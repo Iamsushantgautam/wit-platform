@@ -21,16 +21,22 @@ function App() {
   const parts = hostname.split('.');
   let subdomain = null;
 
-  // Handle localhost (e.g. user.localhost)
-  if (parts.length === 2 && parts[1] === 'localhost') {
-    subdomain = parts[0];
-  }
-  // Handle production domains (e.g. user.website.com or user.website) - assuming valid domain has at least 2 parts
-  // We want to capture 'user' from 'user.mydomain.com'
-  else if (parts.length > 2) {
-    // Exclude 'www'
-    if (parts[0] !== 'www') {
+  // Exclude Vercel deployment URLs (e.g., withub-iota.vercel.app)
+  const isVercelDomain = hostname.includes('vercel.app');
+
+  // Only process subdomains for custom domains, not Vercel deployments
+  if (!isVercelDomain) {
+    // Handle localhost (e.g. user.localhost)
+    if (parts.length === 2 && parts[1] === 'localhost') {
       subdomain = parts[0];
+    }
+    // Handle production domains (e.g. user.website.com or user.website) - assuming valid domain has at least 2 parts
+    // We want to capture 'user' from 'user.mydomain.com'
+    else if (parts.length > 2) {
+      // Exclude 'www'
+      if (parts[0] !== 'www') {
+        subdomain = parts[0];
+      }
     }
   }
 
