@@ -452,3 +452,54 @@
     border-radius: 9999px;
     border: 2px solid white;
 }
+
+/* ========================================= */
+/* SMALL UTILITIES & RESPONSIVE HELPERS      */
+/* ========================================= */
+/* Utility used by JSX classes in Profile.jsx */
+.max-w-mobile {
+    max-width: 480px;
+}
+
+.min-h-screen-safe {
+    min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+}
+
+/* Tweak header and avatar sizes on very small devices */
+@media (max-width: 480px) {
+    .profile-header-card {
+        padding: 1rem 1rem 1.5rem;
+    }
+
+    .profile-avatar-wrapper {
+        width: 4.5rem;
+        height: 4.5rem;
+    }
+
+    .profile-avatar-img {
+        border: 3px solid #111827;
+    }
+
+    /* Action buttons stack vertically on very narrow screens */
+    .action-btn-primary,
+    .action-btn-secondary {
+        width: 100%;
+        padding: 0.6rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .grid.grid-cols-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .mobile-bottom-nav {
+        padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+    }
+}
+
+/* Improve content area spacing on small-to-medium devices */
+@media (max-width: 1024px) {
+    .profile-content-area {
+        padding: 1rem !important;
+    }
+}

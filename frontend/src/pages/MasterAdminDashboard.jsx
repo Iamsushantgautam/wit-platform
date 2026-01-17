@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { Users, Layout, Image, Plus, Search, Filter, Trash2, Edit2, CheckCircle, XCircle, MoreVertical, LogOut } from 'lucide-react';
@@ -62,6 +63,17 @@ const MasterAdminDashboard = () => {
     // Handlers
     const handleSave = async (e) => {
         e.preventDefault();
+        // Basic front-end validation
+        if (!formData.name || formData.name.trim() === '') {
+            return alert('Name is required.');
+        }
+        if (formData.type === 'tool' && !formData.url && !formData.logo) {
+            return alert('Provide a tool URL or upload a logo image.');
+        }
+        if (formData.type === 'prompt' && (!formData.prompt || formData.prompt.trim() === '')) {
+            return alert('Prompt text is required.');
+        }
+
         try {
             const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
             if (editingItem) {
@@ -74,7 +86,24 @@ const MasterAdminDashboard = () => {
             closeForm();
         } catch (error) {
             console.error("Error saving item", error);
-            alert("Failed to save item. Check console.");
+            const message = error.response?.data?.message || error.message || 'Failed to save item';
+            alert(`Failed to save item: ${message}`);
+        }
+    };
+
+    // Image upload handler for logo
+    const handleLogoFile = async (file) => {
+        if (!file) return;
+        const form = new FormData();
+        form.append('image', file);
+        try {
+            const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'multipart/form-data' } };
+            const res = await axios.post(`${API_URL}/upload`, form, config);
+            // API returns the uploaded image path/url
+            setFormData(prev => ({ ...prev, logo: res.data }));
+        } catch (err) {
+            console.error('Upload failed', err);
+            alert('Image upload failed. See console.');
         }
     };
 
@@ -369,7 +398,9 @@ const MasterAdminDashboard = () => {
                     <MoreVertical size={24} className="rotate-90 text-slate-600 dark:text-slate-300" />
                 </button>
                 <h2 className="font-bold text-lg text-slate-900 dark:text-white">Admin Dashboard</h2>
-                <div className="w-10" /> {/* Spacer */}
+                <Link to="/dashboard" className="dashboard-link">
+                    Dashboard
+                </Link>
             </div>
 
             <div className="dashboard-layout">
@@ -388,7 +419,7 @@ const MasterAdminDashboard = () => {
                     </nav>
 
                     <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-800">
-                        <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors font-medium">
+                        <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 logout-btn">
                             <LogOut size={20} />
                             <span>Logout</span>
                         </button>
@@ -468,13 +499,29 @@ const MasterAdminDashboard = () => {
 
                             <div>
                                 <label className="label-premium">Logo URL</label>
-                                <input
-                                    type="url"
-                                    className="input-premium"
-                                    value={formData.logo}
-                                    onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                                    required
-                                />
+                                <div className="file-input-row">
+                                    <div style={{ flex: 1 }}>
+                                        <input
+                                            type="url"
+                                            className="input-premium"
+                                            value={formData.logo}
+                                            onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+                                            placeholder="https://example.com/logo.png or upload below"
+                                        />
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const f = e.target.files && e.target.files[0];
+                                                if (f) handleLogoFile(f);
+                                            }}
+                                            style={{ marginTop: '0.5rem' }}
+                                        />
+                                    </div>
+                                    <div className="file-preview" aria-hidden>
+                                        {formData.logo ? <img src={formData.logo} alt="preview" /> : <div style={{ fontSize: 12, color: 'var(--text-secondary)', padding: 6 }}>No image</div>}
+                                    </div>
+                                </div>
                             </div>
 
                             {formData.type === 'prompt' && (
@@ -521,10 +568,10 @@ const MasterAdminDashboard = () => {
                             )}
 
                             <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                                <button type="button" onClick={closeForm} className="flex-1 px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                <button type="button" onClick={closeForm} className="btn-secondary flex-1">
                                     Cancel
                                 </button>
-                                <button type="submit" className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+                                <button type="submit" className="btn-primary flex-1">
                                     {editingItem ? 'Update' : 'Create'} {formData.type}
                                 </button>
                             </div>

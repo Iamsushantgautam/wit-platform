@@ -242,6 +242,100 @@
     opacity: 1;
 }
 
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    color: #fff;
+    padding: 0.8rem 1.1rem;
+    border-radius: 1rem;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.btn-primary:hover { transform: translateY(-2px); }
+
+.btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 0.7rem 1rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+.logout-btn {
+    background: transparent;
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.08);
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.9rem;
+    font-weight: 700;
+}
+
+.dashboard-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 0.8rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+/* Overview specific layout helpers */
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 1024px) {
+    .overview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* File upload preview inside modal form */
+.file-input-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.file-preview {
+    width: 72px;
+    height: 72px;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+}
+
+.file-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* small helper for reduced padding on compact forms */
+.compact-form .input-premium {
+    padding: 0.6rem 0.9rem;
+}
+
 /* ========================================= */
 /* TOOL ACTIONS                              */
 /* ========================================= */
@@ -553,4 +647,69 @@
 .link-item-premium:hover {
     border-color: var(--primary-color);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
+
+/* ========================================= */
+/* ADDITIONAL RESPONSIVE FIXES & OVERFLOW    */
+/* ========================================= */
+/* Prevent horizontal overflow on small screens */
+.dashboard-container {
+    overflow-x: hidden;
+}
+
+/* Make mobile header sticky and compact */
+.mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Ensure table wrapper allows horizontal scroll on small screens */
+.admin-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Slightly reduce table cell padding on narrow screens */
+@media (max-width: 768px) {
+    .admin-table th,
+    .admin-table td {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+
+    .tool-admin-card {
+        min-height: 220px; /* keep cards consistent height on mobile */
+    }
+
+    /* make search full-width on small screens */
+    .search-wrapper-premium {
+        max-width: 100%;
+    }
+}
+
+/* Improve action alignment for small devices */
+@media (max-width: 480px) {
+    .admin-table thead {
+        display: none; /* hide header to use card-like rows if desired */
+    }
+
+    .admin-table tbody tr {
+        display: block;
+        margin-bottom: 0.75rem;
+        border-radius: 1rem;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 0.75rem;
+    }
+
+    .admin-table tbody tr td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0.25rem;
+    }
 }

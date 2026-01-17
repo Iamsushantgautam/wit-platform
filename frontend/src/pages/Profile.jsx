@@ -83,8 +83,8 @@ const Profile = ({ usernameOverride }) => {
     );
 
     return (
-        <div className="min-h-screen-safe bg-gray-100 flex justify-center">
-            <div className="w-full max-w-mobile bg-white min-h-screen shadow-2xl relative">
+        <div className="profile-container-wrapper min-h-screen-safe flex justify-center">
+            <div className="profile-main-card w-full max-w-mobile bg-white min-h-screen shadow-2xl relative">
 
                 {/* Header Section */}
                 <div className="profile-header-card">
