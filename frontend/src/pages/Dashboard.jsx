@@ -31,6 +31,20 @@ const Dashboard = () => {
     const [availableTools, setAvailableTools] = useState([]);
     const [username, setUsername] = useState(user?.username || '');
     const [password, setPassword] = useState('');
+    const [toolSearch, setToolSearch] = useState('');
+
+    // Filtered Tools for Stack
+    const filteredAvailableTools = availableTools.filter(t =>
+        (t.type !== 'prompt') &&
+        (t.name.toLowerCase().includes(toolSearch.toLowerCase()) ||
+            t.category.toLowerCase().includes(toolSearch.toLowerCase()))
+    );
+
+    const filteredAvailablePrompts = availableTools.filter(t =>
+        (t.type === 'prompt') &&
+        (t.name.toLowerCase().includes(toolSearch.toLowerCase()) ||
+            t.category.toLowerCase().includes(toolSearch.toLowerCase()))
+    );
 
     useEffect(() => {
         const fetchData = async () => {
@@ -247,7 +261,16 @@ const Dashboard = () => {
                     <TabButton id="offers" label="Offers & Banners" icon={Megaphone} />
                     <TabButton id="socials" label="Socials" icon={Share2} />
                     <TabButton id="tools" label="AI Tools" icon={Layout} />
+                    <TabButton id="prompts" label="My Prompts" icon={Megaphone} />
                     <TabButton id="share" label="Share Profile" icon={QrCode} />
+
+                    {user.role === 'master_admin' && (
+                        <Link to="/admin" className="sidebar-tab text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20">
+                            <ShieldAlert size={20} />
+                            <span>Master Admin</span>
+                        </Link>
+                    )}
+
                     <div className="my-6 mx-4 border-t border-gray-100 dark:border-gray-800"></div>
                     <TabButton id="account" label="Account Settings" icon={Settings} />
                 </aside>
@@ -529,21 +552,35 @@ const Dashboard = () => {
                     {/* TOOLS TAB */}
                     {activeTab === 'tools' && (
                         <div>
-                            <h2 className="dashboard-section-title">
-                                <Layout className="text-accent" />
-                                <span>AI Stack</span>
-                            </h2>
-                            <p className="text-gray-500 dark:text-gray-400 mb-8">Select the AI tools you use. These will be featured on your profile page.</p>
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                                <div>
+                                    <h2 className="dashboard-section-title mb-1">
+                                        <Layout className="text-accent" />
+                                        <span>AI Stack</span>
+                                    </h2>
+                                    <p className="text-gray-500 dark:text-gray-400">Select the tools you use to feature them on your profile.</p>
+                                </div>
+                                <div className="search-wrapper-premium w-full md:w-64">
+                                    <Search className="search-icon-premium" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search tools..."
+                                        className="search-input-premium !py-2 !text-sm"
+                                        value={toolSearch}
+                                        onChange={(e) => setToolSearch(e.target.value)}
+                                    />
+                                </div>
+                            </div>
 
                             <div className="tool-grid-premium">
-                                {availableTools.map(tool => (
+                                {filteredAvailableTools.map(tool => (
                                     <div
                                         key={tool._id}
                                         onClick={() => toggleTool(tool._id)}
                                         className={`tool-select-card ${profileData.activeTools.includes(tool._id) ? 'selected' : ''}`}
                                     >
                                         <div className="tool-icon-placeholder">
-                                            <Layout size={24} />
+                                            {tool.logo ? <img src={tool.logo} alt="" className="w-full h-full object-cover rounded-lg" /> : <Layout size={24} />}
                                         </div>
                                         <h4 className="font-bold text-sm mb-1">{tool.name}</h4>
                                         <span className="text-xs opacity-60 uppercase font-bold tracking-wider">{tool.category}</span>
@@ -560,6 +597,71 @@ const Dashboard = () => {
                             <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3">
                                 <Save size={18} />
                                 {saving ? 'Saving...' : 'Update Stack'}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* PROMPTS TAB */}
+                    {activeTab === 'prompts' && (
+                        <div>
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                                <div>
+                                    <h2 className="dashboard-section-title mb-1">
+                                        <Megaphone className="text-accent" />
+                                        <span>My Prompts Library</span>
+                                    </h2>
+                                    <p className="text-gray-500 dark:text-gray-400">Select curated prompts to display on your public profile.</p>
+                                </div>
+                                <div className="search-wrapper-premium w-full md:w-64">
+                                    <Search className="search-icon-premium" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search prompts..."
+                                        className="search-input-premium !py-2 !text-sm"
+                                        value={toolSearch}
+                                        onChange={(e) => setToolSearch(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredAvailablePrompts.map(tool => (
+                                    <div
+                                        key={tool._id}
+                                        onClick={() => toggleTool(tool._id)}
+                                        className={`cursor-pointer group relative rounded-2xl overflow-hidden border-2 transition-all duration-200 ${profileData.activeTools.includes(tool._id)
+                                            ? 'border-purple-500 ring-2 ring-purple-500/20 shadow-lg shadow-purple-500/10'
+                                            : 'border-slate-200 dark:border-slate-800 hover:border-purple-300'
+                                            }`}
+                                    >
+                                        <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+                                            <img src={tool.logo} alt={tool.name} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                            {/* Selection Overlay */}
+                                            <div className={`absolute inset-0 bg-purple-600/20 flex items-center justify-center transition-opacity ${profileData.activeTools.includes(tool._id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                                }`}>
+                                                {profileData.activeTools.includes(tool._id) && (
+                                                    <div className="bg-white text-purple-600 rounded-full p-2 shadow-lg scale-110">
+                                                        <CheckCircle size={24} fill="currentColor" className="text-purple-100" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="p-4 bg-white dark:bg-slate-900">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h4 className="font-bold text-slate-900 dark:text-slate-100 line-clamp-1">{tool.name}</h4>
+                                                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                                    {tool.platform || 'AI'}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-500 line-clamp-2">{tool.description}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3">
+                                <Save size={18} />
+                                {saving ? 'Saving...' : 'Update Library'}
                             </button>
                         </div>
                     )}

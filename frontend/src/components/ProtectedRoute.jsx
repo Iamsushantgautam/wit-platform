@@ -16,7 +16,7 @@ const ProtectedRoute = ({ adminOnly = false }) => {
     }
 
     if (adminOnly && user.role !== 'master_admin') {
-        return <Navigate to="/dashboard" replace />;
+        return <Navigate to="/" replace />;
     }
 
     return <Outlet />;

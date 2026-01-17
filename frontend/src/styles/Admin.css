@@ -1,0 +1,556 @@
+/* ========================================= */
+/* ROOT UTILITIES                            */
+/* ========================================= */
+:root {
+    --primary-color: #2563eb;
+    --secondary-color: #8b5cf6;
+
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-card: #ffffff;
+
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+
+    --border-color: #e2e8f0;
+    --divider-color: #e5e7eb;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark Mode */
+.dark {
+    --bg-primary: #020617;
+    --bg-secondary: #0f172a;
+    --bg-card: #020617;
+
+    --text-primary: #e5e7eb;
+    --text-secondary: #94a3b8;
+
+    --border-color: rgba(255, 255, 255, 0.06);
+    --divider-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ========================================= */
+/* LAYOUT                                    */
+/* ========================================= */
+.dashboard-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-height: 100vh;
+    background: var(--bg-primary);
+}
+
+.dashboard-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================= */
+/* SIDEBAR                                   */
+/* ========================================= */
+.sidebar-container {
+    background: var(--bg-card);
+    border-radius: 1.75rem;
+    padding: 1.75rem;
+    position: sticky;
+    top: 2rem;
+    height: calc(100vh - 4rem);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-md);
+}
+
+.sidebar-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1.2rem;
+    border-radius: 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.25s ease;
+    text-decoration: none;
+    margin-bottom: 0.35rem;
+}
+
+.sidebar-tab:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.sidebar-tab.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+}
+
+/* ========================================= */
+/* CONTENT CARD                              */
+/* ========================================= */
+.content-card {
+    background: var(--bg-card);
+    border-radius: 1.75rem;
+    padding: 2.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+}
+
+.dashboard-section-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dashboard-section-title::after {
+    content: "";
+    flex-grow: 1;
+    height: 1px;
+    background: var(--divider-color);
+}
+
+/* ========================================= */
+/* FORMS                                     */
+/* ========================================= */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.label-premium {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+    display: block;
+}
+
+.input-premium {
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    border-radius: 1rem;
+    border: 2px solid transparent;
+    background: var(--bg-secondary);
+    font-size: 1rem;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.input-premium:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: var(--bg-card);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+/* ========================================= */
+/* SEARCH BAR                                */
+/* ========================================= */
+.search-wrapper-premium {
+    position: relative;
+    max-width: 420px;
+}
+
+.search-input-premium {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.search-input-premium:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.search-icon-premium {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+/* ========================================= */
+/* TOOL GRID                                 */
+/* ========================================= */
+.tool-grid-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.75rem;
+}
+
+.tool-admin-card {
+    background: var(--bg-card);
+    border-radius: 1.5rem;
+    padding: 1.75rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.35s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.tool-admin-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 35px rgba(37, 99, 235, 0.15);
+    border-color: var(--primary-color);
+}
+
+.tool-admin-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tool-admin-card:hover::after {
+    opacity: 1;
+}
+
+/* ========================================= */
+/* TOOL ACTIONS                              */
+/* ========================================= */
+.tool-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: auto;
+}
+
+.tool-btn {
+    flex: 1;
+    padding: 0.55rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tool-btn.edit {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.tool-btn.edit:hover {
+    background: #dbeafe;
+}
+
+.tool-btn.delete {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.tool-btn.delete:hover {
+    background: #fee2e2;
+}
+
+/* ========================================= */
+/* TABLES                                    */
+/* ========================================= */
+.admin-table-container {
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.admin-table thead {
+    background: var(--bg-secondary);
+}
+
+.admin-table th {
+    padding: 1.25rem;
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary);
+}
+
+.admin-table td {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table tr:hover td {
+    background: var(--bg-secondary);
+}
+
+/* ========================================= */
+/* BADGES                                    */
+/* ========================================= */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.badge.admin {
+    background: #f3e8ff;
+    color: #7e22ce;
+}
+
+.badge.member {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.badge.active {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge.blocked {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* ========================================= */
+/* ANIMATIONS                                */
+/* ========================================= */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-up {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* ========================================= */
+/* GLASS PANEL                               */
+/* ========================================= */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.dark .glass-panel {
+    background: rgba(2, 6, 23, 0.75);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ========================================= */
+/* STAT CARDS                                */
+/* ========================================= */
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.stat-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+.stat-card:hover::before {
+    transform: translateX(100%);
+}
+
+/* ========================================= */
+/* TOOL SELECT CARD (Dashboard)              */
+/* ========================================= */
+.tool-select-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+}
+
+.tool-select-card:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.03);
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.15);
+}
+
+.tool-select-card.selected {
+    border-color: var(--primary-color);
+    background: rgba(37, 99, 235, 0.03);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.dark .tool-select-card.selected {
+    background: rgba(37, 99, 235, 0.08);
+}
+
+.tool-icon-placeholder {
+    width: 4rem;
+    height: 4rem;
+    background: var(--bg-secondary);
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    overflow: hidden;
+}
+
+/* ========================================= */
+/* MOBILE RESPONSIVENESS                     */
+/* ========================================= */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+
+    .sidebar-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100vh;
+        z-index: 50;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        border-radius: 0;
+    }
+
+    .sidebar-container.open {
+        transform: translateX(0);
+    }
+
+    .content-card {
+        padding: 1.5rem;
+    }
+
+    .tool-grid-premium {
+        grid-template-columns: 1fr;
+    }
+
+    .search-wrapper-premium {
+        max-width: 100%;
+    }
+}
+
+/* Mobile Header */
+.mobile-header {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem;
+    margin: -2rem -2rem 2rem -2rem;
+}
+
+@media (max-width: 1024px) {
+    .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .sidebar-container {
+        display: none;
+    }
+
+    .sidebar-container.open {
+        display: flex;
+    }
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 45;
+}
+
+@media (max-width: 1024px) {
+    .sidebar-overlay.open {
+        display: block;
+    }
+}
+
+/* ========================================= */
+/* UTILITY CLASSES                           */
+/* ========================================= */
+.link-item-premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    transition: all 0.2s ease;
+}
+
+.link-item-premium:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}

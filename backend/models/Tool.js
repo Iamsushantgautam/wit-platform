@@ -35,6 +35,14 @@ const toolSchema = mongoose.Schema({
         type: String,
         default: 'Image Generation Prompt'
     },
+    platform: {
+        type: String,
+        default: 'Generic'
+    },
+    tags: {
+        type: [String],
+        default: []
+    },
     isEnabled: {
         type: Boolean,
         default: true

@@ -10,6 +10,7 @@ import Profile from './pages/Profile';
 import MasterAdminDashboard from './pages/MasterAdminDashboard';
 import About from './pages/About';
 import AiTools from './pages/AiTools';
+import PromptsLibrary from './pages/PromptsLibrary';
 import Profiles from './pages/Profiles';
 
 import { ThemeProvider } from './context/ThemeContext';
@@ -71,6 +72,7 @@ function App() {
               <Route path="/u/:username" element={<Profile />} />
               <Route path="/about" element={<About />} />
               <Route path="/tools" element={<AiTools />} />
+              <Route path="/prompts" element={<PromptsLibrary />} />
               <Route path="/community" element={<Profiles />} />
 
               {/* Fallback */}

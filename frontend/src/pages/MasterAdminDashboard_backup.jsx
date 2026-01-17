@@ -159,7 +159,7 @@ const MasterAdminDashboard = () => {
                 </div>
             </div>
 
-            {/* Recent Activity / Quick Actions */}
+            {/* Recent Activity / Quick Actions could go here */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
                     <div className="relative z-10">
@@ -358,6 +358,7 @@ const MasterAdminDashboard = () => {
         );
     };
 
+
     return (
         <div className="dashboard-container">
             {/* Sidebar Overlay for Mobile */}
@@ -373,21 +374,36 @@ const MasterAdminDashboard = () => {
             </div>
 
             <div className="dashboard-layout">
+
+                {/* Mobile Sidebar Overlay */}
+                {isSidebarOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/60 z-30 md:hidden backdrop-blur-sm animate-in fade-in"
+                        onClick={() => setIsSidebarOpen(false)}
+                    />
+                )}
+
                 {/* Sidebar */}
-                <aside className={`sidebar-container ${isSidebarOpen ? 'open' : ''}`}>
-                    <div className="mb-6">
-                        <h1 className="text-xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Admin Console</h1>
-                        <p className="text-xs text-slate-400 mt-1">Master Control Panel</p>
+                <aside className={`w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 fixed h-full flex flex-col z-40 transition-transform duration-300 md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                    <div className="p-6 border-b border-slate-100 dark:border-slate-900 flex justify-between items-center">
+                        <div>
+                            <h1 className="text-xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Admin Console</h1>
+                            <p className="text-xs text-slate-400 mt-1">Master Control Panel</p>
+                        </div>
+                        {/* Close button for mobile */}
+                        <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                            <XCircle size={20} />
+                        </button>
                     </div>
 
-                    <nav className="flex-1 space-y-1">
+                    <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                         <SidebarItem id="overview" label="Overview" icon={Layout} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                         <SidebarItem id="users" label="User Management" icon={Users} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                         <SidebarItem id="tools" label="AI Tools" icon={Filter} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                         <SidebarItem id="prompts" label="Prompt Library" icon={Image} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                     </nav>
 
-                    <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <div className="p-4 border-t border-slate-100 dark:border-slate-900 flex-1 ">
                         <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors font-medium">
                             <LogOut size={20} />
                             <span>Logout</span>
@@ -396,144 +412,108 @@ const MasterAdminDashboard = () => {
                 </aside>
 
                 {/* Main Content */}
-                <main className="min-w-0">
-                    {activeTab === 'overview' && <OverviewTab />}
-                    {activeTab === 'users' && <UsersTab />}
-                    {activeTab === 'tools' && <ItemsTab type="tool" />}
-                    {activeTab === 'prompts' && <ItemsTab type="prompt" />}
-                </main>
-            </div>
-
-            {/* Modal Form */}
-            {isFormOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 slide-in-from-bottom-4">
-                        <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-6 flex justify-between items-center z-10">
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                {editingItem ? `Edit ${formData.type}` : `Add New ${formData.type}`}
-                            </h2>
-                            <button onClick={closeForm} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                <XCircle size={24} className="text-slate-400" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSave} className="p-6 space-y-6">
-                            <div className="form-grid">
-                                <div>
-                                    <label className="label-premium">Name</label>
-                                    <input
-                                        type="text"
-                                        className="input-premium"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="label-premium">Category</label>
-                                    <input
-                                        type="text"
-                                        className="input-premium"
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="label-premium">Description</label>
-                                <textarea
-                                    className="input-premium"
-                                    rows="3"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    required
-                                />
-                            </div>
-
-                            {formData.type === 'tool' && (
-                                <div>
-                                    <label className="label-premium">Tool URL</label>
-                                    <input
-                                        type="url"
-                                        className="input-premium"
-                                        value={formData.url}
-                                        onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="label-premium">Logo URL</label>
-                                <input
-                                    type="url"
-                                    className="input-premium"
-                                    value={formData.logo}
-                                    onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                                    required
-                                />
-                            </div>
-
-                            {formData.type === 'prompt' && (
-                                <>
-                                    <div>
-                                        <label className="label-premium">Platform Model</label>
-                                        <select
-                                            className="input-premium"
-                                            value={formData.platform}
-                                            onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                                        >
-                                            <option value="Generic">Generic</option>
-                                            <option value="ChatGPT">ChatGPT</option>
-                                            <option value="Claude">Claude</option>
-                                            <option value="Gemini">Gemini</option>
-                                            <option value="Midjourney">Midjourney</option>
-                                            <option value="DALL-E">DALL-E</option>
-                                            <option value="Stable Diffusion">Stable Diffusion</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="label-premium">Prompt</label>
-                                        <textarea
-                                            className="input-premium"
-                                            rows="4"
-                                            value={formData.prompt}
-                                            onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="label-premium">Tags (comma-separated)</label>
-                                        <input
-                                            type="text"
-                                            className="input-premium"
-                                            value={formData.tags.join(', ')}
-                                            onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()) })}
-                                            placeholder="creative, art, design"
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                                <button type="button" onClick={closeForm} className="flex-1 px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                                    Cancel
-                                </button>
-                                <button type="submit" className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-blue-500/30 transition-all">
-                                    {editingItem ? 'Update' : 'Create'} {formData.type}
-                                </button>
-                            </div>
-                        </form>
+                <main className="flex-1 ml-0 md:ml-64 p-4 md:p-8 lg:p-12 overflow-x-hidden">
+                    {/* Mobile Header Toggle */}
+                    <div className="md:hidden mb-6 flex items-center gap-4">
+                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm hover:bg-slate-50">
+                            <MoreVertical size={24} className="rotate-90 text-slate-600 dark:text-slate-300" />
+                        </button>
+                        <h2 className="font-bold text-lg text-slate-900 dark:text-white">Admin Dashboard</h2>
                     </div>
-                </div>
-            )}
-        </div>
-    );
+
+                    <div className="max-w-6xl mx-auto">
+                        {activeTab === 'overview' && <OverviewTab />}
+                        {activeTab === 'users' && <UsersTab />}
+                        {activeTab === 'tools' && <ItemsTab type="tool" />}
+                        {activeTab === 'prompts' && <ItemsTab type="prompt" />}
+                    </div>
+                </main>
+
+                {/* Modal Form */}
+                {isFormOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                        <div className="bg-white dark:bg-slate-950 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+                            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-950 z-10">
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{editingItem ? 'Edit Item' : `Add New ${formData.type}`}</h2>
+                                <button onClick={closeForm} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                                    <XCircle size={24} className="text-slate-400" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSave} className="p-6 space-y-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div className="space-y-2">
+                                        <label className="label-premium">Name</label>
+                                        <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="input-premium" placeholder="Item Name" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="label-premium">Category</label>
+                                        <input required type="text" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="input-premium" placeholder="e.g. Design, Chat" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="label-premium">Image / Logo URL</label>
+                                    <div className="flex gap-4">
+                                        <input required type="url" value={formData.logo} onChange={e => setFormData({ ...formData, logo: e.target.value })} className="input-premium flex-1" placeholder="https://..." />
+                                        <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 flex-shrink-0 overflow-hidden">
+                                            {formData.logo && <img src={formData.logo} className="w-full h-full object-cover" alt="Preview" />}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="label-premium">Description</label>
+                                    <textarea required value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="input-premium min-h-[100px]" placeholder="Short description..." />
+                                </div>
+
+                                {formData.type === 'tool' && (
+                                    <div className="space-y-2">
+                                        <label className="label-premium">Website URL</label>
+                                        <input type="url" value={formData.url} onChange={e => setFormData({ ...formData, url: e.target.value })} className="input-premium" placeholder="https://..." />
+                                    </div>
+                                )}
+
+                                {formData.type === 'prompt' && (
+                                    <div className="bg-blue-50 dark:bg-blue-900/10 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/30 space-y-4">
+                                        <h3 className="text-blue-800 dark:text-blue-300 font-bold text-sm uppercase flex items-center gap-2"><Image size={16} /> Prompt Details</h3>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <label className="label-premium">Platform Model</label>
+                                                <select value={formData.platform} onChange={e => setFormData({ ...formData, platform: e.target.value })} className="input-premium appearance-none">
+                                                    <option value="Generic">Generic / Other</option>
+                                                    <option value="Midjourney">Midjourney</option>
+                                                    <option value="DALL-E 3">DALL-E 3</option>
+                                                    <option value="Stable Diffusion">Stable Diffusion</option>
+                                                    <option value="Gemini">Gemini</option>
+                                                    <option value="ChatGPT">ChatGPT</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="label-premium">Tags (comma separated)</label>
+                                                <input type="text" value={Array.isArray(formData.tags) ? formData.tags.join(', ') : formData.tags} onChange={e => setFormData({ ...formData, tags: e.target.value.split(',').map(tag => tag.trim()) })} className="input-premium" placeholder="Portrait, Cinema, 8k" />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="label-premium">Prompt Text</label>
+                                            <textarea value={formData.prompt} onChange={e => setFormData({ ...formData, prompt: e.target.value })} className="input-premium font-mono text-sm min-h-[120px]" placeholder="Detailed prompt text here..." />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="pt-4 flex gap-4">
+                                    <button type="button" onClick={closeForm} className="flex-1 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Cancel</button>
+                                    <button type="submit" className="flex-[2] bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30">Save Item</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+            </div>
+            );
 };
 
-export default MasterAdminDashboard;
+            export default MasterAdminDashboard;
