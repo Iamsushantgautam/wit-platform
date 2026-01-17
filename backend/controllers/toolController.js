@@ -21,14 +21,17 @@ const getAdminTools = asyncHandler(async (req, res) => {
 // @route   POST /api/tools
 // @access  Private/Admin
 const createTool = asyncHandler(async (req, res) => {
-    const { name, description, logo, url, category } = req.body;
+    const { name, description, logo, url, category, prompt, promptDescription, type } = req.body;
 
     const tool = await Tool.create({
         name,
         description,
         logo,
         url,
-        category
+        category,
+        prompt,
+        promptDescription,
+        type: type || 'tool'
     });
 
     res.status(201).json(tool);

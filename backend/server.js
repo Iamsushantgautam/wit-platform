@@ -22,6 +22,7 @@ app.use('/api/users', require('./routes/authRoutes'));
 app.use('/api/user-manage', require('./routes/userRoutes'));
 app.use('/api/profiles', require('./routes/profileRoutes'));
 app.use('/api/tools', require('./routes/toolRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 app.get('/', (req, res) => {
     res.send('API is running...');

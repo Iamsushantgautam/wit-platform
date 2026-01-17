@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Search, ExternalLink, Wrench } from 'lucide-react';
+import { Search, ExternalLink, Wrench, Copy } from 'lucide-react';
 
 const AiTools = () => {
     const { API_URL } = useContext(AuthContext);
@@ -79,9 +79,29 @@ const AiTools = () => {
                                             </div>
                                         </div>
 
-                                        <p className="text-secondary text-sm mb-6 line-clamp-3 h-16">
+                                        <p className="text-secondary text-sm mb-6 line-clamp-2 h-10">
                                             {tool.description}
                                         </p>
+
+                                        {tool.prompt && (
+                                            <div className="mb-6 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{tool.promptDescription || 'Prompt'}</span>
+                                                    <button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(tool.prompt);
+                                                            alert('Prompt copied!');
+                                                        }}
+                                                        className="text-xs flex items-center gap-1 text-primary hover:underline hover:cursor-pointer"
+                                                    >
+                                                        <Copy size={12} /> Copy
+                                                    </button>
+                                                </div>
+                                                <p className="text-xs font-mono text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700 h-16 overflow-y-auto whitespace-pre-wrap">
+                                                    {tool.prompt}
+                                                </p>
+                                            </div>
+                                        )}
 
                                         <a href={tool.url} target="_blank" rel="noreferrer" className="w-full btn btn-outline flex justify-center group-hover:bg-primary group-hover:text-white group-hover:border-primary">
                                             Visit Website <ExternalLink size={16} className="ml-2" />

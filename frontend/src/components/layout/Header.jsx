@@ -79,9 +79,16 @@ const Header = () => {
                                             <div className="px-3 mb-2">
                                                 <div className="public-link-card">
                                                     <span className="public-link-label">Public Profile</span>
-                                                    <Link to={`/u/${user.username}`} target="_blank" className="public-link-url">
-                                                        {window.location.host}/u/{user.username}
-                                                    </Link>
+                                                    <a
+                                                        href={window.location.hostname.includes('localhost')
+                                                            ? `http://${user.username}.localhost:5173`
+                                                            : `http://${user.username}.${window.location.host}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="public-link-url"
+                                                    >
+                                                        {user.username}.{window.location.hostname.includes('localhost') ? 'localhost:5173' : window.location.host}
+                                                    </a>
                                                 </div>
                                             </div>
 

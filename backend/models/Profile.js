@@ -32,6 +32,31 @@ const profileSchema = mongoose.Schema({
         imageUrl: String,
         link: String
     }],
+    socialLinks: {
+        instagram: String,
+        youtube: String,
+        telegram: String,
+        x: String,
+        facebook: String,
+        whatsapp: String
+    },
+    customSocials: [{
+        label: String,
+        url: String,
+        icon: String // Could be emoji or Lucide icon name
+    }],
+    customItems: [{
+        title: String,
+        description: String,
+        url: String,
+        image: String, // Logo or preview
+        type: {
+            type: String,
+            enum: ['tool', 'prompt'],
+            default: 'tool'
+        },
+        prompt: String // For prompt cards
+    }],
     activeTools: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tool'

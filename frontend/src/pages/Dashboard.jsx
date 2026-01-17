@@ -4,9 +4,10 @@ import AuthContext from '../context/AuthContext';
 import {
     User, Image, Link as LinkIcon, Layout, Settings,
     ExternalLink, Plus, Trash2, CheckCircle, AlertCircle,
-    ChevronRight, Save, ShieldAlert
+    ChevronRight, Save, ShieldAlert, Share2, QrCode, Megaphone
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import QRCode from 'react-qr-code';
 
 const Dashboard = () => {
     const { user, logout, API_URL } = useContext(AuthContext);
@@ -22,7 +23,9 @@ const Dashboard = () => {
         category: 'Developer',
         importantLinks: [],
         banners: [],
-        activeTools: []
+        activeTools: [],
+        socialLinks: { instagram: '', youtube: '', telegram: '', x: '', facebook: '', whatsapp: '' },
+        customItems: []
     });
 
     const [availableTools, setAvailableTools] = useState([]);
@@ -74,6 +77,44 @@ const Dashboard = () => {
         setProfileData({ ...profileData, importantLinks: newLinks });
     };
 
+    // Banner Handlers
+    const handleBannerChange = (index, field, value) => {
+        const newBanners = [...profileData.banners];
+        newBanners[index][field] = value;
+        setProfileData({ ...profileData, banners: newBanners });
+    };
+
+    const addBanner = () => {
+        setProfileData({
+            ...profileData,
+            banners: [...(profileData.banners || []), { title: '', imageUrl: '', link: '' }]
+        });
+    };
+
+    const removeBanner = (index) => {
+        const newBanners = profileData.banners.filter((_, i) => i !== index);
+        setProfileData({ ...profileData, banners: newBanners });
+    };
+
+    // Custom Social Handlers
+    const addCustomSocial = () => {
+        setProfileData({
+            ...profileData,
+            customSocials: [...(profileData.customSocials || []), { label: '', url: '', icon: '' }]
+        });
+    };
+
+    const handleCustomSocialChange = (index, field, value) => {
+        const newSocials = [...(profileData.customSocials || [])];
+        newSocials[index][field] = value;
+        setProfileData({ ...profileData, customSocials: newSocials });
+    };
+
+    const removeCustomSocial = (index) => {
+        const newSocials = profileData.customSocials.filter((_, i) => i !== index);
+        setProfileData({ ...profileData, customSocials: newSocials });
+    };
+
     const toggleTool = (toolId) => {
         const currentTools = [...profileData.activeTools];
         const index = currentTools.indexOf(toolId);
@@ -83,6 +124,35 @@ const Dashboard = () => {
             currentTools.push(toolId);
         }
         setProfileData({ ...profileData, activeTools: currentTools });
+    };
+
+    const [uploading, setUploading] = useState(false);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        setUploading(true);
+
+        try {
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            };
+
+            const { data } = await axios.post(`${API_URL}/upload`, formData, config);
+            setProfileData(prev => ({ ...prev, image: data }));
+            setMessage({ type: 'success', text: 'Image uploaded successfully!' });
+        } catch (error) {
+            console.error(error);
+            setMessage({ type: 'error', text: 'Image upload failed' });
+        } finally {
+            setUploading(false);
+        }
     };
 
     const saveProfile = async (e) => {
@@ -95,7 +165,8 @@ const Dashboard = () => {
             });
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
         } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to update profile.' });
+            console.error(error);
+            setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update profile.' });
         } finally {
             setSaving(false);
         }
@@ -147,9 +218,16 @@ const Dashboard = () => {
                     <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-2">Workspace</h1>
                     <p className="text-lg text-gray-500 dark:text-gray-400">Design your digital identity</p>
                 </div>
-                <Link to={`/u/${user.username}`} target="_blank" className="btn btn-primary flex items-center gap-2 px-6 py-3">
+                <a
+                    href={window.location.hostname.includes('localhost')
+                        ? `http://${user.username}.localhost:5173`
+                        : `http://${user.username}.${window.location.host}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-primary flex items-center gap-2 px-6 py-3"
+                >
                     <ExternalLink size={18} /> <span>Live Preview</span>
-                </Link>
+                </a>
             </header>
 
             {message && (
@@ -166,7 +244,10 @@ const Dashboard = () => {
                     <TabButton id="profile" label="Profile Details" icon={User} />
                     <TabButton id="appearance" label="Appearance" icon={Image} />
                     <TabButton id="links" label="Important Links" icon={LinkIcon} />
+                    <TabButton id="offers" label="Offers & Banners" icon={Megaphone} />
+                    <TabButton id="socials" label="Socials" icon={Share2} />
                     <TabButton id="tools" label="AI Tools" icon={Layout} />
+                    <TabButton id="share" label="Share Profile" icon={QrCode} />
                     <div className="my-6 mx-4 border-t border-gray-100 dark:border-gray-800"></div>
                     <TabButton id="account" label="Account Settings" icon={Settings} />
                 </aside>
@@ -179,7 +260,7 @@ const Dashboard = () => {
                         <form onSubmit={saveProfile}>
                             <h2 className="dashboard-section-title">
                                 <User className="text-accent" />
-                                <span>Profile Details</span>
+                                <span className="text-gray-900 dark:text-white">Profile Details</span>
                             </h2>
 
                             <div className="space-y-8">
@@ -232,18 +313,62 @@ const Dashboard = () => {
                         <form onSubmit={saveProfile}>
                             <h2 className="dashboard-section-title">
                                 <Image className="text-accent" />
-                                <span>Appearance</span>
+                                <span className="text-gray-900 dark:text-white">Appearance</span>
                             </h2>
 
                             <div className="space-y-8">
                                 <div className="form-group">
-                                    <label className="label-premium">Profile Image URL</label>
-                                    <input
-                                        type="text" name="image"
-                                        value={profileData.image} onChange={handleProfileChange}
-                                        className="input-premium" placeholder="https://cloudinary.com/..."
-                                    />
-                                    <p className="text-sm text-gray-500 mt-2 italic">Pro Tip: Use a square image for best results.</p>
+                                    <label className="label-premium mb-4 block">Profile Image</label>
+
+                                    <div className="flex flex-col md:flex-row gap-8 items-start">
+                                        {/* Image Preview & Upload Trigger */}
+                                        <div className="relative group">
+                                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 dark:border-gray-700 shadow-md">
+                                                {profileData.image ? (
+                                                    <img src={profileData.image} alt="Profile" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-gray-400">
+                                                        <User size={40} />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Hover Overlay for Upload */}
+                                            <label htmlFor="image-upload" className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                                <span className="text-white text-xs font-bold flex flex-col items-center gap-1">
+                                                    <Image size={16} /> Change
+                                                </span>
+                                            </label>
+                                            <input
+                                                id="image-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageUpload}
+                                                className="hidden"
+                                            />
+                                        </div>
+
+                                        <div className="flex-1 space-y-4 max-w-lg">
+                                            <div>
+                                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 block">Image URL</label>
+                                                <input
+                                                    type="text" name="image"
+                                                    value={profileData.image} onChange={handleProfileChange}
+                                                    className="input-premium text-sm py-2" placeholder="https://..."
+                                                />
+                                            </div>
+                                            <div className="text-sm text-gray-500">
+                                                <p className="mb-1">Upload a new photo or paste a URL.</p>
+                                                <p className="italic">Recommended: Square JPG or PNG, max 2MB.</p>
+                                            </div>
+                                            {uploading && (
+                                                <div className="inline-flex items-center gap-2 text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-sm font-medium">
+                                                    <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"></div>
+                                                    Uploading...
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {profileData.image && (
@@ -316,6 +441,87 @@ const Dashboard = () => {
                             <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3">
                                 <Save size={18} />
                                 {saving ? 'Saving...' : 'Save All Links'}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* OFFERS TAB */}
+                    {activeTab === 'offers' && (
+                        <div>
+                            <div className="flex justify-between items-center mb-8">
+                                <h2 className="dashboard-section-title mb-0">
+                                    <Megaphone className="text-accent" />
+                                    <span>Offers & Banners</span>
+                                </h2>
+                                <button type="button" onClick={addBanner} className="btn btn-outline flex items-center gap-2 py-2 px-4 rounded-xl">
+                                    <Plus size={18} /> Add Banner
+                                </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                {(profileData.banners || []).map((banner, index) => (
+                                    <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm animate-in zoom-in-95 duration-200">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <h4 className="font-bold text-gray-700 dark:text-gray-300">Banner #{index + 1}</h4>
+                                            <button onClick={() => removeBanner(index)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="form-group">
+                                                <label className="text-xs font-semibold uppercase text-gray-400">Title</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="e.g. 50% Off Consulting"
+                                                    className="input-premium"
+                                                    value={banner.title}
+                                                    onChange={(e) => handleBannerChange(index, 'title', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="form-group">
+                                                    <label className="text-xs font-semibold uppercase text-gray-400">Image URL</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="https://imgur.com/..."
+                                                        className="input-premium"
+                                                        value={banner.imageUrl}
+                                                        onChange={(e) => handleBannerChange(index, 'imageUrl', e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="form-group">
+                                                    <label className="text-xs font-semibold uppercase text-gray-400">Link URL</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="https://gumroad.com/..."
+                                                        className="input-premium"
+                                                        value={banner.link}
+                                                        onChange={(e) => handleBannerChange(index, 'link', e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                            {banner.imageUrl && (
+                                                <div className="mt-2 h-32 w-full bg-gray-100 rounded-xl overflow-hidden relative group">
+                                                    <img src={banner.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition">Preview</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {(profileData.banners || []).length === 0 && (
+                                    <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                                        <Megaphone size={40} className="mx-auto text-gray-300 mb-4" />
+                                        <p className="text-lg text-gray-400 font-medium">No offers added.</p>
+                                        <button onClick={addBanner} className="text-accent font-bold mt-2 hover:underline">create your first banner</button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3">
+                                <Save size={18} />
+                                {saving ? 'Saving...' : 'Save Offers'}
                             </button>
                         </div>
                     )}
@@ -405,6 +611,101 @@ const Dashboard = () => {
                                 {saving ? 'Updating...' : 'Update Account'}
                             </button>
                         </form>
+                    )}
+
+                    {/* SOCIALS TAB */}
+                    {activeTab === 'socials' && (
+                        <form onSubmit={saveProfile}>
+                            <h2 className="dashboard-section-title">
+                                <Share2 className="text-accent" />
+                                <span>Social Connections</span>
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {Object.keys(profileData.socialLinks || {}).map((platform) => (
+                                    <div key={platform} className="form-group">
+                                        <label className="label-premium capitalize">{platform}</label>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={profileData.socialLinks?.[platform] || ''}
+                                                onChange={(e) => setProfileData({
+                                                    ...profileData,
+                                                    socialLinks: { ...profileData.socialLinks, [platform]: e.target.value }
+                                                })}
+                                                className="input-premium pl-10"
+                                                placeholder={`Your ${platform} URL`}
+                                            />
+                                            {/* Simple Icon Placeholders */}
+                                            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                                <LinkIcon size={16} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-10">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="font-bold text-lg">Custom Social Links</h3>
+                                    <button type="button" onClick={addCustomSocial} className="text-sm text-primary font-bold hover:underline">
+                                        + Add Custom Link
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {(profileData.customSocials || []).map((social, index) => (
+                                        <div key={index} className="flex gap-4 items-center animate-in slide-in-from-left duration-200">
+                                            <div className="flex-1 grid grid-cols-2 gap-4">
+                                                <input
+                                                    type="text" placeholder="Label (e.g. Discord)"
+                                                    className="input-premium"
+                                                    value={social.label} onChange={(e) => handleCustomSocialChange(index, 'label', e.target.value)}
+                                                />
+                                                <input
+                                                    type="text" placeholder="URL"
+                                                    className="input-premium"
+                                                    value={social.url} onChange={(e) => handleCustomSocialChange(index, 'url', e.target.value)}
+                                                />
+                                            </div>
+                                            <button onClick={() => removeCustomSocial(index)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button type="submit" disabled={saving} className="btn btn-primary mt-10 px-8 py-3">
+                                <Save size={18} />
+                                {saving ? 'Saving...' : 'Save Connections'}
+                            </button>
+                        </form>
+                    )}
+
+                    {/* SHARE TAB */}
+                    {activeTab === 'share' && (
+                        <div className="text-center">
+                            <h2 className="dashboard-section-title justify-center">
+                                <QrCode className="text-accent" />
+                                <span>Share Your Profile</span>
+                            </h2>
+
+                            <div className="bg-white p-8 rounded-2xl shadow-xl inline-block mb-8 border border-gray-100">
+                                <QRCode value={`http://${user.username}.${window.location.hostname.includes('localhost') ? 'localhost:5173' : window.location.host}`} size={200} />
+                            </div>
+
+                            <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Scan to visit your profile</p>
+                            <p className="text-gray-500 mb-8">{`http://${user.username}.${window.location.host}`}</p>
+
+                            <a
+                                href={`http://${user.username}.${window.location.hostname.includes('localhost') ? 'localhost:5173' : window.location.host}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-primary px-8 py-3"
+                            >
+                                Open Public Profile <ExternalLink size={18} className="ml-2" />
+                            </a>
+                        </div>
                     )}
 
                 </main>

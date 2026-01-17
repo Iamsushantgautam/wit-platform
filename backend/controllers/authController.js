@@ -8,6 +8,9 @@ const generateToken = require('../utils/generateToken');
 // @desc    Register new user
 // @route   POST /api/users
 // @access  Public
+// @desc    Register new user
+// @route   POST /api/users
+// @access  Public
 const registerUser = asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
 
@@ -44,19 +47,26 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (user) {
         // Automatically create a profile for the user
-        await Profile.create({
-            user: user._id,
-            name: user.username,
-            category: 'Developer'
-        });
+        try {
+            await Profile.create({
+                user: user._id,
+                name: user.username,
+                category: 'Developer'
+            });
 
-        res.status(201).json({
-            _id: user.id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            token: generateToken(user._id),
-        });
+            res.status(201).json({
+                _id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                token: generateToken(user._id),
+            });
+        } catch (error) {
+            // Rollback user creation if profile creation fails
+            await User.findByIdAndDelete(user._id);
+            res.status(400);
+            throw new Error('Could not create profile. Registration failed.');
+        }
     } else {
         res.status(400);
         throw new Error('Invalid user data');

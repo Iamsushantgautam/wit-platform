@@ -22,6 +22,19 @@ const toolSchema = mongoose.Schema({
         type: String,
         required: [true, 'Please add a category']
     },
+    type: {
+        type: String,
+        enum: ['tool', 'prompt'],
+        default: 'tool'
+    },
+    prompt: {
+        type: String,
+        default: ''
+    },
+    promptDescription: {
+        type: String,
+        default: 'Image Generation Prompt'
+    },
     isEnabled: {
         type: Boolean,
         default: true
