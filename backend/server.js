@@ -11,7 +11,7 @@ const app = express();
 app.use(cors({
     origin: [
         'http://localhost:5173',
-        'https://withub-iota.vercel.app/' // Your Vercel URL
+        'https://withub-iota.vercel.app' // Your Vercel URL (no trailing slash)
     ],
     credentials: true
 }));
