@@ -1,0 +1,8 @@
+node_modules
+.env
+*.log
+check_db.js
+final_check.js
+simulate_browser.js
+test_connection.js
+test_registration.js
