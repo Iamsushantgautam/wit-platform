@@ -5,9 +5,13 @@ import {
     User, Image, Link as LinkIcon, Layout, Settings,
     ExternalLink, Plus, Trash2, CheckCircle, AlertCircle,
     ChevronRight, Save, ShieldAlert, Share2, QrCode, Megaphone,
-    Eye, EyeOff, Search
+    Eye, EyeOff, Search, Instagram, Twitter, Facebook, Linkedin, Github, Youtube, MessageCircle, Heart
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import '../styles/DashboardAppearance.css';
+import '../styles/DashboardLinks.css';
+import '../styles/DashboardOffers.css';
+import '../styles/DashboardPrompts.css';
 import QRCode from 'react-qr-code';
 
 const Dashboard = () => {
@@ -33,6 +37,7 @@ const Dashboard = () => {
     const [username, setUsername] = useState(user?.username || '');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [successMsg, setSuccessMsg] = useState('');
     const [toolSearch, setToolSearch] = useState('');
 
     // Filtered Tools for Stack
@@ -86,6 +91,8 @@ const Dashboard = () => {
             ...profileData,
             importantLinks: [...profileData.importantLinks, { title: '', url: '' }]
         });
+        setSuccessMsg('Link added successfully');
+        setTimeout(() => setSuccessMsg(''), 2000);
     };
 
     const removeLink = (index) => {
@@ -103,8 +110,10 @@ const Dashboard = () => {
     const addBanner = () => {
         setProfileData({
             ...profileData,
-            banners: [...(profileData.banners || []), { title: '', imageUrl: '', link: '' }]
+            banners: [...(profileData.banners || []), { title: '', imageUrl: '', link: '', isVisible: true }]
         });
+        setSuccessMsg('Banner added successfully');
+        setTimeout(() => setSuccessMsg(''), 2000);
     };
 
     const removeBanner = (index) => {
@@ -142,7 +151,23 @@ const Dashboard = () => {
         setProfileData({ ...profileData, activeTools: currentTools });
     };
 
+    const toggleFavorite = async (e, toolId) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        try {
+            const config = {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            };
+            const { data } = await axios.post(`${API_URL}/profiles/favorites/prompt`, { toolId }, config);
+            setProfileData(data);
+        } catch (error) {
+            console.error('Error toggling favorite', error);
+        }
+    };
+
     const [uploading, setUploading] = useState(false);
+    const [bannerUploading, setBannerUploading] = useState(null);
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
@@ -160,14 +185,59 @@ const Dashboard = () => {
                 }
             };
 
-            const { data } = await axios.post(`${API_URL}/upload`, formData, config);
-            setProfileData(prev => ({ ...prev, image: data }));
-            setMessage({ type: 'success', text: 'Image uploaded successfully!' });
+            const { data: imageUrl } = await axios.post(`${API_URL}/upload`, formData, config);
+
+            // Update state and auto-save
+            const updatedProfile = { ...profileData, image: imageUrl };
+            setProfileData(updatedProfile);
+
+            await axios.post(`${API_URL}/profiles`, updatedProfile, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+
+            setMessage({ type: 'success', text: 'Profile image updated!' });
         } catch (error) {
             console.error(error);
             setMessage({ type: 'error', text: 'Image upload failed' });
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleBannerImageUpload = async (e, index) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        setBannerUploading(index);
+
+        try {
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            };
+
+            const { data: imageUrl } = await axios.post(`${API_URL}/upload`, formData, config);
+
+            const newBanners = [...(profileData.banners || [])];
+            newBanners[index].imageUrl = imageUrl;
+
+            const updatedProfile = { ...profileData, banners: newBanners };
+            setProfileData(updatedProfile);
+
+            await axios.post(`${API_URL}/profiles`, updatedProfile, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+
+            setMessage({ type: 'success', text: 'Banner uploaded and saved!' });
+        } catch (error) {
+            console.error(error);
+            setMessage({ type: 'error', text: 'Banner upload failed' });
+        } finally {
+            setBannerUploading(null);
         }
     };
 
@@ -227,6 +297,12 @@ const Dashboard = () => {
         </button>
     );
 
+    const publicProfileUrl = window.location.hostname.includes('localhost')
+        ? `http://${user.username}.localhost:5173`
+        : `http://${user.username}.${window.location.host}`;
+
+    const favouritesUrl = `${publicProfileUrl}?tab=prompts`;
+
     return (
         <div className="container dashboard-container min-h-screen">
             <header className="dashboard-header flex justify-between items-end mb-10 pt-8">
@@ -234,16 +310,24 @@ const Dashboard = () => {
                     <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-2">Workspace</h1>
                     <p className="text-lg text-gray-500 dark:text-gray-400">Design your digital identity</p>
                 </div>
-                <a
-                    href={window.location.hostname.includes('localhost')
-                        ? `http://${user.username}.localhost:5173`
-                        : `http://${user.username}.${window.location.host}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-primary flex items-center gap-2 px-6 py-3"
-                >
-                    <ExternalLink size={18} /> <span>Live Preview</span>
-                </a>
+                <div className="flex gap-3 items-center">
+                    <a
+                        href={publicProfileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-primary flex items-center gap-2 px-6 py-3"
+                    >
+                        <ExternalLink size={18} /> <span>Live Preview</span>
+                    </a>
+                    <a
+                        href={favouritesUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-outline flex items-center gap-2 px-4 py-3"
+                    >
+                        <Megaphone size={18} /> <span>Favourite Prompts</span>
+                    </a>
+                </div>
             </header>
 
             {message && (
@@ -259,9 +343,9 @@ const Dashboard = () => {
                 <aside className="sidebar-nav">
                     <TabButton id="profile" label="Profile Details" icon={User} />
                     <TabButton id="appearance" label="Appearance" icon={Image} />
-                    <TabButton id="links" label="Important Links" icon={LinkIcon} />
+                    <TabButton id="links" label="Connections & Links" icon={LinkIcon} />
                     <TabButton id="offers" label="Offers & Banners" icon={Megaphone} />
-                    <TabButton id="socials" label="Socials" icon={Share2} />
+                    {/* Socials merged into Links */}
                     <TabButton id="tools" label="AI Tools" icon={Layout} />
                     <TabButton id="prompts" label="My Prompts" icon={Megaphone} />
                     <TabButton id="share" label="Share Profile" icon={QrCode} />
@@ -335,7 +419,7 @@ const Dashboard = () => {
 
                     {/* APPEARANCE TAB */}
                     {activeTab === 'appearance' && (
-                        <form onSubmit={saveProfile}>
+                        <form onSubmit={saveProfile} className="appearance-section">
                             <h2 className="dashboard-section-title">
                                 <Image className="text-accent" />
                                 <span className="text-gray-900 dark:text-white">Appearance</span>
@@ -345,24 +429,27 @@ const Dashboard = () => {
                                 <div className="form-group">
                                     <label className="label-premium mb-4 block">Profile Image</label>
 
-                                    <div className="flex flex-col md:flex-row gap-8 items-start">
+                                    <div className="image-upload-container">
                                         {/* Image Preview & Upload Trigger */}
-                                        <div className="relative group">
-                                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 dark:border-gray-700 shadow-md">
+                                        <div className="profile-image-uploader">
+                                            <div className="profile-image-preview">
                                                 {profileData.image ? (
-                                                    <img src={profileData.image} alt="Profile" className="w-full h-full object-cover" />
+                                                    <img src={profileData.image} alt="Profile" />
                                                 ) : (
-                                                    <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-gray-400">
-                                                        <User size={40} />
+                                                    <div className="profile-image-placeholder">
+                                                        <User size={48} />
                                                     </div>
                                                 )}
                                             </div>
 
                                             {/* Hover Overlay for Upload */}
-                                            <label htmlFor="image-upload" className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                                <span className="text-white text-xs font-bold flex flex-col items-center gap-1">
-                                                    <Image size={16} /> Change
-                                                </span>
+                                            <label htmlFor="image-upload" className="profile-image-overlay">
+                                                <div className="profile-image-overlay-content">
+                                                    <div className="profile-image-overlay-icon">
+                                                        <Image size={20} />
+                                                    </div>
+                                                    Change Photo
+                                                </div>
                                             </label>
                                             <input
                                                 id="image-upload"
@@ -373,23 +460,37 @@ const Dashboard = () => {
                                             />
                                         </div>
 
-                                        <div className="flex-1 space-y-4 max-w-lg">
-                                            <div>
-                                                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 block">Image URL</label>
+                                        <div className="image-upload-details">
+                                            <div className="image-url-input-group">
+                                                <label className="image-url-label">Image URL</label>
                                                 <input
-                                                    type="text" name="image"
-                                                    value={profileData.image} onChange={handleProfileChange}
-                                                    className="input-premium text-sm py-2" placeholder="https://..."
+                                                    type="text"
+                                                    name="image"
+                                                    value={profileData.image}
+                                                    onChange={handleProfileChange}
+                                                    className="image-url-input"
+                                                    placeholder="https://example.com/your-image.jpg"
                                                 />
                                             </div>
-                                            <div className="text-sm text-gray-500">
-                                                <p className="mb-1">Upload a new photo or paste a URL.</p>
-                                                <p className="italic">Recommended: Square JPG or PNG, max 2MB.</p>
+
+                                            <div className="image-upload-help">
+                                                <div className="image-upload-help-title">
+                                                    <AlertCircle size={16} />
+                                                    Upload Instructions
+                                                </div>
+                                                <p className="image-upload-help-text">
+                                                    Click the circular avatar to upload a new photo from your device,
+                                                    or paste a direct image URL above.
+                                                </p>
+                                                <p className="image-upload-help-highlight">
+                                                    Recommended: Square image (1:1 ratio), JPG or PNG, max 2MB
+                                                </p>
                                             </div>
+
                                             {uploading && (
-                                                <div className="inline-flex items-center gap-2 text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-sm font-medium">
-                                                    <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"></div>
-                                                    Uploading...
+                                                <div className="uploading-indicator">
+                                                    <div className="uploading-spinner" />
+                                                    Uploading your image...
                                                 </div>
                                             )}
                                         </div>
@@ -397,15 +498,23 @@ const Dashboard = () => {
                                 </div>
 
                                 {profileData.image && (
-                                    <div className="flex items-center gap-6 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                                        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg">
-                                            <img src={profileData.image} alt="Preview" className="w-full h-full object-cover" />
+                                    <div className="avatar-preview-card">
+                                        <div className="avatar-preview-image">
+                                            <img src={profileData.image} alt="Preview" />
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-gray-900 dark:text-gray-100">Avatar Preview</p>
-                                            <p className="text-sm text-gray-500">This is how you'll look to others</p>
+                                        <div className="avatar-preview-info">
+                                            <p className="avatar-preview-title">
+                                                Avatar Preview
+                                                <span className="avatar-preview-badge">
+                                                    <CheckCircle size={12} />
+                                                </span>
+                                            </p>
+                                            <p className="avatar-preview-subtitle">
+                                                This is how you'll appear to others on your profile
+                                            </p>
                                         </div>
                                     </div>
+
                                 )}
                             </div>
 
@@ -418,140 +527,277 @@ const Dashboard = () => {
 
                     {/* LINKS TAB */}
                     {activeTab === 'links' && (
-                        <div>
-                            <div className="flex justify-between items-center mb-8">
+                        <div className="links-section">
+                            {/* Header */}
+                            <div className="flex justify-between items-center mb-6">
                                 <h2 className="dashboard-section-title mb-0">
                                     <LinkIcon className="text-accent" />
-                                    <span>Important Links</span>
+                                    <span>Connections & Links</span>
                                 </h2>
-                                <button type="button" onClick={addLink} className="btn btn-outline flex items-center gap-2 py-2 px-4 rounded-xl">
-                                    <Plus size={18} /> Add New Link
-                                </button>
                             </div>
 
-                            <div className="space-y-4">
-                                {profileData.importantLinks.map((link, index) => (
-                                    <div key={index} className="link-item-premium group animate-in slide-in-from-left duration-200" style={{ animationDelay: `${index * 50}ms` }}>
-                                        <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <input
-                                                type="text"
-                                                placeholder="Title (e.g. My Portfolio)"
-                                                className="input-premium"
-                                                value={link.title}
-                                                onChange={(e) => handleLinkChange(index, 'title', e.target.value)}
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="URL (https://...)"
-                                                className="input-premium"
-                                                value={link.url}
-                                                onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
-                                            />
-                                        </div>
-                                        <button onClick={() => removeLink(index)} className="w-10 h-10 flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
-                                            <Trash2 size={20} />
-                                        </button>
-                                    </div>
-                                ))}
+                            {/* 1. IMPORTANT LINKS SECTION */}
+                            <div className="mb-10">
+                                <div className="section-header">
+                                    <h3>Important Links</h3>
+                                    <span className="section-badge">{profileData.importantLinks.length} Added</span>
+                                </div>
 
-                                {profileData.importantLinks.length === 0 && (
-                                    <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-                                        <LinkIcon size={40} className="mx-auto text-gray-300 mb-4" />
-                                        <p className="text-lg text-gray-400 font-medium">No links added yet.</p>
-                                        <button onClick={addLink} className="text-accent font-bold mt-2 hover:underline">Add your first link</button>
-                                    </div>
-                                )}
-                            </div>
-
-                            <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3">
-                                <Save size={18} />
-                                {saving ? 'Saving...' : 'Save All Links'}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* OFFERS TAB */}
-                    {activeTab === 'offers' && (
-                        <div>
-                            <div className="flex justify-between items-center mb-8">
-                                <h2 className="dashboard-section-title mb-0">
-                                    <Megaphone className="text-accent" />
-                                    <span>Offers & Banners</span>
-                                </h2>
-                                <button type="button" onClick={addBanner} className="btn btn-outline flex items-center gap-2 py-2 px-4 rounded-xl">
-                                    <Plus size={18} /> Add Banner
-                                </button>
-                            </div>
-
-                            <div className="space-y-6">
-                                {(profileData.banners || []).map((banner, index) => (
-                                    <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm animate-in zoom-in-95 duration-200">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <h4 className="font-bold text-gray-700 dark:text-gray-300">Banner #{index + 1}</h4>
-                                            <button onClick={() => removeBanner(index)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition">
+                                <div className="links-container">
+                                    {profileData.importantLinks.map((link, index) => (
+                                        <div key={index} className="link-card animate-in slide-in-from-left duration-300" style={{ animationDelay: `${index * 50}ms` }}>
+                                            <div className="link-card-drag">
+                                                <Layout size={16} />
+                                            </div>
+                                            <div className="link-card-inputs">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Title (e.g. My Portfolio)"
+                                                    className="input-premium"
+                                                    value={link.title}
+                                                    onChange={(e) => handleLinkChange(index, 'title', e.target.value)}
+                                                />
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="URL (https://...)"
+                                                        className="input-premium pl-9"
+                                                        value={link.url}
+                                                        onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
+                                                    />
+                                                    <ExternalLink size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                </div>
+                                            </div>
+                                            <button onClick={() => removeLink(index)} className="link-card-remove" title="Remove Link">
                                                 <Trash2 size={18} />
                                             </button>
                                         </div>
-                                        <div className="space-y-4">
-                                            <div className="form-group">
-                                                <label className="text-xs font-semibold uppercase text-gray-400">Title</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="e.g. 50% Off Consulting"
-                                                    className="input-premium"
-                                                    value={banner.title}
-                                                    onChange={(e) => handleBannerChange(index, 'title', e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="form-group">
-                                                    <label className="text-xs font-semibold uppercase text-gray-400">Image URL</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="https://imgur.com/..."
-                                                        className="input-premium"
-                                                        value={banner.imageUrl}
-                                                        onChange={(e) => handleBannerChange(index, 'imageUrl', e.target.value)}
-                                                    />
-                                                </div>
-                                                <div className="form-group">
-                                                    <label className="text-xs font-semibold uppercase text-gray-400">Link URL</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="https://gumroad.com/..."
-                                                        className="input-premium"
-                                                        value={banner.link}
-                                                        onChange={(e) => handleBannerChange(index, 'link', e.target.value)}
-                                                    />
-                                                </div>
-                                            </div>
-                                            {banner.imageUrl && (
-                                                <div className="mt-2 h-32 w-full bg-gray-100 rounded-xl overflow-hidden relative group">
-                                                    <img src={banner.imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                                                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition">Preview</div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
 
-                                {(profileData.banners || []).length === 0 && (
-                                    <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-                                        <Megaphone size={40} className="mx-auto text-gray-300 mb-4" />
-                                        <p className="text-lg text-gray-400 font-medium">No offers added.</p>
-                                        <button onClick={addBanner} className="text-accent font-bold mt-2 hover:underline">create your first banner</button>
-                                    </div>
-                                )}
+                                <div className="add-link-area mt-4">
+                                    <button type="button" onClick={addLink} className="btn-add-connection">
+                                        <Plus size={18} /> Add New Link
+                                    </button>
+                                </div>
                             </div>
 
-                            <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3">
-                                <Save size={18} />
-                                {saving ? 'Saving...' : 'Save Offers'}
+                            <div className="section-divider" />
+
+                            {/* 2. SOCIAL PROFILES SECTION */}
+                            <div className="mb-8">
+                                <div className="section-header">
+                                    <h3>Social Profiles</h3>
+                                </div>
+                                <p className="text-sm text-gray-500 mb-6">Add your social media profiles to help people connect with you.</p>
+
+                                <div className="socials-grid">
+                                    {[
+                                        { id: 'instagram', icon: Instagram, color: 'instagram' },
+                                        { id: 'whatsapp', icon: MessageCircle, color: 'whatsapp' },
+                                        { id: 'twitter', icon: Twitter, color: 'twitter' },
+                                        { id: 'linkedin', icon: Linkedin, color: 'linkedin' },
+                                        { id: 'github', icon: Github, color: 'github' },
+                                        { id: 'youtube', icon: Youtube, color: 'youtube' },
+                                        { id: 'facebook', icon: Facebook, color: 'facebook' },
+                                        { id: 'discord', icon: MessageCircle, color: 'discord' },
+                                    ].map((platform) => {
+                                        const Icon = platform.icon;
+                                        return (
+                                            <div key={platform.id} className="social-card">
+                                                <div className={`social-icon-box ${platform.color}`}>
+                                                    <Icon size={20} />
+                                                </div>
+                                                <div className="social-input-wrapper">
+                                                    <label className="social-label">{platform.id}</label>
+                                                    <input
+                                                        type="text"
+                                                        className="social-input"
+                                                        placeholder={`@username or Link`}
+                                                        value={profileData.socialLinks?.[platform.id] || ''}
+                                                        onChange={(e) => setProfileData({
+                                                            ...profileData,
+                                                            socialLinks: { ...profileData.socialLinks, [platform.id]: e.target.value }
+                                                        })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Success Toast */}
+                            {successMsg && (
+                                <div className="connection-success-msg">
+                                    <CheckCircle size={20} />
+                                    {successMsg}
+                                </div>
+                            )}
+
+                            <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3 w-full md:w-auto text-lg">
+                                <Save size={20} />
+                                {saving ? 'Saving Changes...' : 'Save Connections'}
                             </button>
                         </div>
-                    )}
+                    )
+                    }
 
-                    {/* TOOLS TAB */}
+                    {/* OFFERS TAB */}
+                    {
+                        activeTab === 'offers' && (
+                            <div className="offers-section">
+                                <div className="flex justify-between items-center mb-8">
+                                    <h2 className="dashboard-section-title mb-0">
+                                        <Megaphone className="text-accent" />
+                                        <span>Offers & Banners</span>
+                                    </h2>
+                                    <button type="button" onClick={addBanner} className="btn btn-outline flex items-center gap-2 py-2 px-4 rounded-xl">
+                                        <Plus size={18} /> Add Banner
+                                    </button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {(profileData.banners || []).map((banner, index) => (
+                                        <div key={index} className={`banner-card ${!banner.isVisible ? 'opacity-75 grayscale' : ''}`}>
+                                            {/* Header with Toggle */}
+                                            <div className="banner-header">
+                                                <div className="banner-title-group">
+                                                    <span className="banner-number">#{index + 1}</span>
+                                                    <div className="toggle-switch-group">
+                                                        <label className="toggle-label whitespace-nowrap">
+                                                            {banner.isVisible !== false ? 'Visible' : 'Hidden'}
+                                                        </label>
+                                                        <label className="relative inline-flex items-center cursor-pointer">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="toggle-checkbox"
+                                                                checked={banner.isVisible !== false}
+                                                                onChange={(e) => handleBannerChange(index, 'isVisible', e.target.checked)}
+                                                            />
+                                                            <div className="toggle-slider"></div>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <div className="banner-actions">
+                                                    <button onClick={() => removeBanner(index)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="Remove Banner">
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Main Content */}
+                                            <div className="space-y-6">
+                                                <div className="form-group">
+                                                    <label className="label-premium mb-2 block">Banner Title</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g. 50% Off Consulting Services"
+                                                        className="input-premium font-bold text-lg"
+                                                        value={banner.title}
+                                                        onChange={(e) => handleBannerChange(index, 'title', e.target.value)}
+                                                    />
+                                                </div>
+
+                                                {/* Image Upload Area */}
+                                                <div>
+                                                    <label className="label-premium mb-2 block">Banner Image</label>
+                                                    <div className="relative">
+                                                        <label className={`banner-preview-area ${banner.imageUrl ? 'has-image' : ''}`}>
+                                                            {banner.imageUrl ? (
+                                                                <>
+                                                                    <img src={banner.imageUrl} alt="Banner" className="banner-image-display" />
+                                                                    <div className="banner-overlay">
+                                                                        <div className="bg-white/20 p-3 rounded-full mb-2 backdrop-blur-md">
+                                                                            <Image size={24} className="text-white" />
+                                                                        </div>
+                                                                        <span className="text-white font-bold text-sm">Change Image</span>
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <div className="upload-placeholder">
+                                                                    <div className="upload-icon-circle">
+                                                                        {bannerUploading === index ? (
+                                                                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-current"></div>
+                                                                        ) : (
+                                                                            <Image size={24} />
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="font-medium text-gray-900 dark:text-white">Click to upload banner</p>
+                                                                    <p className="text-xs">Recommended: 1200x600px (2:1)</p>
+                                                                </div>
+                                                            )}
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="hidden"
+                                                                onChange={(e) => handleBannerImageUpload(e, index)}
+                                                                disabled={bannerUploading === index}
+                                                            />
+                                                        </label>
+
+                                                        {/* Error/Loading Overlay for Upload */}
+                                                        {bannerUploading === index && (
+                                                            <div className="absolute inset-0 bg-white/50 dark:bg-black/50 flex items-center justify-center rounded-xl z-10 backdrop-blur-sm">
+                                                                <div className="flex flex-col items-center">
+                                                                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent mb-2"></div>
+                                                                    <span className="font-bold text-primary">Uploading...</span>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* URL Input Toggle using Details/Summary */}
+                                                    <details className="mt-2" open={!banner.imageUrl}>
+                                                        <summary className="banner-url-toggler text-xs list-none flex items-center gap-1">
+                                                            <LinkIcon size={12} />
+                                                            {banner.imageUrl ? 'Edit Image URL' : 'Or paste image URL'}
+                                                        </summary>
+                                                        <div className="mt-2 animate-in slide-in-from-top-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="https://imgur.com/..."
+                                                                className="input-premium text-sm"
+                                                                value={banner.imageUrl}
+                                                                onChange={(e) => handleBannerChange(index, 'imageUrl', e.target.value)}
+                                                            />
+                                                        </div>
+                                                    </details>
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label className="label-premium mb-2 block">Destination Link</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Where should this banner link to?"
+                                                            className="input-premium pl-10"
+                                                            value={banner.link}
+                                                            onChange={(e) => handleBannerChange(index, 'link', e.target.value)}
+                                                        />
+                                                        <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {(profileData.banners || []).length === 0 && (
+                                        <div className="text-center py-16 bg-gray-50 dark:bg-gray-800/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                                            <Megaphone size={40} className="mx-auto text-gray-300 mb-4" />
+                                            <p className="text-lg text-gray-400 font-medium">No offers added.</p>
+                                            <button onClick={addBanner} className="text-accent font-bold mt-2 hover:underline">Create your first banner</button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3 w-full md:w-auto text-lg">
+                                    <Save size={20} />
+                                    {saving ? 'Saving...' : 'Save Offers'}
+                                </button>
+                            </div>
+                        )
+                    }  {/* TOOLS TAB */}
                     {activeTab === 'tools' && (
                         <div>
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -601,229 +847,190 @@ const Dashboard = () => {
                                 {saving ? 'Saving...' : 'Update Stack'}
                             </button>
                         </div>
-                    )}
+                    )
+                    }
 
                     {/* PROMPTS TAB */}
-                    {activeTab === 'prompts' && (
-                        <div>
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                                <div>
-                                    <h2 className="dashboard-section-title mb-1">
-                                        <Megaphone className="text-accent" />
-                                        <span>My Prompts Library</span>
-                                    </h2>
-                                    <p className="text-gray-500 dark:text-gray-400">Select curated prompts to display on your public profile.</p>
-                                </div>
-                                <div className="search-wrapper-premium w-full md:w-64">
-                                    <Search className="search-icon-premium" size={18} />
-                                    <input
-                                        type="text"
-                                        placeholder="Search prompts..."
-                                        className="search-input-premium !py-2 !text-sm"
-                                        value={toolSearch}
-                                        onChange={(e) => setToolSearch(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredAvailablePrompts.map(tool => (
-                                    <div
-                                        key={tool._id}
-                                        onClick={() => toggleTool(tool._id)}
-                                        className={`cursor-pointer group relative rounded-2xl overflow-hidden border-2 transition-all duration-200 ${profileData.activeTools.includes(tool._id)
-                                            ? 'border-purple-500 ring-2 ring-purple-500/20 shadow-lg shadow-purple-500/10'
-                                            : 'border-slate-200 dark:border-slate-800 hover:border-purple-300'
-                                            }`}
-                                    >
-                                        <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
-                                            <img src={tool.logo} alt={tool.name} className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                            {/* Selection Overlay */}
-                                            <div className={`absolute inset-0 bg-purple-600/20 flex items-center justify-center transition-opacity ${profileData.activeTools.includes(tool._id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                                                }`}>
-                                                {profileData.activeTools.includes(tool._id) && (
-                                                    <div className="bg-white text-purple-600 rounded-full p-2 shadow-lg scale-110">
-                                                        <CheckCircle size={24} fill="currentColor" className="text-purple-100" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="p-4 bg-white dark:bg-slate-900">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h4 className="font-bold text-slate-900 dark:text-slate-100 line-clamp-1">{tool.name}</h4>
-                                                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
-                                                    {tool.platform || 'AI'}
-                                                </span>
-                                            </div>
-                                            <p className="text-xs text-slate-500 line-clamp-2">{tool.description}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3">
-                                <Save size={18} />
-                                {saving ? 'Saving...' : 'Update Library'}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* ACCOUNT TAB */}
-                    {activeTab === 'account' && (
-                        <form onSubmit={updateAccount}>
-                            <h2 className="dashboard-section-title text-red-600">
-                                <ShieldAlert />
-                                <span>Security Settings</span>
-                            </h2>
-
-                            <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-6 rounded-2xl mb-10">
-                                <div className="flex gap-4">
-                                    <AlertCircle className="text-red-500 flex-shrink-0" size={24} />
+                    {
+                        activeTab === 'prompts' && (
+                            <div className="prompts-section">
+                                {/* Header with Stats */}
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                                     <div>
-                                        <h4 className="font-bold text-red-800 dark:text-red-400">Important Notice</h4>
-                                        <p className="text-sm text-red-700 dark:text-red-500/80 mt-1 leading-relaxed">
-                                            Changing your username will update your public profile URL. Your current URL will be automatically redirected to the new one, but we recommend only doing this when necessary.
+                                        <h2 className="dashboard-section-title mb-1">
+                                            <Megaphone className="text-accent" />
+                                            <span>My Prompts Library</span>
+                                        </h2>
+                                        <p className="text-gray-500 dark:text-gray-400">
+                                            Select prompts to display. <span className="font-bold text-accent">{profileData.activeTools.filter(id => availableTools.find(t => t._id === id)?.type === 'prompt').length}</span> selected.
                                         </p>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-8">
-                                <div className="form-group max-w-md">
-                                    <label className="label-premium">Username</label>
-                                    <input
-                                        type="text"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        className="input-premium"
-                                    />
-                                </div>
-
-                                <div className="form-group max-w-md">
-                                    <label className="label-premium">New Password</label>
-                                    <div className="relative">
+                                    <div className="search-wrapper-premium w-full md:w-64">
+                                        <Search className="search-icon-premium" size={18} />
                                         <input
-                                            type={showPassword ? "text" : "password"}
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            className="input-premium pr-10" placeholder="••••••••"
+                                            type="text"
+                                            placeholder="Search prompts..."
+                                            className="search-input-premium !py-2 !text-sm"
+                                            value={toolSearch}
+                                            onChange={(e) => setToolSearch(e.target.value)}
                                         />
-                                        <button
-                                            type="button"
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                        >
-                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                        </button>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">Leave blank if you don't want to change your password.</p>
                                 </div>
+
+                                <div className="prompt-grid">
+                                    {filteredAvailablePrompts.map(tool => {
+                                        // Safe check for favorites
+                                        const isFav = profileData.favoritesPrompts?.some(f => (f._id || f) === tool._id);
+                                        const isSelected = profileData.activeTools.includes(tool._id);
+
+                                        return (
+                                            <div
+                                                key={tool._id}
+                                                onClick={() => toggleTool(tool._id)}
+                                                className={`prompt-card ${isSelected ? 'selected' : ''}`}
+                                            >
+                                                <div className="prompt-image-wrapper">
+                                                    {tool.logo ? (
+                                                        <img src={tool.logo} alt={tool.name} className="prompt-image" />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300">
+                                                            <Megaphone size={40} />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Selection Overlay */}
+                                                    <div className="prompt-overlay">
+                                                        <div className="prompt-check-badge">
+                                                            <CheckCircle size={24} fill="white" className="text-purple-600" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="prompt-content">
+                                                    <div className="prompt-header">
+                                                        <h4 className="prompt-title" title={tool.name}>{tool.name}</h4>
+                                                        <span className="prompt-badge">{tool.platform || 'AI'}</span>
+                                                    </div>
+                                                    <p className="prompt-description" title={tool.description}>{tool.description}</p>
+
+                                                    <div className="prompt-actions">
+                                                        <span className={`text-xs font-bold ${isSelected ? 'text-purple-600' : 'text-gray-400'}`}>
+                                                            {isSelected ? 'Selected' : 'Click to select'}
+                                                        </span>
+                                                        <button
+                                                            className={`btn-favorite ${isFav ? 'active' : ''}`}
+                                                            onClick={(e) => toggleFavorite(e, tool._id)}
+                                                            title={isFav ? "Remove from favorites" : "Add to favorites"}
+                                                        >
+                                                            <Heart size={20} className={isFav ? "fill-current" : ""} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3 w-full md:w-auto text-lg">
+                                    <Save size={20} />
+                                    {saving ? 'Saving...' : 'Save Library'}
+                                </button>
                             </div>
+                        )
+                    }
 
-                            <button type="submit" disabled={saving} className="btn mt-10 px-8 py-3 bg-red-600 text-white hover:bg-red-700 rounded-xl font-bold shadow-lg shadow-red-200 dark:shadow-none">
-                                {saving ? 'Updating...' : 'Update Account'}
-                            </button>
-                        </form>
-                    )}
+                    {/* ACCOUNT TAB */}
+                    {
+                        activeTab === 'account' && (
+                            <form onSubmit={updateAccount}>
+                                <h2 className="dashboard-section-title text-red-600">
+                                    <ShieldAlert />
+                                    <span>Security Settings</span>
+                                </h2>
 
-                    {/* SOCIALS TAB */}
-                    {activeTab === 'socials' && (
-                        <form onSubmit={saveProfile}>
-                            <h2 className="dashboard-section-title">
-                                <Share2 className="text-accent" />
-                                <span>Social Connections</span>
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {Object.keys(profileData.socialLinks || {}).map((platform) => (
-                                    <div key={platform} className="form-group">
-                                        <label className="label-premium capitalize">{platform}</label>
+                                <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 p-6 rounded-2xl mb-10">
+                                    <div className="flex gap-4">
+                                        <AlertCircle className="text-red-500 flex-shrink-0" size={24} />
+                                        <div>
+                                            <h4 className="font-bold text-red-800 dark:text-red-400">Important Notice</h4>
+                                            <p className="text-sm text-red-700 dark:text-red-500/80 mt-1 leading-relaxed">
+                                                Changing your username will update your public profile URL. Your current URL will be automatically redirected to the new one, but we recommend only doing this when necessary.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-8">
+                                    <div className="form-group max-w-md">
+                                        <label className="label-premium">Username</label>
+                                        <input
+                                            type="text"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            className="input-premium"
+                                        />
+                                    </div>
+
+                                    <div className="form-group max-w-md">
+                                        <label className="label-premium">New Password</label>
                                         <div className="relative">
                                             <input
-                                                type="text"
-                                                value={profileData.socialLinks?.[platform] || ''}
-                                                onChange={(e) => setProfileData({
-                                                    ...profileData,
-                                                    socialLinks: { ...profileData.socialLinks, [platform]: e.target.value }
-                                                })}
-                                                className="input-premium pl-10"
-                                                placeholder={`Your ${platform} URL`}
+                                                type={showPassword ? "text" : "password"}
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="input-premium pr-10" placeholder="••••••••"
                                             />
-                                            {/* Simple Icon Placeholders */}
-                                            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                                <LinkIcon size={16} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="mt-10">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="font-bold text-lg">Custom Social Links</h3>
-                                    <button type="button" onClick={addCustomSocial} className="text-sm text-primary font-bold hover:underline">
-                                        + Add Custom Link
-                                    </button>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {(profileData.customSocials || []).map((social, index) => (
-                                        <div key={index} className="flex gap-4 items-center animate-in slide-in-from-left duration-200">
-                                            <div className="flex-1 grid grid-cols-2 gap-4">
-                                                <input
-                                                    type="text" placeholder="Label (e.g. Discord)"
-                                                    className="input-premium"
-                                                    value={social.label} onChange={(e) => handleCustomSocialChange(index, 'label', e.target.value)}
-                                                />
-                                                <input
-                                                    type="text" placeholder="URL"
-                                                    className="input-premium"
-                                                    value={social.url} onChange={(e) => handleCustomSocialChange(index, 'url', e.target.value)}
-                                                />
-                                            </div>
-                                            <button onClick={() => removeCustomSocial(index)} className="text-red-500 hover:bg-red-50 p-2 rounded-lg">
-                                                <Trash2 size={18} />
+                                            <button
+                                                type="button"
+                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                            >
+                                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
                                         </div>
-                                    ))}
+                                        <p className="text-xs text-gray-500 mt-2">Leave blank if you don't want to change your password.</p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <button type="submit" disabled={saving} className="btn btn-primary mt-10 px-8 py-3">
-                                <Save size={18} />
-                                {saving ? 'Saving...' : 'Save Connections'}
-                            </button>
-                        </form>
-                    )}
+                                <button type="submit" disabled={saving} className="btn mt-10 px-8 py-3 bg-red-600 text-white hover:bg-red-700 rounded-xl font-bold shadow-lg shadow-red-200 dark:shadow-none">
+                                    {saving ? 'Updating...' : 'Update Account'}
+                                </button>
+                            </form>
+                        )
+                    }
+
+
 
                     {/* SHARE TAB */}
-                    {activeTab === 'share' && (
-                        <div className="text-center">
-                            <h2 className="dashboard-section-title justify-center">
-                                <QrCode className="text-accent" />
-                                <span>Share Your Profile</span>
-                            </h2>
+                    {
+                        activeTab === 'share' && (
+                            <div className="text-center">
+                                <h2 className="dashboard-section-title justify-center">
+                                    <QrCode className="text-accent" />
+                                    <span>Share Your Profile</span>
+                                </h2>
 
-                            <div className="bg-white p-8 rounded-2xl shadow-xl inline-block mb-8 border border-gray-100">
-                                <QRCode value={`http://${user.username}.${window.location.hostname.includes('localhost') ? 'localhost:5173' : window.location.host}`} size={200} />
+                                <div className="bg-white p-8 rounded-2xl shadow-xl inline-block mb-8 border border-gray-100">
+                                    <QRCode value={`http://${user.username}.${window.location.hostname.includes('localhost') ? 'localhost:5173' : window.location.host}`} size={200} />
+                                </div>
+
+                                <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Scan to visit your profile</p>
+                                <p className="text-gray-500 mb-8">{`http://${user.username}.${window.location.host}`}</p>
+
+                                <a
+                                    href={`http://${user.username}.${window.location.hostname.includes('localhost') ? 'localhost:5173' : window.location.host}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="btn btn-primary px-8 py-3"
+                                >
+                                    Open Public Profile <ExternalLink size={18} className="ml-2" />
+                                </a>
                             </div>
-
-                            <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Scan to visit your profile</p>
-                            <p className="text-gray-500 mb-8">{`http://${user.username}.${window.location.host}`}</p>
-
-                            <a
-                                href={`http://${user.username}.${window.location.hostname.includes('localhost') ? 'localhost:5173' : window.location.host}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="btn btn-primary px-8 py-3"
-                            >
-                                Open Public Profile <ExternalLink size={18} className="ml-2" />
-                            </a>
-                        </div>
-                    )}
+                        )}
 
                 </main>
             </div>
-        </div>
+        </div >
     );
 };
 

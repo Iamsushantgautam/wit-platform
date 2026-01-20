@@ -1,0 +1,319 @@
+/* ========================================
+   DASHBOARD LINKS & SOCIALS SECTION
+   ======================================== */
+
+.links-section {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* ========================================
+   IMPORTANT LINKS SECTION
+   ======================================== */
+.links-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.link-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dark .link-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.link-card:hover {
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+    border-color: #8b5cf6;
+    transform: translateY(-2px);
+}
+
+.link-card-drag {
+    color: #94a3b8;
+    cursor: grab;
+    padding: 0.5rem;
+}
+
+.link-card-drag:hover {
+    color: #64748b;
+}
+
+.link-card-inputs {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.link-card-remove {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    color: #ef4444;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    border: none;
+}
+
+.link-card-remove:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Add Button Area */
+.add-link-area {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-add-connection {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-add-connection:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+}
+
+.btn-add-connection:active {
+    transform: translateY(0);
+}
+
+/* Success Message */
+.connection-success-msg {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: #10b981;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 600;
+    z-index: 50;
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   SOCIAL MEDIA SECTION
+   ======================================== */
+.socials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.social-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+}
+
+.dark .social-card {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.social-card:focus-within {
+    border-color: #8b5cf6;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.dark .social-card:focus-within {
+    background: #1e293b;
+}
+
+.social-icon-box {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Platform Colors */
+.social-icon-box.instagram {
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.social-icon-box.whatsapp {
+    background: #25D366;
+}
+
+.social-icon-box.twitter {
+    background: #1DA1F2;
+}
+
+.social-icon-box.facebook {
+    background: #1877F2;
+}
+
+.social-icon-box.linkedin {
+    background: #0A66C2;
+}
+
+.social-icon-box.youtube {
+    background: #FF0000;
+}
+
+.social-icon-box.github {
+    background: #333;
+}
+
+.social-icon-box.discord {
+    background: #5865F2;
+}
+
+.social-icon-box.default {
+    background: #64748b;
+}
+
+.social-input-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.social-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.social-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-size: 0.9rem;
+    color: #334155;
+    padding: 0;
+}
+
+.dark .social-input {
+    color: #e2e8f0;
+}
+
+.social-input:focus {
+    outline: none;
+}
+
+.social-input::placeholder {
+    color: #94a3b8;
+}
+
+/* ========================================
+   SECTION DIVIDERS
+   ======================================== */
+.section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+    margin: 3rem 0;
+}
+
+.dark .section-divider {
+    background: linear-gradient(90deg, transparent, #334155, transparent);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.dark .section-header h3 {
+    color: #f1f5f9;
+}
+
+.section-badge {
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.dark .section-badge {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .link-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .link-card-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .link-card-remove {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+}

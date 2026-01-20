@@ -4,12 +4,14 @@ const {
     getMyProfile,
     updateProfile,
     getProfileByUsername,
-    getAllPublicProfiles
+    getAllPublicProfiles,
+    toggleFavoritePrompt
 } = require('../controllers/profileController');
 const { protect } = require('../middleware/authMiddleware');
 
 router.get('/me', protect, getMyProfile);
 router.post('/', protect, updateProfile);
+router.post('/favorites/prompt', protect, toggleFavoritePrompt);
 router.get('/u/:username', getProfileByUsername);
 router.get('/', getAllPublicProfiles);
 

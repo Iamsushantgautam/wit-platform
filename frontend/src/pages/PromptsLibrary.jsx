@@ -1,22 +1,23 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Copy, Check, Filter, Search, Zap, SlidersHorizontal } from 'lucide-react';
-import { FaRobot, FaMagic } from 'react-icons/fa';
+import { Copy, Check, Search, Share2, Bookmark } from 'lucide-react';
+import { FaRobot } from 'react-icons/fa';
+import '../styles/Prompts.css';
 
 const PromptsLibrary = () => {
-    const { API_URL } = useContext(AuthContext);
+    const { API_URL, user } = useContext(AuthContext);
     const [prompts, setPrompts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
     const [search, setSearch] = useState('');
     const [copiedId, setCopiedId] = useState(null);
+    const [favorites, setFavorites] = useState([]);
+    const [modalPrompt, setModalPrompt] = useState(null);
 
     useEffect(() => {
         const fetchPrompts = async () => {
             try {
-                // Fetch tools where type is 'prompt'
-                // Assuming the public tools endpoint returns all tools, we filter here or backend
                 const res = await axios.get(`${API_URL}/tools`);
                 const promptItems = res.data.filter(t => t.type === 'prompt');
                 setPrompts(promptItems);
@@ -26,8 +27,21 @@ const PromptsLibrary = () => {
                 setLoading(false);
             }
         };
-        fetchPrompts();
-    }, [API_URL]);
+        const fetchData = async () => {
+            await fetchPrompts();
+            if (user) {
+                try {
+                    const config = { headers: { Authorization: `Bearer ${user.token}` } };
+                    const res = await axios.get(`${API_URL}/profiles/me`, config);
+                    const favIds = (res.data.favoritesPrompts || []).map(p => p._id);
+                    setFavorites(favIds);
+                } catch (err) {
+                    console.error('Error fetching favorites', err);
+                }
+            }
+        };
+        fetchData();
+    }, [API_URL, user]);
 
     const handleCopy = (text, id) => {
         navigator.clipboard.writeText(text);
@@ -35,171 +49,290 @@ const PromptsLibrary = () => {
         setTimeout(() => setCopiedId(null), 2000);
     };
 
+    const handleShare = (prompt) => {
+        const shareData = {
+            title: prompt.name || 'AI Prompt',
+            text: prompt.prompt,
+            url: window.location.href
+        };
+
+        if (navigator.share) {
+            navigator.share(shareData).catch(err => console.error('Share failed', err));
+        } else {
+            navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+            alert('Share text copied to clipboard');
+        }
+    };
+
+    const toggleFavorite = async (prompt) => {
+        if (!user) {
+            window.location.href = '/login';
+            return;
+        }
+        try {
+            const config = {
+                headers: {
+                    Authorization: `Bearer ${user.token}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            const res = await axios.post(
+                `${API_URL}/profiles/favorites/prompt`,
+                { toolId: prompt._id },
+                config
+            );
+            const favIds = (res.data.favoritesPrompts || []).map(p => p._id);
+            setFavorites(favIds);
+        } catch (err) {
+            console.error('Error toggling favorite', err);
+            alert('Could not save to favourites');
+        }
+    };
+
     const filteredPrompts = prompts.filter(p => {
         const matchesFilter = filter === 'All' || p.category === filter || p.platform === filter;
-        const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-            p.description.toLowerCase().includes(search.toLowerCase()) ||
+        const matchesSearch =
+            p.name.toLowerCase().includes(search.toLowerCase()) ||
+            (p.description || '').toLowerCase().includes(search.toLowerCase()) ||
             (p.tags && p.tags.some(t => t.toLowerCase().includes(search.toLowerCase())));
         return matchesFilter && matchesSearch;
     });
 
-    const uniqueCategories = ['All', ...new Set(prompts.map(p => p.category))];
-    const uniquePlatforms = [...new Set(prompts.map(p => p.platform).filter(Boolean))];
+    const uniqueCategories = ['All', ...new Set(prompts.map(p => p.category).filter(Boolean))];
 
     return (
-        <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500 selection:text-white pb-20">
-            {/* Ambient Background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px]"></div>
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/20 blur-[120px]"></div>
+        <div className="prompts-page">
+            {/* Ambient background */}
+            <div className="prompts-ambient">
+                <div className="prompts-ambient-blob prompts-ambient-blob--left" />
+                <div className="prompts-ambient-blob prompts-ambient-blob--right" />
             </div>
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24">
-
+            <div className="prompts-inner">
                 {/* Header */}
-                <div className="text-center mb-16">
-                    <h1 className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 mb-6 tracking-tight">
-                        Prompt Library
-                    </h1>
-                    <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                        Discover curated AI prompts to supercharge your creativity. Copy with one click and use in your favorite AI models.
+                <header className="prompts-header">
+                    <h1 className="prompts-title">Prompts Library</h1>
+                    <p className="prompts-subtitle">
+                        Curated AI image prompts with rich visuals. Click any card to copy the exact prompt
+                        and use it in your favourite model.
                     </p>
-                </div>
+                </header>
 
-                {/* Filters & Search */}
-                <div className="mb-12 flex flex-col md:flex-row justify-between items-center gap-6 sticky top-20 z-40 bg-black/80 backdrop-blur-xl p-4 rounded-3xl border border-white/10 shadow-2xl">
+                {/* Filters & search */}
+                <section className="prompts-toolbar">
                     <div className="search-wrapper-premium w-full md:w-96">
-                        <Search className="search-icon-premium" size={20} />
+                        <Search className="search-icon-premium" size={18} />
                         <input
                             type="text"
                             placeholder="Search prompts, tags, vibes..."
-                            className="search-input-premium !bg-white/5 !border-white/10 !text-white placeholder-gray-500 focus:!border-purple-500/50"
+                            className="search-input-premium !bg-white/5 !border-white/20 !text-white placeholder-gray-500 focus:!border-purple-500/60"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
 
-                    <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
-                        {uniqueCategories.slice(0, 5).map(cat => (
+                    <div className="prompts-filters">
+                        {uniqueCategories.map(cat => (
                             <button
                                 key={cat}
+                                type="button"
                                 onClick={() => setFilter(cat)}
-                                className={`px-5 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all border ${filter === cat
-                                    ? 'bg-purple-600 border-purple-500 text-white shadow-lg shadow-purple-500/25'
-                                    : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:text-white'
-                                    }`}
+                                className={
+                                    'prompts-filter-pill' +
+                                    (filter === cat ? ' prompts-filter-pill--active' : '')
+                                }
                             >
                                 {cat}
                             </button>
                         ))}
                     </div>
-                </div>
+                </section>
 
                 {/* Grid */}
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-                        <p className="text-gray-400 animate-pulse">Scanning the library...</p>
+                    <div className="prompts-loading">
+                        <div className="prompts-loading-spinner" />
+                        <p className="prompts-loading-text">Scanning the library...</p>
                     </div>
-                ) : (
-                    <>
-                        {filteredPrompts.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-4 bg-black/80 backdrop-blur-xl ">
+                ) : filteredPrompts.length > 0 ? (
+                    <div className="prompts-grid">
+                        {filteredPrompts.map(prompt => {
+                            const isFav = favorites.includes(prompt._id);
+                            const words = (prompt.prompt || '').trim().split(/\s+/);
+                            const isLong = words.length > 25;
+                            const previewText = isLong
+                                ? words.slice(0, 25).join(' ') + ' ...'
+                                : prompt.prompt;
 
-                                {filteredPrompts.map(prompt => (
-                                    <div
-                                        key={prompt._id}
-                                        className="relative rounded-2xl overflow-hidden group"
-                                    >
-                                        {/* Image Container */}
-                                        <div className="relative w-full">
-                                            <img
-                                                src={prompt.logo}
-                                                alt={prompt.name}
-                                                className="w-[10rem] h-[10rem] object-cover"
-                                            />
+                            return (
+                                <article
+                                    key={prompt._id}
+                                    className="prompt-card"
+                                >
+                                    <div className="prompt-image-wrap">
+                                        <img
+                                            src={prompt.logo}
+                                            alt={prompt.name}
+                                            className="prompt-image"
+                                        />
+                                        <div className="prompt-overlay" />
 
-                                            {/* Gradient Overlay - Always visible but stronger at bottom */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300"></div>
-
-                                            {/* Top Tags/Badges */}
-                                            <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
-                                                <span className="bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-                                                    {prompt.name}
-                                                </span>
+                                        <div className="prompt-top-row">
+                                            <span className="prompt-chip">
+                                                {prompt.name || 'Untitled Prompt'}
+                                            </span>
+                                            <div className="prompt-top-row-actions">
                                                 {prompt.platform && (
-                                                    <span className="bg-white/20 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase flex items-center gap-1">
-                                                        <FaRobot size={10} /> {prompt.platform}
+                                                    <span className="prompt-chip prompt-chip--platform">
+                                                        <FaRobot size={10} />
+                                                        {prompt.platform}
+                                                    </span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    className="prompt-icon-btn"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleShare(prompt);
+                                                    }}
+                                                    title="Share"
+                                                >
+                                                    <Share2 size={14} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`prompt-icon-btn ${isFav ? 'prompt-icon-btn--saved' : ''}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleFavorite(prompt);
+                                                    }}
+                                                    title={isFav ? 'Saved to favourites' : 'Save to favourites'}
+                                                >
+                                                    <Bookmark size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="prompt-body">
+                                            <p className="prompt-text">
+                                                Prompt: {previewText}
+                                                {isLong && (
+                                                    <button
+                                                        type="button"
+                                                        style={{
+                                                            marginLeft: '0.25rem',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 600,
+                                                            textDecoration: 'underline',
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            color: '#a855f7',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setModalPrompt(prompt);
+                                                        }}
+                                                    >
+                                                        more
+                                                    </button>
+                                                )}
+                                            </p>
+                                            <div className="prompt-footer">
+                                                <button
+                                                    type="button"
+                                                    className={
+                                                        'prompt-copy-btn' +
+                                                        (copiedId === prompt._id
+                                                            ? ' prompt-copy-btn--success'
+                                                            : '')
+                                                    }
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleCopy(prompt.prompt, prompt._id);
+                                                    }}
+                                                >
+                                                    {copiedId === prompt._id ? (
+                                                        <>
+                                                            <Check size={14} />
+                                                            Copied
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Copy size={14} />
+                                                            Copy Prompt
+                                                        </>
+                                                    )}
+                                                </button>
+                                                {prompt.category && (
+                                                    <span className="prompt-meta-tag">
+                                                        {prompt.category}
                                                     </span>
                                                 )}
                                             </div>
-
-                                            {/* Bottom Overlay Content */}
-                                            <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                                                {/* Prompt Text Preview */}
-                                                <div className="mb-4">
-                                                    <p className="text-xs text-gray-300 font-medium leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all duration-300 drop-shadow-md">
-                                                        "{prompt.prompt}"
-                                                    </p>
-                                                </div>
-
-                                                {/* Action Row */}
-                                                <div className="flex items-center justify-between gap-3">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleCopy(prompt.prompt, prompt._id);
-                                                        }}
-                                                        className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white py-2 px-4 rounded-lg text-xs font-bold transition-all active:scale-95 group/btn"
-                                                    >
-                                                        {copiedId === prompt._id ? (
-                                                            <>
-                                                                <Check size={14} className="text-green-400" />
-                                                                <span className="text-green-400">Copied!</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Copy size={14} className="group-hover/btn:scale-110 transition-transform" />
-                                                                <span className="btn btn-primary">Copy Prompt</span>
-                                                            </>
-                                                        )}
-                                                    </button>
-
-                                                    {/* Tags/Icons */}
-                                                    <div className="flex gap-1">
-                                                        {/* Optional nice-to-have icons like Share or Bookmark - visualized as tags for now or icons if available */}
-                                                        {prompt.category && (
-                                                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-gray-400" title={prompt.category}>
-                                                                <Filter size={14} />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
-                                ))}
-
-                            </div>
-                        ) : (
-                            <div className="text-center py-32 bg-white/5 rounded-[40px] border border-dashed border-white/10">
-                                <Search size={48} className="mx-auto text-gray-600 mb-6" />
-                                <h3 className="text-3xl font-bold text-white mb-4">Shade not found</h3>
-                                <p className="text-gray-400 max-w-sm mx-auto text-lg">
-                                    Our scanners couldn't find any prompts matching <span className="text-purple-400 font-bold italic">"{search}"</span>.
-                                </p>
-                                <button
-                                    onClick={() => { setSearch(''); setFilter('All'); }}
-                                    className="mt-10 text-purple-400 font-bold hover:text-purple-300 underline underline-offset-8"
-                                >
-                                    Reset Discovery
-                                </button>
-                            </div>
-                        )
-                        }
-                    </>
+                                </article>
+                            )
+                        })}
+                    </div>
+                ) : (
+                    <div className="prompts-empty">
+                        <h2 className="prompts-empty-title">No prompts found</h2>
+                        <p className="prompts-empty-text">
+                            We couldn&apos;t find any prompts matching
+                            {' '}
+                            <span className="text-purple-400 font-semibold">"{search}"</span>.
+                            Try a different keyword or reset your filters.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => { setSearch(''); setFilter('All'); }}
+                            className="btn-primary"
+                        >
+                            Reset search
+                        </button>
+                    </div>
                 )}
             </div>
+
+            {/* Modal for full prompt */}
+            {modalPrompt && (
+                <div
+                    className="prompt-modal-backdrop"
+                    onClick={() => setModalPrompt(null)}
+                >
+                    <div
+                        className="prompt-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {modalPrompt.logo && (
+                            <img
+                                src={modalPrompt.logo}
+                                alt={modalPrompt.name}
+                                className="prompt-modal-image"
+                            />
+                        )}
+                        <div className="prompt-modal-body">
+                            <h3 className="prompt-modal-title">
+                                {modalPrompt.name || 'Prompt'}
+                            </h3>
+                            <p className="prompt-modal-text">
+                                {modalPrompt.prompt}
+                            </p>
+                            <div className="prompt-modal-footer">
+                                <button
+                                    type="button"
+                                    className="prompt-modal-close"
+                                    onClick={() => setModalPrompt(null)}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

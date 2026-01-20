@@ -2,12 +2,15 @@ const asyncHandler = require('express-async-handler');
 const Profile = require('../models/Profile');
 const User = require('../models/User');
 const UsernameHistory = require('../models/UsernameHistory');
+const Tool = require('../models/Tool');
 
 // @desc    Get current user profile
 // @route   GET /api/profiles/me
 // @access  Private
 const getMyProfile = asyncHandler(async (req, res) => {
-    const profile = await Profile.findOne({ user: req.user._id }).populate('user', 'username email');
+    const profile = await Profile.findOne({ user: req.user._id })
+        .populate('user', 'username email')
+        .populate('favoritesPrompts');
     if (!profile) {
         res.status(404);
         throw new Error('Profile not found');
@@ -19,7 +22,7 @@ const getMyProfile = asyncHandler(async (req, res) => {
 // @route   POST /api/profiles
 // @access  Private
 const updateProfile = asyncHandler(async (req, res) => {
-    const { name, bio, image, category, importantLinks, banners, activeTools, socialLinks, customItems, customSocials } = req.body;
+    const { name, bio, image, category, importantLinks, banners, activeTools, socialLinks, customItems, customSocials, favoritesPrompts } = req.body;
 
     const profileFields = {
         user: req.user._id,
@@ -32,7 +35,8 @@ const updateProfile = asyncHandler(async (req, res) => {
         activeTools,
         socialLinks,
         customItems,
-        customSocials
+        customSocials,
+        favoritesPrompts
     };
 
     let profile = await Profile.findOne({ user: req.user._id });
@@ -71,7 +75,8 @@ const getProfileByUsername = asyncHandler(async (req, res) => {
 
     const profile = await Profile.findOne({ user: user._id })
         .populate('user', 'username email')
-        .populate('activeTools'); // Populate tools details
+        .populate('activeTools')
+        .populate('favoritesPrompts'); // Populate tools details
 
     if (!profile) {
         res.status(404);
@@ -92,9 +97,53 @@ const getAllPublicProfiles = asyncHandler(async (req, res) => {
     res.json(profiles);
 });
 
+// @desc    Toggle a prompt tool in favoritesPrompts
+// @route   POST /api/profiles/favorites/prompt
+// @access  Private
+const toggleFavoritePrompt = asyncHandler(async (req, res) => {
+    const { toolId } = req.body;
+    if (!toolId) {
+        res.status(400);
+        throw new Error('toolId is required');
+    }
+
+    const tool = await Tool.findById(toolId);
+    if (!tool || tool.type !== 'prompt') {
+        res.status(404);
+        throw new Error('Prompt not found');
+    }
+
+    let profile = await Profile.findOne({ user: req.user._id });
+
+    if (!profile) {
+        profile = new Profile({
+            user: req.user._id,
+            name: req.user.username,
+            favoritesPrompts: []
+        });
+    }
+
+    const exists = profile.favoritesPrompts.some(id => id.toString() === toolId);
+
+    if (exists) {
+        profile.favoritesPrompts = profile.favoritesPrompts.filter(id => id.toString() !== toolId);
+    } else {
+        profile.favoritesPrompts.push(toolId);
+    }
+
+    await profile.save();
+
+    const populated = await Profile.findById(profile._id)
+        .populate('favoritesPrompts')
+        .populate('user', 'username email');
+
+    res.json(populated);
+});
+
 module.exports = {
     getMyProfile,
     updateProfile,
     getProfileByUsername,
-    getAllPublicProfiles
+    getAllPublicProfiles,
+    toggleFavoritePrompt
 };

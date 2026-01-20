@@ -2,8 +2,9 @@ import { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Users, Layout, Image, Plus, Search, Filter, Trash2, Edit2, CheckCircle, XCircle, MoreVertical, LogOut } from 'lucide-react';
+import { Users, Layout, Image, Plus, Search, Filter, Trash2, Edit2, CheckCircle, XCircle, MoreVertical, LogOut, Globe, Wand2 } from 'lucide-react';
 import '../styles/Admin.css';
+import '../styles/Prompts.css';
 
 // Sidebar Item Component
 const SidebarItem = ({ id, label, icon: Icon, activeTab, setActiveTab }) => (
@@ -354,45 +355,90 @@ const MasterAdminDashboard = () => {
                         {!searchTerm && <button onClick={() => openForm(type)} className="bg-blue-600 text-white font-bold py-2 px-6 rounded-xl">Add {type}</button>}
                     </div>
                 ) : (
-                    <div className="tool-grid-premium">
+                    <div className={type === 'prompt' ? 'prompts-grid' : 'tool-grid-premium'}>
                         {filteredItems.map(item => (
-                            <div key={item._id} className="tool-admin-card group">
-                                <div className="flex items-start gap-4 mb-4">
-                                    <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-800 shadow-inner">
-                                        <img src={item.logo} alt={item.name} className="w-full h-full object-cover" />
+                            type === 'prompt' ? (
+                                // Prompt Card - Public Library Style
+                                <article key={item._id} className="prompt-card">
+                                    <div className="prompt-image-wrap">
+                                        {item.logo ? (
+                                            <img src={item.logo} alt={item.name} className="prompt-image" />
+                                        ) : (
+                                            <div className="w-full h-full bg-gray-900 flex items-center justify-center text-gray-600">
+                                                <Image size={60} />
+                                            </div>
+                                        )}
+                                        <div className="prompt-overlay" />
+
+                                        {/* Top Row - Title and Platform */}
+                                        <div className="prompt-top-row">
+                                            <span className="prompt-chip">{item.name || 'Untitled Prompt'}</span>
+                                            <div className="prompt-top-row-actions">
+                                                {item.platform && (
+                                                    <span className="prompt-chip prompt-chip--platform">
+                                                        {item.platform}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Bottom Body - Prompt Text and Actions */}
+                                        <div className="prompt-body">
+                                            {item.prompt && (
+                                                <p className="prompt-text">
+                                                    Prompt: {item.prompt.length > 100 ? item.prompt.substring(0, 100) + '...' : item.prompt}
+                                                </p>
+                                            )}
+                                            <div className="prompt-footer">
+                                                <button
+                                                    onClick={() => openForm(type, item)}
+                                                    className="prompt-copy-btn"
+                                                    style={{ flex: '0 1 auto' }}
+                                                >
+                                                    <Edit2 size={14} /> Edit
+                                                </button>
+                                                {item.category && (
+                                                    <span className="prompt-meta-tag">{item.category}</span>
+                                                )}
+                                                <button
+                                                    onClick={() => handleDelete(item._id)}
+                                                    className="prompt-icon-btn"
+                                                    style={{ background: 'rgba(239, 68, 68, 0.9)' }}
+                                                    title="Delete Prompt"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 transition-colors">{item.name}</h3>
-                                        <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">{item.category}</p>
+                                </article>
+                            ) : (
+                                // Tool Card - Original design
+                                <div key={item._id} className="tool-admin-card group">
+                                    <div className="flex items-start gap-4 mb-4">
+                                        <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-800 shadow-inner">
+                                            <img src={item.logo} alt={item.name} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 transition-colors">{item.name}</h3>
+                                            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">{item.category}</p>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4 flex-grow">
+                                        {item.description}
+                                    </p>
+
+                                    <div className="flex gap-2 mt-auto pt-4 border-t border-slate-50 dark:border-slate-800">
+                                        <button onClick={() => openForm(type, item)} className="tool-btn edit flex items-center justify-center gap-2">
+                                            <Edit2 size={14} /> <span>Edit</span>
+                                        </button>
+                                        <button onClick={() => handleDelete(item._id)} className="tool-btn delete flex items-center justify-center gap-2">
+                                            <Trash2 size={14} /> <span>Delete</span>
+                                        </button>
                                     </div>
                                 </div>
-
-                                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4 flex-grow">
-                                    {item.description}
-                                </p>
-
-                                {type === 'prompt' && (
-                                    <div className="mb-4 space-y-3">
-                                        <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3 text-xs font-mono text-slate-500 dark:text-slate-400 line-clamp-2 border border-slate-100 dark:border-slate-800 italic">
-                                            "{item.prompt}"
-                                        </div>
-                                        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-                                            {(item.tags || []).map((tag, i) => (
-                                                <span key={i} className="whitespace-nowrap text-[10px] px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md font-bold border border-blue-100 dark:border-blue-900/30">{tag}</span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="flex gap-2 mt-auto pt-4 border-t border-slate-50 dark:border-slate-800">
-                                    <button onClick={() => openForm(type, item)} className="tool-btn edit flex items-center justify-center gap-2">
-                                        <Edit2 size={14} /> <span>Edit</span>
-                                    </button>
-                                    <button onClick={() => handleDelete(item._id)} className="tool-btn delete flex items-center justify-center gap-2">
-                                        <Trash2 size={14} /> <span>Delete</span>
-                                    </button>
-                                </div>
-                            </div>
+                            )
                         ))}
                     </div>
                 )}
@@ -450,31 +496,32 @@ const MasterAdminDashboard = () => {
 
             {/* Modal Form */}
             {isFormOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 slide-in-from-bottom-4">
-                        <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-6 flex justify-between items-center z-10">
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <div className="prompt-modal-backdrop" onClick={closeForm}>
+                    <div className="prompt-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '48rem' }}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">
                                 {editingItem ? `Edit ${formData.type === 'tool' ? 'Tool' : 'Prompt'}` : `Add New ${formData.type === 'tool' ? 'Tool' : 'Prompt'}`}
                             </h2>
-                            <button onClick={closeForm} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                <XCircle size={24} className="text-slate-400" />
+                            <button onClick={closeForm} className="btn-close" type="button">
+                                <XCircle size={24} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSave} className="p-6 space-y-6">
+                        <form onSubmit={handleSave}>
 
-                            {/* --- ISOATED FORM FOR PROMPTS --- */}
+                            {/* --- ISOLATED FORM FOR PROMPTS --- */}
                             {formData.type === 'prompt' ? (
                                 <div className="space-y-6">
                                     {/* Image Upload (Center Stage) */}
                                     <div className="flex flex-col items-center justify-center">
-                                        <div className="relative group w-full max-w-sm aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 transition-colors">
+                                        <div className={`image-upload-area group ${formData.logo ? 'has-image' : ''}`}>
                                             {formData.logo ? (
                                                 <img src={formData.logo} alt="Preview" className="w-full h-full object-cover" />
                                             ) : (
                                                 <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-6 text-center">
-                                                    <Image size={48} className="mb-2 opacity-50" />
-                                                    <span className="text-sm font-bold">Upload Result Image (Required)</span>
+                                                    <Image size={48} className="mb-3 opacity-50" />
+                                                    <span className="text-sm font-bold">Upload Result Image</span>
+                                                    <span className="text-xs opacity-75 mt-1">Click or drag to upload</span>
                                                 </div>
                                             )}
                                             <input
@@ -484,13 +531,13 @@ const MasterAdminDashboard = () => {
                                                     const f = e.target.files && e.target.files[0];
                                                     if (f) handleLogoFile(f);
                                                 }}
-                                                className="absolute inset-0 opacity-0 cursor-pointer w-[100px] h-[100px] z-10 object-cover"
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
                                                 required={!formData.logo}
                                             />
-                                            {/* Loading State Overlay */}
-                                            {/* You might want to add a loading state here if upload is slow */}
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-2">Click to upload the generated image</p>
+                                        <p className="text-xs text-slate-500 mt-3 text-center">
+                                            {formData.logo ? 'Click to change image' : 'Supports JPG, PNG, WebP (Max 5MB)'}
+                                        </p>
                                     </div>
 
                                     <div className="form-grid">
@@ -595,16 +642,75 @@ const MasterAdminDashboard = () => {
                                     </div>
 
                                     <div>
-                                        <label className="label-premium">Logo URL</label>
-                                        <div className="file-input-row">
-                                            <div style={{ flex: 1 }}>
+                                        <label className="label-premium">Logo</label>
+                                        <div className="space-y-3">
+                                            {/* Preview & Actions */}
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-20 h-20 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden flex-shrink-0 flex items-center justify-center relative group">
+                                                    {formData.logo ? (
+                                                        <img src={formData.logo} alt="Logo" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <Image size={32} className="text-slate-600" />
+                                                    )}
+                                                </div>
+
+                                                <div className="flex flex-col gap-2 flex-1">
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (!formData.url) return alert("Please enter a Tool URL first");
+                                                                try {
+                                                                    const urlObj = new URL(formData.url);
+                                                                    const domain = urlObj.hostname;
+                                                                    const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+                                                                    setFormData({ ...formData, logo: faviconUrl });
+                                                                } catch (e) {
+                                                                    alert("Invalid URL format");
+                                                                }
+                                                            }}
+                                                            className="flex items-center gap-2 px-3 py-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-500 rounded-lg text-xs font-bold transition-colors border border-blue-600/20"
+                                                        >
+                                                            <Globe size={14} /> Fetch from URL
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                if (!formData.name) return alert("Please enter a Name first");
+                                                                const initials = formData.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                                                                const avatarUrl = `https://ui-avatars.com/api/?name=${initials}&background=random&color=fff&size=128&bold=true`;
+                                                                setFormData({ ...formData, logo: avatarUrl });
+                                                            }}
+                                                            className="flex items-center gap-2 px-3 py-2 bg-purple-600/10 hover:bg-purple-600/20 text-purple-500 rounded-lg text-xs font-bold transition-colors border border-purple-600/20"
+                                                        >
+                                                            <Wand2 size={14} /> Generate Custom
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-[10px] text-slate-500">
+                                                        Auto-fetch gets the favicon from the website URL. Generate creates an initial-based avatar.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* URL Input */}
+                                            <div className="relative">
                                                 <input
                                                     type="url"
-                                                    className="input-premium"
+                                                    className="input-premium pl-10"
                                                     value={formData.logo}
                                                     onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
                                                     placeholder="https://example.com/logo.png"
                                                 />
+                                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
+                                                    <Image size={16} />
+                                                </div>
+                                            </div>
+
+                                            {/* File Upload Fallback */}
+                                            <div className="relative group">
+                                                <button type="button" className="w-full py-2 border border-dashed border-slate-700 rounded-lg text-xs text-slate-500 hover:text-slate-300 hover:border-slate-500 transition-colors">
+                                                    Or upload a file from computer
+                                                </button>
                                                 <input
                                                     type="file"
                                                     accept="image/*"
@@ -612,22 +718,21 @@ const MasterAdminDashboard = () => {
                                                         const f = e.target.files && e.target.files[0];
                                                         if (f) handleLogoFile(f);
                                                     }}
-                                                    style={{ marginTop: '0.5rem' }}
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
                                                 />
-                                            </div>
-                                            <div className="file-preview" aria-hidden>
-                                                {formData.logo ? <img src={formData.logo} alt="preview" /> : <div style={{ fontSize: 12, color: 'var(--text-secondary)', padding: 6 }}>No image</div>}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
-                                <button type="button" onClick={closeForm} className="btn-secondary flex-1">
+                            <div className="form-submit-buttons">
+                                <button type="button" onClick={closeForm} className="btn-submit btn-submit-secondary">
+                                    <XCircle size={18} />
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary flex-1">
+                                <button type="submit" className="btn-submit btn-submit-primary">
+                                    <CheckCircle size={18} />
                                     {editingItem ? 'Update' : 'Create'} {formData.type === 'tool' ? 'Tool' : 'Prompt'}
                                 </button>
                             </div>

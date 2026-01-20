@@ -60,6 +60,10 @@ const profileSchema = mongoose.Schema({
     activeTools: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tool'
+    }],
+    favoritesPrompts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Tool'
     }]
 }, {
     timestamps: true
