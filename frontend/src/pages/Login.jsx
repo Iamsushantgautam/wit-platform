@@ -2,9 +2,12 @@ import { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 
+import { Eye, EyeOff } from 'lucide-react';
+
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const { login, user, loading } = useContext(AuthContext);
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
@@ -45,11 +48,11 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
-                        <label className="form-label">Email Address</label>
+                        <label className="form-label">Email or Username</label>
                         <input
-                            type="email"
+                            type="text"
                             className="form-input"
-                            placeholder="you@example.com"
+                            placeholder="username or email@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -57,14 +60,23 @@ const Login = () => {
                     </div>
                     <div className="form-group">
                         <label className="form-label">Password</label>
-                        <input
-                            type="password"
-                            className="form-input"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="form-input pr-10"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                            <button
+                                type="button"
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
 
                     <button

@@ -105,57 +105,64 @@ const PromptsLibrary = () => {
                     <>
                         {filteredPrompts.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                                {/* Card style started here */}
                                 {filteredPrompts.map(prompt => (
-                                    <div key={prompt._id} className="group relative bg-[#0f0f12] border border-white/10 rounded-3xl overflow-hidden hover:border-purple-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
-                                        {/* Image Container */}
-                                        <div className="aspect-[4/3] relative overflow-hidden">
+                                    <div
+                                        key={prompt._id}
+                                        className="relative rounded-2xl overflow-hidden group"
+                                    >
+                                        {/* Image */}
+                                        <div className="relative aspect-[4/5] w-full relative rounded-2xl overflow-hidden group">
                                             <img
                                                 src={prompt.logo}
                                                 alt={prompt.name}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 relative rounded-2xl overflow-hidden group"
                                             />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80"></div>
 
-                                            {/* Overlay Tags */}
-                                            <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                                                {(prompt.tags || []).map((tag, i) => (
-                                                    <span key={i} className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-xs font-bold text-white uppercase tracking-wider">
-                                                        {tag}
-                                                    </span>
-                                                ))}
+                                            {/* Dark overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+
+                                            {/* Title badge */}
+                                            <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold tracking-wide">
+                                                {prompt.name}
                                             </div>
 
-                                            {/* Platform Badge */}
-                                            <div className="absolute top-4 right-4">
-                                                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold shadow-lg">
-                                                    <FaMagic size={10} /> {prompt.platform || 'AI'}
-                                                </span>
+                                            {/* Model badge */}
+                                            <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                                <FaRobot size={12} /> {prompt.platform || 'AI'}
                                             </div>
 
-                                            {/* Prompt Preview Overlay */}
-                                            <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                                                <h3 className="text-xl font-bold text-white mb-2 leading-tight">{prompt.name}</h3>
-                                                <div className="line-clamp-2 text-sm text-gray-300 font-medium mb-4 opacity-80 group-hover:opacity-100 transition-opacity">
+                                            {/* Bottom content */}
+                                            <div className="absolute bottom-0 left-0 right-0 p-5">
+                                                <p className="text-sm text-gray-300 leading-relaxed line-clamp-3 mb-4">
                                                     {prompt.description}
-                                                </div>
+                                                </p>
 
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleCopy(prompt.prompt, prompt._id);
                                                     }}
-                                                    className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white py-3 rounded-xl font-bold transition-all active:scale-95"
+                                                    className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white py-2.5 rounded-xl font-semibold transition-all active:scale-95"
                                                 >
                                                     {copiedId === prompt._id ? (
-                                                        <> <Check size={18} className="text-green-400" /> Copied! </>
+                                                        <>
+                                                            <Check size={18} className="text-green-400" />
+                                                            Copied
+                                                        </>
                                                     ) : (
-                                                        <> <Copy size={18} /> Copy Prompt </>
+                                                        <>
+                                                            <Copy size={18} />
+                                                            Copy Prompt
+                                                        </>
                                                     )}
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
                                 ))}
+
                             </div>
                         ) : (
                             <div className="text-center py-32 bg-white/5 rounded-[40px] border border-dashed border-white/10">

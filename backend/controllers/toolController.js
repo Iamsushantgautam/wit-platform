@@ -21,7 +21,7 @@ const getAdminTools = asyncHandler(async (req, res) => {
 // @route   POST /api/tools
 // @access  Private/Admin
 const createTool = asyncHandler(async (req, res) => {
-    const { name, description, logo, url, category, prompt, promptDescription, type } = req.body;
+    const { name, description, logo, url, category, prompt, promptDescription, type, platform, tags } = req.body;
 
     const tool = await Tool.create({
         name,
@@ -31,7 +31,9 @@ const createTool = asyncHandler(async (req, res) => {
         category,
         prompt,
         promptDescription,
-        type: type || 'tool'
+        type: type || 'tool',
+        platform: platform || 'Generic',
+        tags: tags || []
     });
 
     res.status(201).json(tool);
@@ -41,12 +43,24 @@ const createTool = asyncHandler(async (req, res) => {
 // @route   PUT /api/tools/:id
 // @access  Private/Admin
 const updateTool = asyncHandler(async (req, res) => {
+    const { name, description, logo, url, category, prompt, promptDescription, type, platform, tags, isEnabled } = req.body;
+
     const tool = await Tool.findById(req.params.id);
 
     if (tool) {
-        const updatedTool = await Tool.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-        });
+        tool.name = name || tool.name;
+        tool.description = description || tool.description;
+        tool.logo = logo || tool.logo;
+        tool.url = url || tool.url;
+        tool.category = category || tool.category;
+        tool.prompt = prompt !== undefined ? prompt : tool.prompt;
+        tool.promptDescription = promptDescription !== undefined ? promptDescription : tool.promptDescription;
+        tool.type = type || tool.type;
+        tool.platform = platform || tool.platform;
+        tool.tags = tags || tool.tags;
+        if (isEnabled !== undefined) tool.isEnabled = isEnabled;
+
+        const updatedTool = await tool.save();
         res.json(updatedTool);
     } else {
         res.status(404);

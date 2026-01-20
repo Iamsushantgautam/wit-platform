@@ -79,8 +79,10 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    // Check for user email
-    const user = await User.findOne({ email });
+    // Check for user by email OR username
+    const user = await User.findOne({
+        $or: [{ email: email }, { username: email }]
+    });
 
     if (user && (await bcrypt.compare(password, user.password))) {
         if (user.isBlocked) {

@@ -4,7 +4,8 @@ import AuthContext from '../context/AuthContext';
 import {
     User, Image, Link as LinkIcon, Layout, Settings,
     ExternalLink, Plus, Trash2, CheckCircle, AlertCircle,
-    ChevronRight, Save, ShieldAlert, Share2, QrCode, Megaphone
+    ChevronRight, Save, ShieldAlert, Share2, QrCode, Megaphone,
+    Eye, EyeOff
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import QRCode from 'react-qr-code';
@@ -31,6 +32,7 @@ const Dashboard = () => {
     const [availableTools, setAvailableTools] = useState([]);
     const [username, setUsername] = useState(user?.username || '');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [toolSearch, setToolSearch] = useState('');
 
     // Filtered Tools for Stack
@@ -699,12 +701,21 @@ const Dashboard = () => {
 
                                 <div className="form-group max-w-md">
                                     <label className="label-premium">New Password</label>
-                                    <input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="input-premium" placeholder="••••••••"
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            className="input-premium pr-10" placeholder="••••••••"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
                                     <p className="text-xs text-gray-500 mt-2">Leave blank if you don't want to change your password.</p>
                                 </div>
                             </div>

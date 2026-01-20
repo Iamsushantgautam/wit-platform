@@ -61,26 +61,39 @@ const MasterAdminDashboard = () => {
     }, [API_URL]);
 
     // Handlers
+    // Handlers
     const handleSave = async (e) => {
         e.preventDefault();
-        // Basic front-end validation
-        if (!formData.name || formData.name.trim() === '') {
-            return alert('Name is required.');
-        }
-        if (formData.type === 'tool' && !formData.url && !formData.logo) {
-            return alert('Provide a tool URL or upload a logo image.');
-        }
-        if (formData.type === 'prompt' && (!formData.prompt || formData.prompt.trim() === '')) {
-            return alert('Prompt text is required.');
+
+        const payload = { ...formData }; // Clone to avoid mutation side effects
+
+        // Validation & Defaults Logic
+        if (formData.type === 'prompt') {
+            if (!formData.name) return alert('Please give this prompt a Title/Name.');
+            if (!formData.logo) return alert('An image upload is required for prompts.');
+            if (!formData.prompt) return alert('The prompt text is required.');
+
+            // Defaults for schema compliance
+            if (!payload.description) payload.description = payload.prompt.substring(0, 100) + (payload.prompt.length > 100 ? '...' : '');
+            if (!payload.url) payload.url = '#'; // Prompts don't have a link usually
+            if (!payload.category || payload.category === '') payload.category = 'AI Image';
+        } else {
+            // Tool Validation
+            if (!formData.name || formData.name.trim() === '') {
+                return alert('Name is required.');
+            }
+            if (formData.type === 'tool' && !formData.url && !formData.logo) {
+                return alert('Provide a tool URL or upload a logo image.');
+            }
         }
 
         try {
             const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
             if (editingItem) {
-                const res = await axios.put(`${API_URL}/tools/${editingItem._id}`, formData, config);
+                const res = await axios.put(`${API_URL}/tools/${editingItem._id}`, payload, config);
                 setTools(tools.map(t => t._id === editingItem._id ? res.data : t));
             } else {
-                const res = await axios.post(`${API_URL}/tools`, formData, config);
+                const res = await axios.post(`${API_URL}/tools`, payload, config);
                 setTools([res.data, ...tools]);
             }
             closeForm();
@@ -438,10 +451,10 @@ const MasterAdminDashboard = () => {
             {/* Modal Form */}
             {isFormOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 slide-in-from-bottom-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 slide-in-from-bottom-4">
                         <div className="sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-6 flex justify-between items-center z-10">
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                                {editingItem ? `Edit ${formData.type}` : `Add New ${formData.type}`}
+                                {editingItem ? `Edit ${formData.type === 'tool' ? 'Tool' : 'Prompt'}` : `Add New ${formData.type === 'tool' ? 'Tool' : 'Prompt'}`}
                             </h2>
                             <button onClick={closeForm} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
                                 <XCircle size={24} className="text-slate-400" />
@@ -449,105 +462,73 @@ const MasterAdminDashboard = () => {
                         </div>
 
                         <form onSubmit={handleSave} className="p-6 space-y-6">
-                            <div className="form-grid">
-                                <div>
-                                    <label className="label-premium">Name</label>
-                                    <input
-                                        type="text"
-                                        className="input-premium"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        required
-                                    />
-                                </div>
 
-                                <div>
-                                    <label className="label-premium">Category</label>
-                                    <input
-                                        type="text"
-                                        className="input-premium"
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="label-premium">Description</label>
-                                <textarea
-                                    className="input-premium"
-                                    rows="3"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    required
-                                />
-                            </div>
-
-                            {formData.type === 'tool' && (
-                                <div>
-                                    <label className="label-premium">Tool URL</label>
-                                    <input
-                                        type="url"
-                                        className="input-premium"
-                                        value={formData.url}
-                                        onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="label-premium">Logo URL</label>
-                                <div className="file-input-row">
-                                    <div style={{ flex: 1 }}>
-                                        <input
-                                            type="url"
-                                            className="input-premium"
-                                            value={formData.logo}
-                                            onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                                            placeholder="https://example.com/logo.png or upload below"
-                                        />
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                const f = e.target.files && e.target.files[0];
-                                                if (f) handleLogoFile(f);
-                                            }}
-                                            style={{ marginTop: '0.5rem' }}
-                                        />
+                            {/* --- ISOATED FORM FOR PROMPTS --- */}
+                            {formData.type === 'prompt' ? (
+                                <div className="space-y-6">
+                                    {/* Image Upload (Center Stage) */}
+                                    <div className="flex flex-col items-center justify-center">
+                                        <div className="relative group w-full max-w-sm aspect-[4/3] bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 transition-colors">
+                                            {formData.logo ? (
+                                                <img src={formData.logo} alt="Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-6 text-center">
+                                                    <Image size={48} className="mb-2 opacity-50" />
+                                                    <span className="text-sm font-bold">Upload Result Image (Required)</span>
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const f = e.target.files && e.target.files[0];
+                                                    if (f) handleLogoFile(f);
+                                                }}
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                required={!formData.logo}
+                                            />
+                                            {/* Loading State Overlay */}
+                                            {/* You might want to add a loading state here if upload is slow */}
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-2">Click to upload the generated image</p>
                                     </div>
-                                    <div className="file-preview" aria-hidden>
-                                        {formData.logo ? <img src={formData.logo} alt="preview" /> : <div style={{ fontSize: 12, color: 'var(--text-secondary)', padding: 6 }}>No image</div>}
-                                    </div>
-                                </div>
-                            </div>
 
-                            {formData.type === 'prompt' && (
-                                <>
-                                    <div>
-                                        <label className="label-premium">Platform Model</label>
-                                        <select
-                                            className="input-premium"
-                                            value={formData.platform}
-                                            onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                                        >
-                                            <option value="Generic">Generic</option>
-                                            <option value="ChatGPT">ChatGPT</option>
-                                            <option value="Claude">Claude</option>
-                                            <option value="Gemini">Gemini</option>
-                                            <option value="Midjourney">Midjourney</option>
-                                            <option value="DALL-E">DALL-E</option>
-                                            <option value="Stable Diffusion">Stable Diffusion</option>
-                                        </select>
+                                    <div className="form-grid">
+                                        <div>
+                                            <label className="label-premium">Title / Name</label>
+                                            <input
+                                                type="text"
+                                                className="input-premium"
+                                                placeholder="e.g. Cyberpunk City"
+                                                value={formData.name}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="label-premium">AI Model</label>
+                                            <select
+                                                className="input-premium"
+                                                value={formData.platform}
+                                                onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
+                                            >
+                                                <option value="Midjourney">Midjourney</option>
+                                                <option value="DALL-E">DALL-E</option>
+                                                <option value="Stable Diffusion">Stable Diffusion</option>
+                                                <option value="Leonardo AI">Leonardo AI</option>
+                                                <option value="Bing Image Creator">Bing Image Creator</option>
+                                                <option value="Adobe Firefly">Adobe Firefly</option>
+                                                <option value="Generic">Generic</option>
+                                            </select>
+                                        </div>
                                     </div>
 
                                     <div>
-                                        <label className="label-premium">Prompt</label>
+                                        <label className="label-premium">Prompt Details</label>
                                         <textarea
-                                            className="input-premium"
+                                            className="input-premium font-mono text-sm leading-relaxed"
                                             rows="4"
+                                            placeholder="Enter the exact prompt used..."
                                             value={formData.prompt}
                                             onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
                                             required
@@ -555,16 +536,91 @@ const MasterAdminDashboard = () => {
                                     </div>
 
                                     <div>
-                                        <label className="label-premium">Tags (comma-separated)</label>
+                                        <label className="label-premium">Tags</label>
                                         <input
                                             type="text"
                                             className="input-premium"
+                                            placeholder="3d, character, lighting (comma separated)"
                                             value={formData.tags.join(', ')}
                                             onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()) })}
-                                            placeholder="creative, art, design"
                                         />
                                     </div>
-                                </>
+                                </div>
+                            ) : (
+                                /* --- STANDARD FORM FOR TOOLS --- */
+                                <div className="space-y-6">
+                                    <div className="form-grid">
+                                        <div>
+                                            <label className="label-premium">Name</label>
+                                            <input
+                                                type="text"
+                                                className="input-premium"
+                                                value={formData.name}
+                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="label-premium">Category</label>
+                                            <input
+                                                type="text"
+                                                className="input-premium"
+                                                value={formData.category}
+                                                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="label-premium">Description</label>
+                                        <textarea
+                                            className="input-premium"
+                                            rows="3"
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="label-premium">Tool URL</label>
+                                        <input
+                                            type="url"
+                                            className="input-premium"
+                                            value={formData.url}
+                                            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="label-premium">Logo URL</label>
+                                        <div className="file-input-row">
+                                            <div style={{ flex: 1 }}>
+                                                <input
+                                                    type="url"
+                                                    className="input-premium"
+                                                    value={formData.logo}
+                                                    onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+                                                    placeholder="https://example.com/logo.png"
+                                                />
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        const f = e.target.files && e.target.files[0];
+                                                        if (f) handleLogoFile(f);
+                                                    }}
+                                                    style={{ marginTop: '0.5rem' }}
+                                                />
+                                            </div>
+                                            <div className="file-preview" aria-hidden>
+                                                {formData.logo ? <img src={formData.logo} alt="preview" /> : <div style={{ fontSize: 12, color: 'var(--text-secondary)', padding: 6 }}>No image</div>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             )}
 
                             <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -572,7 +628,7 @@ const MasterAdminDashboard = () => {
                                     Cancel
                                 </button>
                                 <button type="submit" className="btn-primary flex-1">
-                                    {editingItem ? 'Update' : 'Create'} {formData.type}
+                                    {editingItem ? 'Update' : 'Create'} {formData.type === 'tool' ? 'Tool' : 'Prompt'}
                                 </button>
                             </div>
                         </form>
