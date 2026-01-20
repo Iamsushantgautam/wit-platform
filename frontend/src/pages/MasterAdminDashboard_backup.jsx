@@ -165,7 +165,7 @@ const MasterAdminDashboard = () => {
                     <div className="relative z-10">
                         <h3 className="text-2xl font-bold mb-2">Manage Prompts</h3>
                         <p className="text-blue-100 mb-6 max-w-sm">Add exciting new prompts to the public library. Curate the best AI generation prompts for users.</p>
-                        <button onClick={() => { setActiveTab('prompts'); openForm('prompt'); }} className="glass-panel text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-white transition-colors shadow-lg">
+                        <button onClick={() => { setActiveTab('prompts'); openForm('prompt'); }} className="glass-panel text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-white transition-colors shadow-lg btn btn-primary">
                             Add New Prompt
                         </button>
                     </div>

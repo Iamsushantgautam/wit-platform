@@ -207,7 +207,7 @@ const MasterAdminDashboard = () => {
                     <div className="relative z-10">
                         <h3 className="text-2xl font-bold mb-2">Manage Prompts</h3>
                         <p className="text-blue-100 mb-6 max-w-sm">Add exciting new prompts to the public library. Curate the best AI generation prompts for users.</p>
-                        <button onClick={() => { setActiveTab('prompts'); openForm('prompt'); }} className="glass-panel text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-white transition-colors shadow-lg">
+                        <button onClick={() => { setActiveTab('prompts'); openForm('prompt'); }} className="glass-panel text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-white transition-colors shadow-lg btn btn-primary">
                             Add New Prompt
                         </button>
                     </div>
@@ -484,7 +484,7 @@ const MasterAdminDashboard = () => {
                                                     const f = e.target.files && e.target.files[0];
                                                     if (f) handleLogoFile(f);
                                                 }}
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                className="absolute inset-0 opacity-0 cursor-pointer w-[100px] h-[100px] z-10 object-cover"
                                                 required={!formData.logo}
                                             />
                                             {/* Loading State Overlay */}

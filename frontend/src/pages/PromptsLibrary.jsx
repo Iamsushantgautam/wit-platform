@@ -104,60 +104,77 @@ const PromptsLibrary = () => {
                 ) : (
                     <>
                         {filteredPrompts.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-4 bg-black/80 backdrop-blur-xl ">
 
-                                {/* Card style started here */}
                                 {filteredPrompts.map(prompt => (
                                     <div
                                         key={prompt._id}
                                         className="relative rounded-2xl overflow-hidden group"
                                     >
-                                        {/* Image */}
-                                        <div className="relative aspect-[4/5] w-full relative rounded-2xl overflow-hidden group">
+                                        {/* Image Container */}
+                                        <div className="relative w-full">
                                             <img
                                                 src={prompt.logo}
                                                 alt={prompt.name}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 relative rounded-2xl overflow-hidden group"
+                                                className="w-[10rem] h-[10rem] object-cover"
                                             />
 
-                                            {/* Dark overlay */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
+                                            {/* Gradient Overlay - Always visible but stronger at bottom */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300"></div>
 
-                                            {/* Title badge */}
-                                            <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold tracking-wide">
-                                                {prompt.name}
+                                            {/* Top Tags/Badges */}
+                                            <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
+                                                <span className="bg-black/60 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                                                    {prompt.name}
+                                                </span>
+                                                {prompt.platform && (
+                                                    <span className="bg-white/20 backdrop-blur-md border border-white/10 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase flex items-center gap-1">
+                                                        <FaRobot size={10} /> {prompt.platform}
+                                                    </span>
+                                                )}
                                             </div>
 
-                                            {/* Model badge */}
-                                            <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                                                <FaRobot size={12} /> {prompt.platform || 'AI'}
-                                            </div>
+                                            {/* Bottom Overlay Content */}
+                                            <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                                                {/* Prompt Text Preview */}
+                                                <div className="mb-4">
+                                                    <p className="text-xs text-gray-300 font-medium leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all duration-300 drop-shadow-md">
+                                                        "{prompt.prompt}"
+                                                    </p>
+                                                </div>
 
-                                            {/* Bottom content */}
-                                            <div className="absolute bottom-0 left-0 right-0 p-5">
-                                                <p className="text-sm text-gray-300 leading-relaxed line-clamp-3 mb-4">
-                                                    {prompt.description}
-                                                </p>
+                                                {/* Action Row */}
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleCopy(prompt.prompt, prompt._id);
+                                                        }}
+                                                        className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white py-2 px-4 rounded-lg text-xs font-bold transition-all active:scale-95 group/btn"
+                                                    >
+                                                        {copiedId === prompt._id ? (
+                                                            <>
+                                                                <Check size={14} className="text-green-400" />
+                                                                <span className="text-green-400">Copied!</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Copy size={14} className="group-hover/btn:scale-110 transition-transform" />
+                                                                <span className="btn btn-primary">Copy Prompt</span>
+                                                            </>
+                                                        )}
+                                                    </button>
 
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleCopy(prompt.prompt, prompt._id);
-                                                    }}
-                                                    className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white py-2.5 rounded-xl font-semibold transition-all active:scale-95"
-                                                >
-                                                    {copiedId === prompt._id ? (
-                                                        <>
-                                                            <Check size={18} className="text-green-400" />
-                                                            Copied
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Copy size={18} />
-                                                            Copy Prompt
-                                                        </>
-                                                    )}
-                                                </button>
+                                                    {/* Tags/Icons */}
+                                                    <div className="flex gap-1">
+                                                        {/* Optional nice-to-have icons like Share or Bookmark - visualized as tags for now or icons if available */}
+                                                        {prompt.category && (
+                                                            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-black/40 backdrop-blur-md border border-white/10 text-gray-400" title={prompt.category}>
+                                                                <Filter size={14} />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -178,7 +195,8 @@ const PromptsLibrary = () => {
                                     Reset Discovery
                                 </button>
                             </div>
-                        )}
+                        )
+                        }
                     </>
                 )}
             </div>

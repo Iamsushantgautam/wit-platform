@@ -5,7 +5,7 @@ import {
     User, Image, Link as LinkIcon, Layout, Settings,
     ExternalLink, Plus, Trash2, CheckCircle, AlertCircle,
     ChevronRight, Save, ShieldAlert, Share2, QrCode, Megaphone,
-    Eye, EyeOff
+    Eye, EyeOff, Search
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import QRCode from 'react-qr-code';

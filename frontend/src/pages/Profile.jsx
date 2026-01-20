@@ -41,19 +41,27 @@ const Profile = ({ usernameOverride }) => {
     if (loading) return <div className="flex justify-center items-center min-h-screen bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-900 border-t-transparent"></div></div>;
     if (error) return <div className="text-center mt-20 text-gray-500 font-medium">{error}</div>;
 
-    const TabButton = ({ id, label, icon }) => {
-        const Icon = icon;
-        return (
-            <button
-                onClick={() => setActiveTab(id)}
-                className={`mobile-tab-btn ${activeTab === id ? 'active' : ''}`}
-            >
-                <Icon size={24} strokeWidth={activeTab === id ? 2.5 : 1.5} />
-                <span className="text-[10px] font-medium mt-1">{label}</span>
-                {activeTab === id && <span className="mobile-tab-indicator"></span>}
-            </button>
-        );
-    };
+    // --- Design Helpers ---
+    const NavItem = ({ id, label, onClick, active }) => (
+        <button
+            onClick={onClick}
+            className={`w-full text-left font-semibold px-4 py-2 rounded-xl transition-all ${active
+                ? 'bg-blue-50 text-blue-600'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+        >
+            {label}
+        </button>
+    );
+
+    const MobileNavItem = ({ id, label, active, onClick }) => (
+        <button
+            onClick={onClick}
+            className={`font-semibold ${active ? 'text-blue-600' : 'text-gray-500'}`}
+        >
+            {label}
+        </button>
+    );
 
     // Social Icon Helper
     const getSocialIcon = (platform) => {
@@ -72,352 +80,226 @@ const Profile = ({ usernameOverride }) => {
         }
     };
 
-    const LinkTreeCard = ({ url, title, icon }) => (
-        <a href={url} target="_blank" rel="noreferrer" className="link-tree-card group">
-            <div className="link-tree-icon bg-gray-50 text-gray-600 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                {icon}
-            </div>
-            <span className="link-tree-text group-hover:text-blue-700 transition-colors">{title}</span>
-            <ChevronRight size={18} className="link-tree-chevron group-hover:translate-x-1 transition-transform" />
-        </a>
-    );
-
     return (
-        <div className="profile-container-wrapper min-h-screen-safe flex justify-center">
-            <div className="profile-main-card w-full max-w-mobile bg-white min-h-screen shadow-2xl relative">
+        <div className="min-h-screen flex flex-col md:flex-row bg-gray-100 font-sans text-slate-800">
 
-                {/* Header Section */}
-                <div className="profile-header-card">
-                    {/* Top Bar */}
-                    <div className="header-top-bar">
-                        <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                            <div className="w-6 h-0.5 bg-white mb-1.5"></div>
-                            <div className="w-4 h-0.5 bg-white mb-1.5"></div>
-                            <div className="w-6 h-0.5 bg-white"></div>
-                        </button>
-                        <h2 className="text-lg font-bold">Profile</h2>
-
-                        {/* Edit Button for Owner or Menu for Visitor */}
-                        {isOwner ? (
-                            <Link to="/dashboard" className="p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors flex items-center gap-2 px-4 shadow-lg backdrop-blur-sm">
-                                <Edit size={14} />
-                                <span className="text-xs font-bold">Edit Profile</span>
-                            </Link>
-                        ) : (
-                            <button className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                                <span className="relative">
-                                    <div className="w-1.5 h-1.5 bg-white rounded-full border-2 border-gray-900 box-content"></div>
-                                    <div className="header-decoration-1"></div>
-                                    <div className="header-decoration-2"></div>
-                                </span>
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Profile Info */}
-                    <div className="flex flex-col items-center text-center relative z-10">
-                        <div className="profile-avatar-wrapper">
-                            <img
-                                src={profile.image || `https://ui-avatars.com/api/?name=${profile.name}&background=random`}
-                                alt={profile.name}
-                                className="profile-avatar-img"
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2 mb-1">
-                            <h1 className="text-2xl font-bold">{profile.name}</h1>
-                            {/* Verified Badge */}
-                            <svg className="verified-badge" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-
-                        <p className="text-gray-400 text-sm mb-2">{profile.category || 'Creator'} | @{username}</p>
-                        <p className="text-gray-300 text-sm max-w-[80%] leading-relaxed opacity-90">{profile.bio || 'Digital Creator & Educator'}</p>
-
-                        {/* Action Buttons */}
-                        <div className="grid grid-cols-2 w-full mt-6" style={{ gap: '0.75rem' }}>
-                            <button
-                                onClick={() => setShowShare(true)}
-                                className="action-btn-primary"
-                            >
-                                <FaWhatsapp size={18} /> Get Help
-                            </button>
-                            <a
-                                href={profile.importantLinks?.[0]?.url || "#"}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="action-btn-secondary"
-                            >
-                                <MessageCircle size={18} /> Free Prompts
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* Background decorations */}
-                    <div className="profile-bg-blob-1"></div>
-                    <div className="profile-bg-blob-2"></div>
-
-                    {/* Desktop Sidebar Navigation */}
-                    <div className="desktop-sidebar-nav">
-                        <button onClick={() => setActiveTab('profile')} className={`desktop-nav-item ${activeTab === 'profile' ? 'active' : ''}`}>
-                            <User size={20} /> Profile
-                        </button>
-                        <button onClick={() => setActiveTab('courses')} className={`desktop-nav-item ${activeTab === 'courses' ? 'active' : ''}`}>
-                            <Layers size={20} /> Courses
-                        </button>
-                        <button onClick={() => setActiveTab('prompts')} className={`desktop-nav-item ${activeTab === 'prompts' ? 'active' : ''}`}>
-                            <Grid size={20} /> Prompts
-                        </button>
-                    </div>
-                </div>
-
-
-
-                {/* Content Area */}
-                <div className="pb-24 bg-gray-50 min-h-screen-safe profile-content-area">
-
-                    {/* COURSES TAB (Offers) */}
-                    {activeTab === 'courses' && (
-                        <div className="p-4 space-y-4 animate-in slide-in-from-bottom-4 fade-in">
-                            {/* New Launch Banner */}
-                            {profile.banners && profile.banners[0] && (
-                                <div className="bg-gray-900 rounded-2xl p-6 text-white relative overflow-hidden shadow-lg group cursor-pointer mb-6" onClick={() => window.open(profile.banners[0].link, '_blank')}>
-                                    <div className="relative z-10 max-w-[70%]">
-                                        <h3 className="text-2xl font-bold leading-tight mb-2">{profile.banners[0].title}</h3>
-                                        <div className="inline-block bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-4">GRAB OFFER</div>
-                                        <p className="text-sm text-gray-300 mb-4">Get 20% Off This Weekend!</p>
-                                    </div>
-                                    <div className="banner-gradient-overlay"></div>
-                                    {profile.banners[0].imageUrl && (
-                                        <img src={profile.banners[0].imageUrl} className="banner-img-absolute" alt="Banner" />
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="flex justify-between items-center px-1">
-                                <h3 className="font-bold text-gray-800">Best Sellers</h3>
-                                <button className="text-blue-600 text-xs font-bold">View All</button>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-                                {(profile.banners || []).map((banner, index) => (
-                                    <a key={index} href={banner.link} target="_blank" rel="noreferrer" className="course-card">
-                                        <div className="course-img-container">
-                                            {banner.imageUrl && <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />}
-                                            <div className="tag-new">New</div>
-                                        </div>
-                                        <div className="p-3 flex flex-col flex-1">
-                                            <h4 className="font-bold text-sm text-gray-800 line-clamp-2 mb-1 leading-tight">{banner.title}</h4>
-
-                                            <div className="flex items-center gap-1 mb-2 mt-auto">
-                                                <div className="text-yellow-400 text-xs flex">{'★'.repeat(5)}</div>
-                                                <span className="text-[10px] text-gray-400">4.9</span>
-                                            </div>
-                                            <div className="flex items-center justify-between mt-1">
-                                                <span className="tag-offer">50% OFF</span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* PROFILE TAB (Linktree Style) */}
-                    {activeTab === 'profile' && (
-                        <div className="p-4 space-y-6 animate-in slide-in-from-bottom-4 fade-in">
-
-                            {/* Important Links (Top Section) */}
-                            <div>
-                                <div className="flex justify-between items-center mb-3 px-1">
-                                    <h3 className="font-bold text-gray-800">Highlights</h3>
-                                    {isOwner && <Link to="/dashboard" className="text-blue-600 text-xs font-bold flex items-center gap-1"><Plus size={12} /> Add New</Link>}
-                                </div>
-                                <div className="space-y-1">
-                                    {(profile.importantLinks || []).map((link, idx) => (
-                                        <LinkTreeCard
-                                            key={idx}
-                                            url={link.url}
-                                            title={link.title}
-                                            icon={<ExternalLink size={20} />}
-                                        />
-                                    ))}
-                                    {(!profile.importantLinks || profile.importantLinks.length === 0) && (
-                                        <div className="text-center py-6 bg-gray-50 rounded-lg text-gray-400 text-sm">No highlights added yet.</div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Social Media Links (Bottom Section) */}
-                            <div>
-                                <h3 className="font-bold text-gray-800 mb-3 px-1">Connect with me</h3>
-                                <div className="space-y-1">
-                                    {Object.entries(profile.socialLinks || {}).map(([key, url]) => {
-                                        if (!url) return null;
-                                        return (
-                                            <LinkTreeCard
-                                                key={key}
-                                                url={url}
-                                                title={`Follow me on ${key.charAt(0).toUpperCase() + key.slice(1)}`}
-                                                icon={getSocialIcon(key)}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* UPDATES TAB (Renamed/Used for Prompts based on user flow, but user asked for prompts. I will add a proper Prompts tab) */}
-                    {activeTab === 'prompts' && (
-                        <div className="p-4 space-y-4 animate-in slide-in-from-bottom-4 fade-in">
-                            <div className="flex items-center gap-2 mb-2 px-1">
-                                <h3 className="font-bold text-gray-800">Prompt Collection</h3>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-4">
-                                {(profile.activeTools || []).filter(t => t.type === 'prompt').map((prompt, idx) => (
-                                    <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
-                                        {/* Image Header */}
-                                        <div className="h-48 relative overflow-hidden bg-gray-100">
-                                            <img
-                                                src={prompt.logo}
-                                                alt={prompt.name}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                            />
-                                            <div className="absolute top-3 right-3">
-                                                <span className="bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-md border border-white/20 uppercase">
-                                                    {prompt.platform || 'AI'}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="p-4">
-                                            <h4 className="font-bold text-gray-900 text-lg mb-1">{prompt.name}</h4>
-
-                                            {/* Tags */}
-                                            <div className="flex flex-wrap gap-1 mb-3">
-                                                {(prompt.tags || []).slice(0, 3).map((tag, i) => (
-                                                    <span key={i} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-medium">
-                                                        #{tag}
-                                                    </span>
-                                                ))}
-                                            </div>
-
-                                            {/* Prompt Copy Area */}
-                                            <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 relative group/copy">
-                                                <p className="text-sm text-gray-600 font-mono line-clamp-2">{prompt.prompt}</p>
-                                                <div className="absolute inset-0 bg-white/90 opacity-0 group-hover/copy:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[1px]">
-                                                    <button
-                                                        onClick={() => {
-                                                            navigator.clipboard.writeText(prompt.prompt);
-                                                            // Optional: Toast notification
-                                                        }}
-                                                        className="bg-black text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 transform translate-y-2 group-hover/copy:translate-y-0 transition-transform"
-                                                    >
-                                                        Copy Prompt
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {(profile.activeTools || []).filter(t => t.type === 'prompt').length === 0 && (
-                                <div className="text-center py-10 opacity-50">
-                                    <p>No prompts selected yet.</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                </div>
-
-                {/* Bottom Navigation Bar */}
-                <div className="mobile-bottom-nav">
-                    <button onClick={() => setActiveTab('profile')} className={`bottom-nav-btn ${activeTab === 'profile' ? 'active' : ''}`}>
-                        <User size={20} />
-                        <span className="text-[10px]">Profile</span>
-                    </button>
-                    <button onClick={() => setActiveTab('courses')} className={`bottom-nav-btn ${activeTab === 'courses' ? 'active' : ''}`}>
-                        <Layers size={20} />
-                        <span className="text-[10px]">Courses</span>
-                    </button>
-                    <button onClick={() => setActiveTab('prompts')} className={`bottom-nav-btn ${activeTab === 'prompts' ? 'active' : ''}`}>
-                        <div className="notification-dot-container">
-                            <Grid size={20} />
-                            {/* <span className="notification-dot"></span> */}
-                        </div>
-                        <span className="text-[10px]">Prompts</span>
-                    </button>
-                    <button onClick={() => setDrawerOpen(true)} className="bottom-nav-btn">
-                        <Grid size={20} />
-                        <span className="text-[10px]">More</span>
-                    </button>
-                </div>
-
-                {/* Bottom Drawer (All Links / Edit) */}
-                <div className={`fixed inset-0 bg-black/50 z-[90] transition-opacity duration-300 ${drawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setDrawerOpen(false)}></div>
-                <div className={`bottom-drawer ${drawerOpen ? 'open' : ''}`}>
-                    <div className="drawer-header">
-                        <h3 className="font-bold text-lg">All Content</h3>
-                        <button onClick={() => setDrawerOpen(false)} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
-                            <X size={20} />
-                        </button>
-                    </div>
-                    <div className="p-4 space-y-6 pb-20">
-                        {/* Drawer content: Just displaying all categories for now */}
+            {/* Sidebar (Desktop) */}
+            <aside className="hidden md:flex w-64 bg-white border-r flex-col justify-between p-6 fixed h-full z-20">
+                <div>
+                    <h2 className="text-2xl font-bold mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        {profile?.name || 'WitHub'}
+                    </h2>
+                    <nav className="space-y-4">
+                        <NavItem id="profile" label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+                        <NavItem id="courses" label="Courses" active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} />
+                        <NavItem id="prompts" label="Prompts" active={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
                         {isOwner && (
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
-                                <h4 className="font-bold text-blue-700 mb-2 flex items-center gap-2"><Edit size={16} /> Owner Controls</h4>
-                                <p className="text-xs text-blue-600 mb-3">You are viewing your own profile. Use these shortcuts to manage your content.</p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Link to="/dashboard" className="bg-white text-blue-600 py-2 rounded-lg text-sm font-bold text-center border border-blue-200 shadow-sm">Edit Profile</Link>
-                                    <Link to="/dashboard" className="bg-blue-600 text-white py-2 rounded-lg text-sm font-bold text-center shadow-lg shadow-blue-500/30">Add Link</Link>
+                            <div className="pt-4 mt-4 border-t border-gray-100">
+                                <Link to="/dashboard" className="w-full block text-left font-semibold px-4 py-2 text-gray-500 hover:text-blue-600 transition-colors">
+                                    Dashboard
+                                </Link>
+                            </div>
+                        )}
+                    </nav>
+                </div>
+                <div className="text-sm text-gray-300">© 2026 WitHub</div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="flex-1 p-4 md:p-10 pb-24 md:pb-10 md:ml-64">
+
+                {/* --- PROFILE TAB --- */}
+                {activeTab === 'profile' && (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-10">
+                        {/* Profile Card */}
+                        <div className="bg-gradient-to-r from-black to-blue-900 rounded-3xl p-8 text-white text-center max-w-2xl mx-auto shadow-2xl relative overflow-hidden">
+                            {/* Edit Button (Owner) */}
+                            {isOwner && (
+                                <Link to="/dashboard" className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-colors">
+                                    <Edit size={16} />
+                                </Link>
+                            )}
+
+                            <div className="relative inline-block mb-4">
+                                <img
+                                    src={profile?.image || `https://ui-avatars.com/api/?name=${user?.username || 'User'}`}
+                                    className="w-28 h-28 rounded-full border-4 border-white/20 shadow-xl object-cover bg-white"
+                                    alt="Profile"
+                                />
+                                {profile?.category && (
+                                    <span className="absolute bottom-1 right-1 bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-black">
+                                        {profile.category}
+                                    </span>
+                                )}
+                            </div>
+
+                            <h2 className="text-3xl font-bold mb-1">{profile?.name || user?.username}</h2>
+                            <p className="text-blue-100 mb-6 font-medium opacity-90">{profile?.bio || 'Digital Creator'}</p>
+
+                            <div className="flex gap-4 justify-center flex-wrap">
+                                <button onClick={() => setShowShare(true)} className="bg-green-500 hover:bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all flex items-center gap-2">
+                                    <Share2 size={18} /> Share
+                                </button>
+                                <button onClick={() => setActiveTab('prompts')} className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2">
+                                    <Grid size={18} /> Prompts
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Courses Preview (First 2) */}
+                        {profile?.banners && profile.banners.length > 0 && (
+                            <div className="max-w-4xl mx-auto">
+                                <div className="flex justify-between items-end mb-4 px-2">
+                                    <h3 className="font-bold text-xl text-gray-800">Featured Courses</h3>
+                                    <button onClick={() => setActiveTab('courses')} className="text-blue-600 text-sm font-semibold hover:underline">View All</button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    {profile.banners.slice(0, 2).map((banner, idx) => (
+                                        <a key={idx} href={banner.link} target="_blank" rel="noreferrer" className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all p-3 group border border-gray-100">
+                                            {banner.imageUrl && (
+                                                <div className="overflow-hidden rounded-xl mb-3 relative aspect-video">
+                                                    <img src={banner.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={banner.title} />
+                                                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur text-xs font-bold px-2 py-1 rounded">
+                                                        New
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <h3 className="font-bold text-gray-900 leading-tight mb-1">{banner.title}</h3>
+                                            <div className="text-xs text-gray-500 mb-3">Limited Time Offer</div>
+                                            <button className="text-blue-600 font-bold text-sm">View Course &rarr;</button>
+                                        </a>
+                                    ))}
                                 </div>
                             </div>
                         )}
 
-                        <div>
-                            <h4 className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-3">Sections</h4>
-                            <button onClick={() => { setActiveTab('courses'); setDrawerOpen(false); }} className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors mb-1">
-                                <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><Layers size={20} /></div>
-                                <span className="font-bold text-gray-700">All Courses</span>
-                                <ChevronRight className="ml-auto text-gray-300" size={18} />
-                            </button>
-                            <button onClick={() => { setActiveTab('updates'); setDrawerOpen(false); }} className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors mb-1">
-                                <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center"><Bell size={20} /></div>
-                                <span className="font-bold text-gray-700">Latest Updates</span>
-                                <ChevronRight className="ml-auto text-gray-300" size={18} />
-                            </button>
+                        {/* Important Links */}
+                        <div className="max-w-4xl mx-auto space-y-4">
+                            <div className="flex justify-between items-center px-1">
+                                <h3 className="font-bold text-xl text-gray-800">Quick Links</h3>
+                            </div>
+                            {(profile?.importantLinks || []).map((link, i) => (
+                                <a key={i} href={link.url} target="_blank" rel="noreferrer" className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md border border-gray-100 transition-all group">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                            <ExternalLink size={20} />
+                                        </div>
+                                        <span className="font-bold text-gray-700 group-hover:text-blue-700 transition-colors">{link.title}</span>
+                                    </div>
+                                    <ChevronRight className="text-gray-300 group-hover:text-blue-500 transition-colors" />
+                                </a>
+                            ))}
+                            {/* Socials Grid */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+                                {Object.entries(profile?.socialLinks || {}).map(([key, url]) => {
+                                    if (!url) return null;
+                                    return (
+                                        <a key={key} href={url} target="_blank" rel="noreferrer" className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center gap-2 shadow-sm border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all">
+                                            <div className="text-gray-600">
+                                                {getSocialIcon(key)}
+                                            </div>
+                                            <span className="text-xs font-bold capitalize text-gray-500">{key}</span>
+                                        </a>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                {/* Share Modal */}
-                {showShare && (
-                    <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowShare(false)}>
-                        <div className="bg-white rounded-3xl p-8 w-full max-w-sm text-center" onClick={e => e.stopPropagation()}>
-                            <h3 className="text-xl font-bold mb-6">Share Profile</h3>
-                            <div className="bg-white p-4 rounded-xl shadow-lg border inline-block mb-6">
-                                <QRCode value={window.location.href} size={180} />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                                <button onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link Copied!') }} className="btn btn-outline py-3 rounded-xl flex items-center justify-center gap-2">
-                                    <ExternalLink size={18} /> Copy Link
-                                </button>
-                                <button onClick={() => setShowShare(false)} className="btn btn-primary py-3 rounded-xl">
-                                    Close
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 )}
 
-            </div>
+
+                {/* --- COURSES TAB --- */}
+                {activeTab === 'courses' && (
+                    <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-8">
+                        <h2 className="text-2xl font-bold mb-6 text-gray-900">All Courses & Offers</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            {(profile?.banners || []).map((banner, idx) => (
+                                <a key={idx} href={banner.link} target="_blank" rel="noreferrer" className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all p-4 group border border-gray-100">
+                                    {banner.imageUrl ? (
+                                        <div className="overflow-hidden rounded-xl mb-4 relative aspect-video shadow-inner">
+                                            <img src={banner.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={banner.title} />
+                                        </div>
+                                    ) : (
+                                        <div className="h-40 bg-gray-100 rounded-xl mb-4 flex items-center justify-center text-gray-400">
+                                            <Layers size={40} />
+                                        </div>
+                                    )}
+                                    <h3 className="font-bold text-lg text-gray-900 leading-tight mb-2">{banner.title}</h3>
+                                    <div className="text-sm text-gray-500">Premium Content</div>
+                                    <button className="mt-4 w-full py-2 bg-blue-50 text-blue-600 rounded-lg font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">Access Now</button>
+                                </a>
+                            ))}
+                        </div>
+                        {(!profile?.banners || profile.banners.length === 0) && (
+                            <div className="text-center py-20 bg-white rounded-3xl border-dashed border-2 border-gray-200">
+                                <p className="text-gray-400">No courses available yet.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* --- PROMPTS TAB --- */}
+                {activeTab === 'prompts' && (
+                    <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-8">
+                        <h2 className="text-2xl font-bold mb-6 text-gray-900">Prompt Collection</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {(profile?.activeTools || []).filter(t => t.type === 'prompt').map((prompt, idx) => (
+                                <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 group">
+                                    <div className="aspect-square relative overflow-hidden bg-gray-100">
+                                        <img src={prompt.logo} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={prompt.name} />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
+                                            <p className="text-white text-xs font-mono line-clamp-4 text-center">"{prompt.prompt}"</p>
+                                        </div>
+                                        <div className="absolute top-2 right-2">
+                                            <span className="bg-black/60 backdrop-blur text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase">{prompt.platform}</span>
+                                        </div>
+                                    </div>
+                                    <div className="p-4">
+                                        <h3 className="font-bold text-gray-900 mb-2 truncate">{prompt.name}</h3>
+                                        <button onClick={() => { navigator.clipboard.writeText(prompt.prompt); alert('Copied!') }} className="w-full py-2 border border-gray-200 rounded-xl font-bold text-xs text-gray-600 hover:bg-gray-900 hover:text-white transition-colors">
+                                            Copy Prompt
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {(!profile?.activeTools?.some(t => t.type === 'prompt')) && (
+                            <div className="text-center py-20 bg-white rounded-3xl border-dashed border-2 border-gray-200">
+                                <p className="text-gray-400">No prompts showcased.</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+            </main>
+
+            {/* Bottom Mobile Nav */}
+            <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-3 md:hidden z-50 pb-safe">
+                <MobileNavItem label="Profile" active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} />
+                <MobileNavItem label="Courses" active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} />
+                <MobileNavItem label="Prompts" active={activeTab === 'prompts'} onClick={() => setActiveTab('prompts')} />
+            </nav>
+
+            {/* Share Modal Logic */}
+            {showShare && (
+                <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowShare(false)}>
+                    <div className="bg-white rounded-3xl p-8 w-full max-w-sm text-center" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-xl font-bold mb-6">Share Profile</h3>
+                        <div className="bg-white p-4 rounded-xl shadow-lg border inline-block mb-6">
+                            <QRCode value={window.location.href} size={180} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link Copied!') }} className="py-3 rounded-xl font-bold border border-gray-200 hover:bg-gray-50 flex items-center justify-center gap-2">
+                                <ExternalLink size={18} /> Copy
+                            </button>
+                            <button onClick={() => setShowShare(false)} className="py-3 rounded-xl font-bold bg-black text-white hover:bg-gray-800">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
