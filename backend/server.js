@@ -8,11 +8,24 @@ connectDB();
 
 const app = express();
 
+const allowedOrigins = [
+    'http://localhost:5173',
+    'https://withub-iota.vercel.app'
+];
+
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'https://withub-iota.vercel.app' // Your Vercel URL (no trailing slash)
-    ],
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true); // Postman, curl, etc.
+
+        if (
+            allowedOrigins.includes(origin) ||
+            /^http:\/\/[a-z0-9-]+\.localhost:5173$/i.test(origin) // e.g. sushant.localhost:5173
+        ) {
+            return callback(null, true);
+        }
+
+        return callback(new Error('Not allowed by CORS: ' + origin));
+    },
     credentials: true
 }));
 app.use(express.json());
