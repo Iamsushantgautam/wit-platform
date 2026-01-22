@@ -230,7 +230,7 @@
 
 /* === PROFILE TAB === */
 .profile-hero-card {
-    margin: 20px 16px;
+    margin: 15px 10px;
     background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
     border-radius: 24px;
     padding: 40px 24px 32px;
@@ -245,11 +245,12 @@
 }
 
 .profile-hero-card__avatar {
-    width: 120px;
-    height: 120px;
+    width: 200px;
+    height: 200px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid #2563eb;
+    border: 4px solid #0088cc;
+    /* background: linear-gradient(135deg, #FF9933 0%, #FFFFFF 50%, #138808 100%); */
     box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
 }
 
@@ -272,9 +273,14 @@
 
 .profile-hero-card__name {
     color: white;
-    font-size: 26px;
+    font-size: 32px;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.profile-hero-card_username {
+    color: #cbd5e1;
+    font-size: 15px;
 }
 
 .profile-hero-card__bio {
@@ -706,8 +712,8 @@
 
     .profile-hero-card {
         margin: 0 0 32px;
-        max-width: 500px;
-        margin-left: auto;
+        max-width: calc(100 - 1rem);
+        margin-left: 10px;
         margin-right: auto;
     }
 

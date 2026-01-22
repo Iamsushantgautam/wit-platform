@@ -202,6 +202,7 @@ const Profile = ({ usernameOverride }) => {
                                 <div className="profile-hero-card__badge">AI</div>
                             </div>
                             <h1 className="profile-hero-card__name">{profile.name || username}</h1>
+                            <p className="profile-hero-card_bio profile-hero-card_username"><span>@  {username} </span></p>
                             <p className="profile-hero-card__bio">{profile.bio || 'AI Course Creator | Educator'}</p>
                             <div className="profile-hero-card__actions">
                                 <button className="profile-hero-card__btn profile-hero-card__btn--secondary">
