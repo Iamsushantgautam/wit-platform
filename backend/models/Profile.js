@@ -75,7 +75,9 @@ const profileSchema = mongoose.Schema({
             enum: ['tool', 'prompt'],
             default: 'tool'
         },
-        prompt: String // For prompt cards
+        prompt: String, // For prompt cards
+        tags: [String],
+        category: String
     }],
     activeTools: [{
         type: mongoose.Schema.Types.ObjectId,

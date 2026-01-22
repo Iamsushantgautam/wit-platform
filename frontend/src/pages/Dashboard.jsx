@@ -5,7 +5,7 @@ import {
     User, Image, Link as LinkIcon, Layout, Settings,
     ExternalLink, Plus, Trash2, CheckCircle, AlertCircle,
     ChevronRight, Save, ShieldAlert, Share2, QrCode, Megaphone,
-    Eye, EyeOff, Search, Instagram, Twitter, Facebook, Linkedin, Github, Youtube, MessageCircle, Heart, Palette, Bell, Edit, Star, X, Tag, Ticket, AlignLeft, Wrench
+    Eye, EyeOff, Search, Instagram, Twitter, Facebook, Linkedin, Github, Youtube, MessageCircle, Heart, Palette, Bell, Edit, Star, X, Tag, Ticket, AlignLeft, Wrench, Copy, Check
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ProfileCustomizer from '../components/ProfileCustomizer';
@@ -16,6 +16,7 @@ import '../styles/DashboardLinks.css';
 import '../styles/DashboardOffers.css';
 import '../styles/DashboardPrompts.css';
 import '../styles/AiTools.css';
+import '../styles/Prompts.css';
 import QRCode from 'react-qr-code';
 
 const Dashboard = () => {
@@ -165,16 +166,32 @@ const Dashboard = () => {
         }
     };
 
-    const saveCustomToolFromModal = () => {
+    const saveCustomToolFromModal = async () => {
         if (!tempTool.title) {
             setMessage({ type: 'error', text: 'Tool name is required' });
             return;
         }
         const newTool = { ...tempTool, type: 'tool' };
-        setProfileData({ ...profileData, customItems: [...(profileData.customItems || []), newTool] });
+        const updatedCustomItems = [...(profileData.customItems || []), newTool];
+        const updatedProfileData = { ...profileData, customItems: updatedCustomItems };
+
+        setProfileData(updatedProfileData);
         setToolModalOpen(false);
-        setSuccessMsg('Custom tool added!');
-        setTimeout(() => setSuccessMsg(''), 2000);
+
+        // Auto-save
+        setSaving(true);
+        try {
+            await axios.post(`${API_URL}/profiles`, updatedProfileData, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            setSuccessMsg('Custom tool saved successfully!');
+            setTimeout(() => setSuccessMsg(''), 2000);
+        } catch (error) {
+            console.error("Auto-save failed", error);
+            setMessage({ type: 'error', text: 'Tool added locally but failed to save to server.' });
+        } finally {
+            setSaving(false);
+        }
     };
 
     const removeCustomItem = (itemToRemove) => {
@@ -309,6 +326,94 @@ const Dashboard = () => {
 
     const [uploading, setUploading] = useState(false);
     const [bannerUploading, setBannerUploading] = useState(null);
+
+    // Custom Prompt Handlers
+    const [promptModalOpen, setPromptModalOpen] = useState(false);
+    const [tempPrompt, setTempPrompt] = useState({
+        title: '',
+        prompt: '',
+        image: '',
+        category: 'General',
+        tags: ''
+    });
+    const [copiedId, setCopiedId] = useState(null);
+
+    const openAddPromptModal = () => {
+        setTempPrompt({ title: '', prompt: '', image: '', category: 'General', tags: '' });
+        setPromptModalOpen(true);
+    };
+
+    const handleCustomPromptImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        setBannerUploading('prompt');
+
+        try {
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            };
+            const { data: imageUrl } = await axios.post(`${API_URL}/upload?context=user_prompt`, formData, config);
+            setTempPrompt({ ...tempPrompt, image: imageUrl });
+            setMessage({ type: 'success', text: 'Image uploaded!' });
+        } catch (error) {
+            console.error(error);
+            setMessage({ type: 'error', text: 'Upload failed' });
+        } finally {
+            setBannerUploading(null);
+        }
+    };
+
+    const saveCustomPromptFromModal = async () => {
+        if (!tempPrompt.title || !tempPrompt.prompt) {
+            setMessage({ type: 'error', text: 'Title and Prompt are required' });
+            return;
+        }
+
+        // Process tags
+        const processedTags = tempPrompt.tags
+            ? tempPrompt.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+            : [];
+
+        const newPrompt = {
+            ...tempPrompt,
+            tags: processedTags,
+            type: 'prompt'
+        };
+
+        const updatedCustomItems = [...(profileData.customItems || []), newPrompt];
+        const updatedProfileData = { ...profileData, customItems: updatedCustomItems };
+
+        // Update local state
+        setProfileData(updatedProfileData);
+        setPromptModalOpen(false);
+
+        // Auto-save to backend
+        setSaving(true);
+        try {
+            await axios.post(`${API_URL}/profiles`, updatedProfileData, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            setSuccessMsg('Custom prompt saved successfully!');
+            setTimeout(() => setSuccessMsg(''), 2000);
+        } catch (error) {
+            console.error("Auto-save failed", error);
+            setMessage({ type: 'error', text: 'Prompt added locally but failed to save to server.' });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCopyPrompt = (text, id) => {
+        navigator.clipboard.writeText(text);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
@@ -1140,9 +1245,57 @@ const Dashboard = () => {
                                             <span>My Prompts Library</span>
                                         </h2>
                                         <p className="text-gray-500 dark:text-gray-400">
-                                            Select prompts to display. <span className="font-bold text-accent">{profileData.activeTools.filter(id => availableTools.find(t => t._id === id)?.type === 'prompt').length}</span> selected.
+                                            Manage your prompts. Add custom prompts or select from library.
                                         </p>
                                     </div>
+                                    <button onClick={openAddPromptModal} className="btn btn-outline flex items-center gap-2 py-2 px-4 whitespace-nowrap">
+                                        <Plus size={18} /> Add Custom Prompt
+                                    </button>
+                                </div>
+
+                                {/* Custom Prompts */}
+                                {profileData.customItems && profileData.customItems.filter(i => i.type === 'prompt').length > 0 && (
+                                    <div className="mb-10">
+                                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800 dark:text-white">
+                                            <Megaphone size={18} className="text-purple-500" /> Your Custom Prompts
+                                        </h3>
+                                        <div className="prompts-grid">
+                                            {profileData.customItems.filter(i => i.type === 'prompt').map((prompt, idx) => (
+                                                <article key={idx} className="prompt-card relative group">
+                                                    <button
+                                                        onClick={() => removeCustomItem(prompt)}
+                                                        className="absolute top-2 right-2 bg-red-100 text-red-500 p-1.5 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-20 hover:bg-red-200"
+                                                        title="Remove Prompt"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+
+                                                    <div className="prompt-image-wrap">
+                                                        {prompt.image ? <img src={prompt.image} alt={prompt.title} className="prompt-image" /> : <div className="prompt-image bg-gray-200 flex items-center justify-center"><Megaphone className="text-gray-400" /></div>}
+                                                        <div className="prompt-overlay" />
+                                                        <div className="prompt-top-row">
+                                                            <span className="prompt-chip">{prompt.title}</span>
+                                                        </div>
+
+                                                        <div className="prompt-body">
+                                                            <p className="prompt-text line-clamp-3">{prompt.prompt}</p>
+                                                            <div className="prompt-footer">
+                                                                <button type="button" className={`prompt-copy-btn ${copiedId === prompt ? 'prompt-copy-btn--success' : ''}`} onClick={() => handleCopyPrompt(prompt.prompt, prompt)}>
+                                                                    {copiedId === prompt ? <><Check size={14} /> Copied</> : <><Copy size={14} /> Copy</>}
+                                                                </button>
+                                                                <span className="prompt-meta-tag">{prompt.category || 'Custom'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Library Section Header */}
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                                    <h3 className="text-lg font-bold text-gray-800 dark:text-white">Select from Library</h3>
                                     <div className="search-wrapper-premium w-full md:w-64">
                                         <Search className="search-icon-premium" size={18} />
                                         <input
@@ -1605,6 +1758,104 @@ const Dashboard = () => {
                         <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-white dark:bg-gray-900 sticky bottom-0 z-10">
                             <button onClick={() => setToolModalOpen(false)} className="btn btn-ghost px-6">Cancel</button>
                             <button onClick={saveCustomToolFromModal} className="btn btn-primary px-8">Save Tool</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ADD CUSTOM PROMPT MODAL */}
+            {promptModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-gray-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-y-auto max-h-[90vh] animate-in zoom-in-95 duration-200 border border-gray-200 dark:border-gray-800 flex flex-col">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 sticky top-0 z-10">
+                            <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                                <Plus size={24} className="text-purple-500" /> Add Custom Prompt
+                            </h3>
+                            <button onClick={() => setPromptModalOpen(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition text-gray-500">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-5 flex-1 overflow-y-auto">
+                            {/* Image Upload */}
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="w-full h-48 rounded-2xl bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center relative overflow-hidden group">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleCustomPromptImageUpload}
+                                        className="absolute inset-0 w-full h-full cursor-pointer z-20"
+                                        style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 20 }}
+                                        disabled={bannerUploading === 'prompt'}
+                                    />
+                                    {tempPrompt.image ? (
+                                        <div className="relative w-full h-full">
+                                            <img src={tempPrompt.image} alt="" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                <Edit size={24} className="text-white" />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-gray-400 flex flex-col items-center gap-1 pointer-events-none">
+                                            {bannerUploading === 'prompt' ? <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-500 border-t-transparent"></div> : <Image size={40} />}
+                                            <span className="text-sm">Upload Prompt Preview Image</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label-premium">Prompt Title <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    className="input-premium"
+                                    value={tempPrompt.title}
+                                    onChange={(e) => setTempPrompt({ ...tempPrompt, title: e.target.value })}
+                                    placeholder="e.g. Cyberpunk Cityscape"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label-premium">Category</label>
+                                <select
+                                    className="input-premium"
+                                    value={tempPrompt.category}
+                                    onChange={(e) => setTempPrompt({ ...tempPrompt, category: e.target.value })}
+                                >
+                                    <option value="General">General</option>
+                                    <option value="Photography">Photography</option>
+                                    <option value="Art">Art</option>
+                                    <option value="Coding">Coding</option>
+                                    <option value="Writing">Writing</option>
+                                    <option value="Business">Business</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label-premium">Tags</label>
+                                <input
+                                    type="text"
+                                    className="input-premium"
+                                    value={tempPrompt.tags}
+                                    onChange={(e) => setTempPrompt({ ...tempPrompt, tags: e.target.value })}
+                                    placeholder="e.g. ai, future, city (comma separated)"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="label-premium">Prompt Content <span className="text-red-500">*</span></label>
+                                <textarea
+                                    className="input-premium min-h-[150px] font-mono text-sm"
+                                    value={tempPrompt.prompt}
+                                    onChange={(e) => setTempPrompt({ ...tempPrompt, prompt: e.target.value })}
+                                    placeholder="Enter the full prompt text here..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-white dark:bg-gray-900 sticky bottom-0 z-10">
+                            <button onClick={() => setPromptModalOpen(false)} className="btn btn-ghost px-6">Cancel</button>
+                            <button onClick={saveCustomPromptFromModal} className="btn btn-primary px-8">Save Prompt</button>
                         </div>
                     </div>
                 </div>
