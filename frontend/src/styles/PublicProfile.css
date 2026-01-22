@@ -627,6 +627,8 @@
 
 .profile-update-item__content {
     flex: 1;
+    min-width: 0;
+    /* Crucial for preventing overflow in flex items */
 }
 
 .profile-update-item__title {
@@ -637,10 +639,14 @@
     display: flex;
     align-items: flex-start;
     gap: 6px;
+    word-break: break-word;
+    /* Ensure long words break */
+    overflow-wrap: break-word;
 }
 
 .profile-update-item__emoji {
     font-size: 14px;
+    flex-shrink: 0;
 }
 
 .profile-update-item__text {
@@ -648,6 +654,9 @@
     color: #6b7280;
     line-height: 1.5;
     margin-bottom: 6px;
+    word-break: break-word;
+    /* Ensure long words break */
+    overflow-wrap: break-word;
 }
 
 .profile-update-item__time {

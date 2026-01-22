@@ -40,6 +40,9 @@ app.use((req, res, next) => {
 app.use('/api/users', require('./routes/authRoutes'));
 app.use('/api/user-manage', require('./routes/userRoutes'));
 app.use('/api/profiles', require('./routes/profileRoutes'));
+app.use('/api/profiles/customize', require('./routes/profileCustomizationRoutes'));
+app.use('/api/profiles/updates', require('./routes/updatesRoutes'));
+app.use('/api/profiles/pages', require('./routes/customPagesRoutes'));
 app.use('/api/tools', require('./routes/toolRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 

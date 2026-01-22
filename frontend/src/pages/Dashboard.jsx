@@ -5,9 +5,12 @@ import {
     User, Image, Link as LinkIcon, Layout, Settings,
     ExternalLink, Plus, Trash2, CheckCircle, AlertCircle,
     ChevronRight, Save, ShieldAlert, Share2, QrCode, Megaphone,
-    Eye, EyeOff, Search, Instagram, Twitter, Facebook, Linkedin, Github, Youtube, MessageCircle, Heart
+    Eye, EyeOff, Search, Instagram, Twitter, Facebook, Linkedin, Github, Youtube, MessageCircle, Heart, Palette, Bell, Edit
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import ProfileCustomizer from '../components/ProfileCustomizer';
+import UpdatesTab from '../components/UpdatesTab';
+import { addOrUpdateUpdate, deleteUpdate, startEditUpdate, cancelEditUpdate } from '../utils/updatesHelpers';
 import '../styles/DashboardAppearance.css';
 import '../styles/DashboardLinks.css';
 import '../styles/DashboardOffers.css';
@@ -29,7 +32,18 @@ const Dashboard = () => {
         importantLinks: [],
         banners: [],
         activeTools: [],
-        socialLinks: { instagram: '', youtube: '', telegram: '', x: '', facebook: '', whatsapp: '' },
+        socialLinks: {
+            instagram: '',
+            youtube: '',
+            telegram: '',
+            x: '',
+            twitter: '',
+            facebook: '',
+            whatsapp: '',
+            linkedin: '',
+            github: '',
+            discord: ''
+        },
         customItems: []
     });
 
@@ -39,6 +53,11 @@ const Dashboard = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     const [toolSearch, setToolSearch] = useState('');
+
+    // Updates state
+    const [updates, setUpdates] = useState([]);
+    const [editingUpdate, setEditingUpdate] = useState(null);
+    const [updateForm, setUpdateForm] = useState({ emoji: '🎉', title: '', text: '', thumbnail: '', image: '', link: '' });
 
     // Filtered Tools for Stack
     const filteredAvailableTools = availableTools.filter(t =>
@@ -56,14 +75,18 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [profileRes, toolsRes] = await Promise.all([
+                const [profileRes, toolsRes, updatesRes] = await Promise.all([
                     axios.get(`${API_URL}/profiles/me`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                     }),
-                    axios.get(`${API_URL}/tools`)
+                    axios.get(`${API_URL}/tools`),
+                    axios.get(`${API_URL}/profiles/updates`, {
+                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+                    })
                 ]);
                 setProfileData(profileRes.data);
                 setAvailableTools(toolsRes.data);
+                setUpdates(updatesRes.data);
                 setUsername(user.username);
             } catch (error) {
                 console.error("Error fetching dashboard data", error);
@@ -250,6 +273,8 @@ const Dashboard = () => {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             setMessage({ type: 'success', text: 'Profile updated successfully!' });
+            setSuccessMsg('Social profiles saved successfully!');
+            setTimeout(() => setSuccessMsg(''), 3000);
         } catch (error) {
             console.error(error);
             setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update profile.' });
@@ -348,6 +373,8 @@ const Dashboard = () => {
                     {/* Socials merged into Links */}
                     <TabButton id="tools" label="AI Tools" icon={Layout} />
                     <TabButton id="prompts" label="My Prompts" icon={Megaphone} />
+                    <TabButton id="updates" label="Updates" icon={Bell} />
+                    <TabButton id="customize" label="Customize Profile" icon={Palette} />
                     <TabButton id="share" label="Share Profile" icon={QrCode} />
 
                     {user.role === 'master_admin' && (
@@ -1000,6 +1027,26 @@ const Dashboard = () => {
                     }
 
 
+                    {/* UPDATES TAB */}
+                    {activeTab === 'updates' && (
+                        <UpdatesTab
+                            updates={updates}
+                            addOrUpdateUpdate={(e) => {
+                                e.preventDefault();
+                                addOrUpdateUpdate(API_URL, editingUpdate, updateForm, setUpdates, setMessage, setEditingUpdate, setUpdateForm, setSaving);
+                            }}
+                            deleteUpdate={(id) => deleteUpdate(API_URL, id, setUpdates, setMessage)}
+                            startEditUpdate={(update) => startEditUpdate(update, setEditingUpdate, setUpdateForm)}
+                            cancelEditUpdate={() => cancelEditUpdate(setEditingUpdate, setUpdateForm)}
+                            editingUpdate={editingUpdate}
+                            updateForm={updateForm}
+                            setUpdateForm={setUpdateForm}
+                            saving={saving}
+                            API_URL={API_URL}
+                        />)}
+
+                    {/* CUSTOMIZE TAB */}
+                    {activeTab === 'customize' && <ProfileCustomizer />}
 
                     {/* SHARE TAB */}
                     {

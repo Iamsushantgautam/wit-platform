@@ -23,7 +23,7 @@ const Profile = ({ usernameOverride }) => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('offers');
+    const [activeTab, setActiveTab] = useState('profile');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const isOwner = user && profile && user.username === profile.username;
@@ -37,6 +37,18 @@ const Profile = ({ usernameOverride }) => {
             github: <FaGithub />, tiktok: <FaTiktok />
         };
         return icons[platform.toLowerCase()] || <ExternalLink />;
+    };
+
+    // Format date helper
+    const formatDate = (date) => {
+        const d = new Date(date);
+        const now = new Date();
+        const diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+        if (diff === 0) return 'Today';
+        if (diff === 1) return 'Yesterday';
+        if (diff < 7) return `${diff} days ago`;
+        if (diff < 30) return `${Math.floor(diff / 7)} weeks ago`;
+        return d.toLocaleDateString();
     };
 
     useEffect(() => {
@@ -80,24 +92,7 @@ const Profile = ({ usernameOverride }) => {
     );
 
     // Sample updates data (replace with real data from backend)
-    const updates = [
-        {
-            id: 1,
-            emoji: '🎉',
-            title: 'New Offer Launched',
-            text: 'Google Nano Banana Mastery is now available with 50% OFF!',
-            time: '5 days ago',
-            thumbnail: profile?.banners?.[0]?.imageUrl || 'https://source.unsplash.com/random/200x200?1'
-        },
-        {
-            id: 2,
-            emoji: '🎉',
-            title: 'Weekend Offer: 20% OFF on AI Offers',
-            text: 'AI Viral Animal Video Mastery is now available with 20% OFF!',
-            time: '11 days ago',
-            thumbnail: profile?.banners?.[1]?.imageUrl || 'https://source.unsplash.com/random/200x200?2'
-        }
-    ];
+    const updates = profile?.updates || [];
 
     return (
         <div className="profile-page">
@@ -150,6 +145,30 @@ const Profile = ({ usernameOverride }) => {
                         <Home size={24} />
                         <span>Profile</span>
                     </button>
+                    {(profile?.activeTools?.length > 0) && (
+                        <button
+                            className={`profile-drawer__item ${activeTab === 'tools' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('tools');
+                                setIsMenuOpen(false);
+                            }}
+                        >
+                            <Layout size={24} />
+                            <span>Tools</span>
+                        </button>
+                    )}
+                    {(profile?.favoritesPrompts?.length > 0) && (
+                        <button
+                            className={`profile-drawer__item ${activeTab === 'prompts' ? 'active' : ''}`}
+                            onClick={() => {
+                                setActiveTab('prompts');
+                                setIsMenuOpen(false);
+                            }}
+                        >
+                            <MessageCircle size={24} />
+                            <span>Prompts</span>
+                        </button>
+                    )}
                     <button
                         className={`profile-drawer__item ${activeTab === 'offers' ? 'active' : ''}`}
                         onClick={() => {
@@ -219,42 +238,54 @@ const Profile = ({ usernameOverride }) => {
                             </div>
                         </div>
 
-                        {/* Offer Grid */}
-                        <div className="profile-course-grid" style={{ margin: '0 16px' }}>
-                            {(profile?.banners || []).slice(0, 4).map((banner, idx) => (
-                                <a
-                                    key={idx}
-                                    href={banner.link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="profile-course-card"
-                                >
-                                    <div className="profile-course-card__image-wrapper">
-                                        <img
-                                            src={banner.imageUrl || `https://source.unsplash.com/random/400x300?${idx}`}
-                                            alt={banner.title}
-                                            className="profile-course-card__image"
-                                        />
-                                        <span className="profile-course-card__badge">
-                                            {idx % 2 === 0 ? 'New' : 'Trending'}
-                                        </span>
-                                    </div>
-                                    <div className="profile-course-card__body">
-                                        <h3 className="profile-course-card__title">{banner.title}</h3>
-                                        <div className="profile-course-card__footer">
-                                            <div className="profile-course-card__rating">
-                                                <Star size={14} />
-                                                4.5
+                        {/* Social Media Section */}
+                        {profile?.socialLinks && Object.keys(profile.socialLinks).some(key => profile.socialLinks[key]) && (
+                            <div className="profile-social-section">
+                                <h3 className="profile-social-title">Connect With Me</h3>
+                                <div className="profile-social-grid">
+                                    {Object.entries(profile.socialLinks).map(([platform, url]) => {
+                                        if (!url) return null;
+                                        return (
+                                            <a
+                                                key={platform}
+                                                href={url.startsWith('http') ? url : `https://${url}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="profile-social-item"
+                                            >
+                                                <div className={`profile-link-item__icon profile-link-item__icon--${platform}`}>
+                                                    {getSocialIcon(platform)}
+                                                </div>
+                                                <span className="profile-social-label">{platform}</span>
+                                            </a>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Recent Tools Preview */}
+                        {profile?.activeTools?.length > 0 && (
+                            <div className="profile-section">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 16px' }}>
+                                    <h3 className="profile-section-title">My Logic</h3>
+                                    <button onClick={() => setActiveTab('tools')} className="text-blue-600 text-sm font-semibold">View All</button>
+                                </div>
+                                <div className="profile-course-grid" style={{ marginBottom: '24px' }}>
+                                    {profile.activeTools.slice(0, 2).map((tool) => (
+                                        <a key={tool._id} href={tool.url} target="_blank" rel="noreferrer" className="profile-course-card">
+                                            <div className="profile-course-card__image-wrapper" style={{ aspectRatio: '1', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+                                                <img src={tool.logo} alt={tool.name} style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
                                             </div>
-                                            <span className="profile-course-card__discount">50% OFF</span>
-                                        </div>
-                                        <div className="profile-course-card__link">
-                                            View Offer <ChevronRight size={14} />
-                                        </div>
-                                    </div>
-                                </a>
-                            ))}
-                        </div><br />
+                                            <div className="profile-course-card__body">
+                                                <h3 className="profile-course-card__title">{tool.name}</h3>
+                                                <p style={{ fontSize: '12px', color: '#6b7280', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{tool.description}</p>
+                                            </div>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Important Links */}
                         {profile?.importantLinks && profile.importantLinks.length > 0 && (
@@ -281,34 +312,97 @@ const Profile = ({ usernameOverride }) => {
                                 ))}
                             </div>
                         )}
+                    </div>
+                )}
 
+                {/* TOOLS TAB */}
+                {activeTab === 'tools' && (
+                    <div className="profile-courses">
+                        <h2 className="profile-section-title" style={{ paddingLeft: '4px' }}>My Tools</h2>
+                        {profile?.activeTools?.length > 0 ? (
+                            <div className="profile-course-grid">
+                                {profile.activeTools.map((tool) => (
+                                    <a
+                                        key={tool._id}
+                                        href={tool.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="profile-course-card"
+                                    >
+                                        <div className="profile-course-card__image-wrapper" style={{ aspectRatio: '1.2', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '2rem' }}>
+                                            <img
+                                                src={tool.logo}
+                                                alt={tool.name}
+                                                style={{ width: '80px', height: '80px', objectFit: 'contain' }}
+                                            />
+                                        </div>
+                                        <div className="profile-course-card__body">
+                                            <h3 className="profile-course-card__title">{tool.name}</h3>
+                                            <p style={{
+                                                fontSize: '13px',
+                                                color: '#6b7280',
+                                                lineHeight: '1.5',
+                                                marginBottom: '12px',
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: 3,
+                                                WebkitBoxOrient: 'vertical',
+                                                overflow: 'hidden'
+                                            }}>
+                                                {tool.description}
+                                            </p>
+                                            <div className="profile-course-card__link">
+                                                Visit Tool <ExternalLink size={14} />
+                                            </div>
+                                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="profile-empty-state">
+                                <Layout size={48} className="profile-empty-icon" />
+                                <p className="profile-empty-text">No tools added yet</p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
-
-
-
-                        {/* Social Media Section */}
-                        {profile?.socialLinks && Object.keys(profile.socialLinks).some(key => profile.socialLinks[key]) && (
-                            <div className="profile-social-section">
-                                <h3 className="profile-social-title">Connect With Me</h3>
-                                <div className="profile-social-grid">
-                                    {Object.entries(profile.socialLinks).map(([platform, url]) => {
-                                        if (!url) return null;
-                                        return (
-                                            <a
-                                                key={platform}
-                                                href={url.startsWith('http') ? url : `https://${url}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="profile-social-item"
-                                            >
-                                                <div className="profile-social-icon">
-                                                    {getSocialIcon(platform)}
-                                                </div>
-                                                <span className="profile-social-label">{platform}</span>
-                                            </a>
-                                        );
-                                    })}
-                                </div>
+                {/* PROMPTS TAB */}
+                {activeTab === 'prompts' && (
+                    <div className="profile-courses">
+                        <h2 className="profile-section-title" style={{ paddingLeft: '4px' }}>Favorite Prompts</h2>
+                        {profile?.favoritesPrompts?.length > 0 ? (
+                            <div className="profile-course-grid">
+                                {profile.favoritesPrompts.map((prompt) => (
+                                    <div key={prompt._id} className="profile-course-card" style={{ cursor: 'default' }}>
+                                        <div className="profile-course-card__body">
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                                <span style={{ fontSize: '24px' }}>✨</span>
+                                                <h3 className="profile-course-card__title" style={{ margin: 0 }}>{prompt.name}</h3>
+                                            </div>
+                                            <div style={{
+                                                background: '#f3f4f6',
+                                                padding: '12px',
+                                                borderRadius: '8px',
+                                                border: '1px dashed #d1d5db',
+                                                fontSize: '13px',
+                                                color: '#374151',
+                                                fontFamily: 'monospace',
+                                                marginBottom: '12px',
+                                                whiteSpace: 'pre-wrap'
+                                            }}>
+                                                {prompt.prompt}
+                                            </div>
+                                            <p style={{ fontSize: '13px', color: '#6b7280' }}>
+                                                {prompt.description}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="profile-empty-state">
+                                <MessageCircle size={48} className="profile-empty-icon" />
+                                <p className="profile-empty-text">No prompts saved yet</p>
                             </div>
                         )}
                     </div>
@@ -460,38 +554,36 @@ const Profile = ({ usernameOverride }) => {
                 {activeTab === 'updates' && (
                     <div className="profile-updates">
                         {updates.map((update) => (
-                            <div key={update.id} className="profile-update-item">
-                                <img
-                                    src={update.thumbnail}
-                                    alt=""
-                                    className="profile-update-item__thumbnail"
-                                />
+                            <div key={update._id} className="profile-update-item">
+                                {update.thumbnail && (
+                                    <img
+                                        src={update.thumbnail}
+                                        alt=""
+                                        className="profile-update-item__thumbnail"
+                                    />
+                                )}
                                 <div className="profile-update-item__content">
                                     <div className="profile-update-item__title">
                                         <span className="profile-update-item__emoji">{update.emoji}</span>
                                         {update.title}
                                     </div>
                                     <p className="profile-update-item__text">{update.text}</p>
-                                    <div className="profile-update-item__time">{update.time}</div>
-                                </div>
-                            </div>
-                        ))}
-                        {(profile?.banners || []).slice(2).map((banner, idx) => (
-                            <div key={`update-${idx}`} className="profile-update-item">
-                                <img
-                                    src={banner.imageUrl || `https://source.unsplash.com/random/200x200?${idx + 10}`}
-                                    alt=""
-                                    className="profile-update-item__thumbnail"
-                                />
-                                <div className="profile-update-item__content">
-                                    <div className="profile-update-item__title">
-                                        <span className="profile-update-item__emoji">🎉</span>
-                                        Weekend Offer: 50% OFF on AI Offers
-                                    </div>
-                                    <p className="profile-update-item__text">
-                                        {banner.title} is now available with 50% OFF!
-                                    </p>
-                                    <div className="profile-update-item__time">11 days ago</div>
+
+                                    {/* Link in Updates */}
+                                    {update.link && (
+                                        <a
+                                            href={update.link}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1 text-blue-600 font-semibold text-sm mb-2 hover:underline"
+                                            style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#2563eb', fontWeight: 600, fontSize: '13px', marginBottom: '8px', textDecoration: 'none' }}
+                                        >
+                                            <ExternalLink size={14} />
+                                            View Link
+                                        </a>
+                                    )}
+
+                                    <div className="profile-update-item__time">{formatDate(update.createdAt)}</div>
                                 </div>
                             </div>
                         ))}
@@ -508,12 +600,32 @@ const Profile = ({ usernameOverride }) => {
                     <Home size={24} />
                     <span className="profile-bottom-nav__label">Profile</span>
                 </button>
+                {(profile?.activeTools?.length > 0) && (
+                    <button
+                        className={`profile-bottom-nav__item ${activeTab === 'tools' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('tools')}
+                    >
+                        <Layout size={24} />
+                        <span className="profile-bottom-nav__label">Tools</span>
+                    </button>
+                )}
+                {/* 
+                {(profile?.favoritesPrompts?.length > 0) && (
+                    <button
+                        className={`profile-bottom-nav__item ${activeTab === 'prompts' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('prompts')}
+                    >
+                        <MessageCircle size={24} />
+                        <span className="profile-bottom-nav__label">Prompts</span>
+                    </button>
+                )} 
+                */}
                 <button
-                    className={`profile-bottom-nav__item ${activeTab === 'offers' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('offers')}
+                    className={`profile-bottom-nav__item ${activeTab === 'links' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('links')}
                 >
-                    <Gift size={24} />
-                    <span className="profile-bottom-nav__label">Offers</span>
+                    <ExternalLink size={24} />
+                    <span className="profile-bottom-nav__label">Links</span>
                 </button>
                 <button
                     className={`profile-bottom-nav__item ${activeTab === 'updates' ? 'active' : ''}`}
