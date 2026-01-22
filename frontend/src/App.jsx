@@ -12,7 +12,6 @@ import About from './pages/About';
 import AiTools from './pages/AiTools';
 import PromptsLibrary from './pages/PromptsLibrary';
 import Profiles from './pages/Profiles';
-
 import { ThemeProvider } from './context/ThemeContext';
 
 function App() {

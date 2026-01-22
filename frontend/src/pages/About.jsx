@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, Users, Shield } from 'lucide-react';
+import { ProfileUpdates } from '../components/public-profile';
 
 const About = () => {
     return (
@@ -15,6 +16,7 @@ const About = () => {
                     </p>
                 </div>
             </div>
+
 
             {/* Mission Section */}
             <div className="section bg-secondary">

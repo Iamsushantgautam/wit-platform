@@ -77,8 +77,8 @@ const storage = new CloudinaryStorage({
             };
         }
 
-        // Generate unique public_id
-        const name = file.originalname.split('.')[0];
+        // Generate unique public_id (sanitize filename)
+        const name = file.originalname.split('.')[0].trim().replace(/\s+/g, '_');
         const publicId = `${name}-${Date.now()}`;
 
         console.log('Returning Cloudinary params:', { folder, allowed_formats, public_id: publicId });
