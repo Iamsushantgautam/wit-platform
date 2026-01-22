@@ -161,8 +161,7 @@
 /* PROMPT CARD                               */
 /* ========================================= */
 .prompt-card {
-    width: 600px;
-    height: auto;
+
     position: relative;
     border-radius: 1.5rem;
     overflow: hidden;
