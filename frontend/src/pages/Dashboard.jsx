@@ -185,7 +185,7 @@ const Dashboard = () => {
                 }
             };
 
-            const { data: imageUrl } = await axios.post(`${API_URL}/upload`, formData, config);
+            const { data: imageUrl } = await axios.post(`${API_URL}/upload?context=avatar`, formData, config);
 
             // Update state and auto-save
             const updatedProfile = { ...profileData, image: imageUrl };
@@ -220,7 +220,7 @@ const Dashboard = () => {
                 }
             };
 
-            const { data: imageUrl } = await axios.post(`${API_URL}/upload`, formData, config);
+            const { data: imageUrl } = await axios.post(`${API_URL}/upload?context=uploads`, formData, config);
 
             const newBanners = [...(profileData.banners || [])];
             newBanners[index].imageUrl = imageUrl;

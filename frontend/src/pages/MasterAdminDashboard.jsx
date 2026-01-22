@@ -105,14 +105,24 @@ const MasterAdminDashboard = () => {
         }
     };
 
-    // Image upload handler for logo
     const handleLogoFile = async (file) => {
         if (!file) return;
         const form = new FormData();
         form.append('image', file);
         try {
             const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'multipart/form-data' } };
-            const res = await axios.post(`${API_URL}/upload`, form, config);
+
+            // Determine context and itemName based on formData.type
+            let url = `${API_URL}/upload`;
+            if (formData.type === 'prompt') {
+                const promptName = formData.name || 'untitled';
+                url += `?context=prompt&itemName=${encodeURIComponent(promptName)}`;
+            } else if (formData.type === 'tool') {
+                const toolName = formData.name || 'untitled';
+                url += `?context=tool&itemName=${encodeURIComponent(toolName)}`;
+            }
+
+            const res = await axios.post(url, form, config);
             // API returns the uploaded image path/url
             setFormData(prev => ({ ...prev, logo: res.data }));
         } catch (err) {
