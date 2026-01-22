@@ -1396,12 +1396,6 @@ main.flex-grow {
     padding: 2.5rem 0;
 }
 
-/* [Styles moved to ./styles/Admin.css and ./styles/Profile.css] */
-
-/* Appended imports */
-@import './styles/Profile.css';
-@import './styles/Admin.css';
-
 /* Utility for hiding scrollbar */
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
