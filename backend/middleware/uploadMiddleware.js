@@ -11,59 +11,61 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: async (req, file) => {
-        // Dynamic folder structure based on context
         const context = req.query.context || req.body.context;
         const itemName = req.query.itemName || req.body.itemName;
-        const username = req.user ? req.user.username : 'guest';
 
-        // Tool images: withub/tool/[toolName]
+        // Ensure username is safe for folder paths (remove special chars if needed)
+        const username = req.user ? req.user.username.replace(/[^a-zA-Z0-9_-]/g, '') : 'guest';
+
+        let folder = 'withub/misc';
+
+        // Global/Admin Uploads
         if (context === 'tool') {
-            const folderName = itemName || 'misc';
-            return {
-                folder: `withub/tool/${folderName}`,
-                allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'webp', 'svg'],
-            };
+            folder = itemName ? `withub/tool_img/${itemName}` : `withub/tool_img`;
+        } else if (context === 'prompt') {
+            folder = itemName ? `withub/prompt_img/${itemName}` : `withub/prompt_img`;
         }
 
-        // Prompt images: withub/prompt/[promptName]
-        if (context === 'prompt') {
-            const folderName = itemName || 'misc';
-            return {
-                folder: `withub/prompt/${folderName}`,
-                allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'webp'],
-            };
+        // User Specific Uploads
+        else if (context === 'avatar') {
+            folder = `withub/users/${username}/profile_img`;
+        } else if (context === 'uploads') {
+            // Used for Dashboard Banners/Offers
+            folder = `withub/users/${username}/user_offer_img`;
+        } else if (context === 'updates') {
+            folder = `withub/users/${username}/user_update_img`;
+        } else if (context === 'user_tool') {
+            folder = `withub/users/${username}/user_tool_img`;
+        } else if (context === 'user_prompt') {
+            folder = `withub/users/${username}/user_prompt`;
+        } else {
+            // Default for user if authenticated, else generic
+            if (req.user) {
+                folder = `withub/users/${username}/misc`;
+            }
         }
 
-        // User avatar: withub/user/[username]/avatar
+        // Define Allowed Formats based on context if strictness is needed
+        // For now, allow common image formats
+        const allowed_formats = ['jpg', 'png', 'jpeg', 'gif', 'webp', 'svg'];
+
+        // Specific transformation for avatars to ensure consistency
         if (context === 'avatar') {
             return {
-                folder: `withub/user/${username}/avatar`,
-                allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'webp'],
+                folder: folder,
+                allowed_formats: allowed_formats,
                 transformation: [{ width: 500, height: 500, crop: 'fill', gravity: 'face' }]
             };
         }
 
-        // User screenshots: withub/user/[username]/screenshots
-        if (context === 'screenshots') {
-            return {
-                folder: `withub/user/${username}/screenshots`,
-                allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-            };
-        }
-
-        // User general uploads: withub/user/[username]/uploads
-        if (context === 'uploads') {
-            return {
-                folder: `withub/user/${username}/uploads`,
-                allowed_formats: ['jpg', 'png', 'jpeg', 'gif', 'webp', 'pdf'],
-            };
-        }
-
-        // Default fallback
         return {
-            folder: 'withub_uploads',
-            allowed_formats: ['jpg', 'png', 'jpeg', 'gif'],
-            transformation: [{ width: 500, height: 500, crop: 'limit' }]
+            folder: folder,
+            allowed_formats: allowed_formats,
+            public_id: (req, file) => {
+                // Optional: keep original name or generate unique
+                const name = file.originalname.split('.')[0];
+                return `${name}-${Date.now()}`;
+            }
         };
     }
 });

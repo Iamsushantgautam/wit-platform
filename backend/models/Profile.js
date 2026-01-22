@@ -30,8 +30,24 @@ const profileSchema = mongoose.Schema({
     banners: [{
         title: String,
         imageUrl: String,
-        link: String
+        link: String,
+        caption: String,
+        promoCode: String,
+        tags: [String],
+        isVisible: {
+            type: Boolean,
+            default: true
+        }
     }],
+    heroOffer: {
+        title: { type: String, default: '5-in-1 AI Viral Offer Pack' },
+        subtitle: { type: String, default: 'Get 20% Off This Weekend Only!' },
+        badge: { type: String, default: 'Limited Time Offer' },
+        ctaText: { type: String, default: 'GRAB OFFER' },
+        ctaLink: { type: String, default: '#' },
+        backgroundColor: { type: String, default: '#1f2937' },
+        isVisible: { type: Boolean, default: true }
+    },
     socialLinks: {
         instagram: String,
         youtube: String,
