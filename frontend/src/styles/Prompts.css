@@ -441,3 +441,82 @@
     color: #e5e7eb;
     cursor: pointer;
 }
+
+/* Added for Dashboard Integration */
+
+/* Selection State */
+.prompt-card.selected {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+.prompt-check-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(139, 92, 246, 0.9);
+    border-radius: 50%;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Search Input Styles (Matching AiTools aesthetic) */
+.prompts-search-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+}
+
+.prompts-search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.prompts-search-input {
+    width: 100%;
+    padding: 0.75rem 0.75rem 0.75rem 2.75rem;
+    font-size: 0.95rem;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.6);
+    color: #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.prompts-search-input:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.prompts-search-input::placeholder {
+    color: #64748b;
+}

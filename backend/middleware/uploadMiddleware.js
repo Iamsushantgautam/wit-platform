@@ -8,14 +8,33 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Verify configuration
+console.log('Cloudinary Config:', {
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? '✓ Set' : '✗ Missing',
+    api_key: process.env.CLOUDINARY_API_KEY ? '✓ Set' : '✗ Missing',
+    api_secret: process.env.CLOUDINARY_API_SECRET ? '✓ Set' : '✗ Missing'
+});
+
+if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    console.error('⚠️  WARNING: Cloudinary credentials are missing! Uploads will fail.');
+}
+
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: async (req, file) => {
+        console.log('CloudinaryStorage params function called');
+        console.log('File:', file);
+        console.log('User:', req.user);
+
         const context = req.query.context || req.body.context;
         const itemName = req.query.itemName || req.body.itemName;
 
+        console.log('Context:', context);
+        console.log('ItemName:', itemName);
+
         // Ensure username is safe for folder paths (remove special chars if needed)
-        const username = req.user ? req.user.username.replace(/[^a-zA-Z0-9_-]/g, '') : 'guest';
+        const username = req.user?.username ? req.user.username.replace(/[^a-zA-Z0-9_-]/g, '') : 'guest';
+        console.log('Username for folder:', username);
 
         let folder = 'withub/misc';
 
@@ -58,14 +77,16 @@ const storage = new CloudinaryStorage({
             };
         }
 
+        // Generate unique public_id
+        const name = file.originalname.split('.')[0];
+        const publicId = `${name}-${Date.now()}`;
+
+        console.log('Returning Cloudinary params:', { folder, allowed_formats, public_id: publicId });
+
         return {
             folder: folder,
             allowed_formats: allowed_formats,
-            public_id: (req, file) => {
-                // Optional: keep original name or generate unique
-                const name = file.originalname.split('.')[0];
-                return `${name}-${Date.now()}`;
-            }
+            public_id: publicId
         };
     }
 });
