@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     User, Image, Link as LinkIcon, Megaphone, Layout, Bell,
-    Palette, QrCode, ShieldAlert, ChevronRight, Settings
+    Palette, QrCode, ShieldAlert, ChevronRight, Settings, MousePointerClick, Navigation
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -22,6 +22,8 @@ const DashboardSidebar = ({ activeTab, setActiveTab, user }) => {
         <aside className="sidebar-nav">
             <TabButton id="profile" label="Profile Details" icon={User} />
             <TabButton id="appearance" label="Appearance" icon={Image} />
+            <TabButton id="heroButtons" label="Hero Buttons" icon={MousePointerClick} />
+            <TabButton id="navigation" label="Bottom Navigation" icon={Navigation} />
             <TabButton id="links" label="Connections & Links" icon={LinkIcon} />
             <TabButton id="offers" label="Offers & Banners" icon={Megaphone} />
             <TabButton id="tools" label="AI Tools" icon={Layout} />

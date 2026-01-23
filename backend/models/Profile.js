@@ -48,6 +48,38 @@ const profileSchema = mongoose.Schema({
         backgroundColor: { type: String, default: '#1f2937' },
         isVisible: { type: Boolean, default: true }
     },
+    heroButtons: {
+        button1: {
+            label: { type: String, default: 'Get Help' },
+            icon: { type: String, default: 'MessageCircle' },
+            link: { type: String, default: '#' },
+            isVisible: { type: Boolean, default: true }
+        },
+        button2: {
+            label: { type: String, default: 'Free Prompts' },
+            icon: { type: String, default: 'Star' },
+            link: { type: String, default: '/prompts' },
+            isVisible: { type: Boolean, default: true }
+        }
+    },
+    navigationSettings: {
+        menuItems: [{
+            label: { type: String, default: 'Profile' },
+            icon: { type: String, default: 'Home' },
+            tab: { type: String, default: 'profile' },
+            isVisible: { type: Boolean, default: true },
+            order: { type: Number, default: 0 }
+        }],
+        bottomNavItems: [{
+            label: { type: String, default: 'Profile' },
+            icon: { type: String, default: 'Home' },
+            tab: { type: String, default: 'profile' },
+            isVisible: { type: Boolean, default: true },
+            order: { type: Number, default: 0 }
+        }],
+        useDefaultHamburger: { type: Boolean, default: true },
+        useDefaultBottomNav: { type: Boolean, default: true }
+    },
     socialLinks: {
         instagram: String,
         youtube: String,

@@ -21,7 +21,8 @@ import {
     ProfilePrompts,
     ProfileLinks,
     ProfileOffers,
-    ProfileUpdates
+    ProfileUpdates,
+    ProfileBottomNav
 } from '../components/public-profile';
 import '../styles/PublicProfile.css';
 
@@ -158,6 +159,7 @@ const Profile = ({ usernameOverride }) => {
                     <div className="profile-courses">
                         <ProfileOffers profile={profile} />
                     </div>
+
                 )}
 
                 {/* LINKS TAB */}
@@ -165,6 +167,7 @@ const Profile = ({ usernameOverride }) => {
                     <div className="profile-links">
                         <h2 className="profile-section-title">Important Links</h2>
                         <ProfileLinks importantLinks={profile?.importantLinks} />
+
 
                         {/* Social Media Links */}
                         {profile?.socialLinks && Object.keys(profile.socialLinks).some(key => profile.socialLinks[key]) && (
@@ -216,6 +219,14 @@ const Profile = ({ usernameOverride }) => {
                     </div>
                 )}
             </main>
+
+            {/* Bottom Navigation */}
+            <ProfileBottomNav
+                profile={profile}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                updates={updates}
+            />
         </div>
     );
 };

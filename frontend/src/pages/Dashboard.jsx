@@ -18,6 +18,8 @@ import '../styles/Prompts.css';
 import DashboardSidebar from '../components/user/DashboardSidebar';
 import UserProfile from '../components/user/UserProfile';
 import UserAppearance from '../components/user/UserAppearance';
+import UserHeroButtons from '../components/user/UserHeroButtons';
+import UserNavigation from '../components/user/UserNavigation';
 import UserLinks from '../components/user/UserLinks';
 import UserOffers from '../components/user/UserOffers';
 import UserTools from '../components/user/UserTools';
@@ -64,6 +66,24 @@ const Dashboard = () => {
             ctaLink: '',
             backgroundColor: '#1f2937',
             isVisible: true
+        },
+        heroButtons: {
+            button1: {
+                label: 'Get Help',
+                icon: 'MessageCircle',
+                link: '#',
+                isVisible: true
+            },
+            button2: {
+                label: 'Free Prompts',
+                icon: 'Star',
+                link: '/prompts',
+                isVisible: true
+            }
+        },
+        navigationSettings: {
+            bottomNavItems: [],
+            useDefaultMenu: true
         }
     });
 
@@ -579,6 +599,24 @@ const Dashboard = () => {
                             handleProfileChange={handleProfileChange}
                             handleImageUpload={handleImageUpload}
                             uploading={uploading}
+                            saveProfile={saveProfile}
+                            saving={saving}
+                        />
+                    )}
+
+                    {activeTab === 'heroButtons' && (
+                        <UserHeroButtons
+                            profileData={profileData}
+                            setProfileData={setProfileData}
+                            saveProfile={saveProfile}
+                            saving={saving}
+                        />
+                    )}
+
+                    {activeTab === 'navigation' && (
+                        <UserNavigation
+                            profileData={profileData}
+                            setProfileData={setProfileData}
                             saveProfile={saveProfile}
                             saving={saving}
                         />

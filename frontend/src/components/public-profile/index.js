@@ -8,3 +8,4 @@ export { default as ProfilePrompts } from './ProfilePrompts';
 export { default as ProfileLinks } from './ProfileLinks';
 export { default as ProfileOffers } from './ProfileOffers';
 export { default as ProfileUpdates } from './ProfileUpdates';
+export { default as ProfileBottomNav } from './ProfileBottomNav';
