@@ -72,9 +72,9 @@ const Offers = () => {
                                 <div className="section-header-wrapper">
                                     <div className="offer-section-title">
                                         <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600">
-                                            <Tag size={24} />
+
                                         </div>
-                                        <span>Coupon Codes</span>
+                                        <h1><Tag size={24} />Coupon Codes</h1>
                                     </div>
                                     {/* Pagination could be added here if needed */}
                                 </div>
@@ -93,9 +93,9 @@ const Offers = () => {
                                 <div className="section-header-wrapper">
                                     <div className="offer-section-title">
                                         <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg text-amber-600">
-                                            <Percent size={24} />
+
                                         </div>
-                                        <span>Hot Deals</span>
+                                        <h1><Percent size={24} />Hot Deals</h1>
                                     </div>
 
                                     {/* Pagination Controls */}
