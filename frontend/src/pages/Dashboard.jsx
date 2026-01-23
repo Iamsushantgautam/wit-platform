@@ -97,6 +97,17 @@ const Dashboard = () => {
     const [editingUpdate, setEditingUpdate] = useState(null);
     const [updateForm, setUpdateForm] = useState({ emoji: '🎉', title: '', text: '', thumbnail: '', image: '', link: '' });
 
+    // Feature flags from admin settings
+    const [featureFlags, setFeatureFlags] = useState({
+        userToolsEnabled: true,
+        userPromptsEnabled: true,
+        userOffersEnabled: true,
+        userLinksEnabled: true,
+        userUpdatesEnabled: true,
+        userNavigationEnabled: true,
+        userHeroButtonsEnabled: true
+    });
+
     // Banner Modal State
     const [bannerModalOpen, setBannerModalOpen] = useState(false);
     const [currentBannerIndex, setCurrentBannerIndex] = useState(null);
@@ -408,18 +419,20 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [profileRes, toolsRes, updatesRes] = await Promise.all([
+                const [profileRes, toolsRes, updatesRes, featuresRes] = await Promise.all([
                     axios.get(`${API_URL}/profiles/me`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                     }),
                     axios.get(`${API_URL}/tools`),
                     axios.get(`${API_URL}/profiles/updates`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                    })
+                    }),
+                    axios.get(`${API_URL}/admin/features`)
                 ]);
                 setProfileData(profileRes.data);
                 setAvailableTools(toolsRes.data);
                 setUpdates(updatesRes.data);
+                setFeatureFlags(featuresRes.data);
                 setUsername(user.username);
             } catch (error) {
                 console.error("Error fetching dashboard data", error);
@@ -578,7 +591,7 @@ const Dashboard = () => {
 
             <div className="dashboard-layout">
                 {/* Sidebar Navigation */}
-                <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} />
+                <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} featureFlags={featureFlags} />
 
                 {/* Main Content Area */}
                 <main className="content-card">
@@ -603,7 +616,7 @@ const Dashboard = () => {
                         />
                     )}
 
-                    {activeTab === 'heroButtons' && (
+                    {activeTab === 'heroButtons' && featureFlags.userHeroButtonsEnabled && (
                         <UserHeroButtons
                             profileData={profileData}
                             setProfileData={setProfileData}
@@ -612,7 +625,7 @@ const Dashboard = () => {
                         />
                     )}
 
-                    {activeTab === 'navigation' && (
+                    {activeTab === 'navigation' && featureFlags.userNavigationEnabled && (
                         <UserNavigation
                             profileData={profileData}
                             setProfileData={setProfileData}
@@ -621,7 +634,7 @@ const Dashboard = () => {
                         />
                     )}
 
-                    {activeTab === 'links' && (
+                    {activeTab === 'links' && featureFlags.userLinksEnabled && (
                         <UserLinks
                             profileData={profileData}
                             handleLinkChange={handleLinkChange}
@@ -634,7 +647,7 @@ const Dashboard = () => {
                         />
                     )}
 
-                    {activeTab === 'offers' && (
+                    {activeTab === 'offers' && featureFlags.userOffersEnabled && (
                         <UserOffers
                             profileData={profileData}
                             setProfileData={setProfileData}
@@ -646,7 +659,7 @@ const Dashboard = () => {
                         />
                     )}
 
-                    {activeTab === 'tools' && (
+                    {activeTab === 'tools' && featureFlags.userToolsEnabled && (
                         <UserTools
                             profileData={profileData}
                             availableTools={availableTools}
@@ -658,7 +671,7 @@ const Dashboard = () => {
                         />
                     )}
 
-                    {activeTab === 'prompts' && (
+                    {activeTab === 'prompts' && featureFlags.userPromptsEnabled && (
                         <UserPrompts
                             profileData={profileData}
                             availableTools={availableTools}
@@ -686,7 +699,7 @@ const Dashboard = () => {
                         />
                     )}
 
-                    {activeTab === 'updates' && (
+                    {activeTab === 'updates' && featureFlags.userUpdatesEnabled && (
                         <UpdatesTab
                             updates={updates}
                             addOrUpdateUpdate={(e) => {

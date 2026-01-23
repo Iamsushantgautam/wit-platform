@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const DashboardSidebar = ({ activeTab, setActiveTab, user }) => {
+const DashboardSidebar = ({ activeTab, setActiveTab, user, featureFlags = {} }) => {
 
     const TabButton = ({ id, label, icon: Icon }) => (
         <button
@@ -22,13 +22,27 @@ const DashboardSidebar = ({ activeTab, setActiveTab, user }) => {
         <aside className="sidebar-nav">
             <TabButton id="profile" label="Profile Details" icon={User} />
             <TabButton id="appearance" label="Appearance" icon={Image} />
-            <TabButton id="heroButtons" label="Hero Buttons" icon={MousePointerClick} />
-            <TabButton id="navigation" label="Bottom Navigation" icon={Navigation} />
-            <TabButton id="links" label="Connections & Links" icon={LinkIcon} />
-            <TabButton id="offers" label="Offers & Banners" icon={Megaphone} />
-            <TabButton id="tools" label="AI Tools" icon={Layout} />
-            <TabButton id="prompts" label="My Prompts" icon={Megaphone} />
-            <TabButton id="updates" label="Updates" icon={Bell} />
+            {featureFlags.userHeroButtonsEnabled && (
+                <TabButton id="heroButtons" label="Hero Buttons" icon={MousePointerClick} />
+            )}
+            {featureFlags.userNavigationEnabled && (
+                <TabButton id="navigation" label="Bottom Navigation" icon={Navigation} />
+            )}
+            {featureFlags.userLinksEnabled && (
+                <TabButton id="links" label="Connections & Links" icon={LinkIcon} />
+            )}
+            {featureFlags.userOffersEnabled && (
+                <TabButton id="offers" label="Offers & Banners" icon={Megaphone} />
+            )}
+            {featureFlags.userToolsEnabled && (
+                <TabButton id="tools" label="AI Tools" icon={Layout} />
+            )}
+            {featureFlags.userPromptsEnabled && (
+                <TabButton id="prompts" label="My Prompts" icon={Megaphone} />
+            )}
+            {featureFlags.userUpdatesEnabled && (
+                <TabButton id="updates" label="Updates" icon={Bell} />
+            )}
             <TabButton id="customize" label="Customize Profile" icon={Palette} />
             <TabButton id="share" label="Share Profile" icon={QrCode} />
 

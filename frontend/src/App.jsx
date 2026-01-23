@@ -12,7 +12,9 @@ import About from './pages/About';
 import AiTools from './pages/AiTools';
 import PromptsLibrary from './pages/PromptsLibrary';
 import Profiles from './pages/Profiles';
+import Offers from './pages/Offers';
 import { ThemeProvider } from './context/ThemeContext';
+import Roadmap from './pages/Roadmap';
 
 function App() {
   // Subdomain Routing Logic
@@ -79,6 +81,8 @@ function App() {
               <Route path="/tools" element={<AiTools />} />
               <Route path="/prompts" element={<PromptsLibrary />} />
               <Route path="/community" element={<Profiles />} />
+              <Route path="/roadmap" element={<Roadmap />} />
+              <Route path="/offers" element={<Offers />} />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" />} />

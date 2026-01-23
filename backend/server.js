@@ -45,6 +45,8 @@ app.use('/api/profiles/updates', require('./routes/updatesRoutes'));
 app.use('/api/profiles/pages', require('./routes/customPagesRoutes'));
 app.use('/api/tools', require('./routes/toolRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/offers', require('./routes/offerRoutes'));
 
 app.get('/', (req, res) => {
     res.send('API is running...');

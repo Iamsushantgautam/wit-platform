@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom';
+import { Twitter, Github, Linkedin, MessageCircle } from 'lucide-react';
+
 const Footer = () => {
     return (
         <footer className="app-footer">
@@ -12,18 +15,19 @@ const Footer = () => {
                     <div>
                         <h4 className="footer-heading">Platform</h4>
                         <ul className="footer-links">
-                            <li><a href="#" className="footer-link">Features</a></li>
-                            <li><a href="#" className="footer-link">Pricing</a></li>
-                            <li><a href="#" className="footer-link">AI Tools</a></li>
+                            <li><Link to="/about" className="footer-link">About Us</Link></li>
+                            <li><Link to="/roadmap" className="footer-link">Roadmap</Link></li>
+                            <li><Link to="/offers" className="footer-link">Offers & Deals</Link></li>
+                            <li><Link to="/tools" className="footer-link">AI Tools</Link></li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="footer-heading">Community</h4>
-                        <ul className="footer-links">
-                            <li><a href="#" className="footer-link">Discord</a></li>
-                            <li><a href="#" className="footer-link">Twitter</a></li>
-                            <li><a href="#" className="footer-link">Blog</a></li>
-                        </ul>
+                        <h4 className="footer-heading">Connect</h4>
+                        <div className="flex gap-4 mt-4">
+                            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-blue-400 transition-colors p-2 bg-slate-800 rounded-full hover:bg-slate-700"><Twitter size={18} /></a>
+                            <a href="https://discord.com" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-indigo-400 transition-colors p-2 bg-slate-800 rounded-full hover:bg-slate-700"><MessageCircle size={18} /></a>
+                            <a href="https://github.com" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-white transition-colors p-2 bg-slate-800 rounded-full hover:bg-slate-700"><Github size={18} /></a>
+                        </div>
                     </div>
                     <div>
                         <h4 className="footer-heading">Legal</h4>

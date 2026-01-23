@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MessageCircle } from 'lucide-react';
-import { PromptCard } from '../components/public-profile';
+import PromptCard from '../blocks/PromptCard';
 
 const ProfilePrompts = ({ profile }) => {
     const [copiedId, setCopiedId] = useState(null);

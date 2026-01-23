@@ -47,7 +47,7 @@ const Header = () => {
                     <nav className="desktop-nav">
                         <ThemeToggle />
                         <Link to="/" className="nav-link">Home</Link>
-                        <Link to="/about" className="nav-link">About</Link>
+
                         <Link to="/prompts" className="nav-link">Prompts</Link>
                         <Link to="/tools" className="nav-link">AI Tools</Link>
                         {!user ? (
@@ -142,7 +142,7 @@ const Header = () => {
                     </div>
                     <nav className="flex flex-col space-y-4">
                         <Link to="/" onClick={toggleDrawer} className="nav-link block">Home</Link>
-                        <Link to="/about" onClick={toggleDrawer} className="nav-link block">About</Link>
+
                         <Link to="/prompts" onClick={toggleDrawer} className="nav-link block">Prompts</Link>
                         <Link to="/tools" onClick={toggleDrawer} className="nav-link block">AI Tools</Link>
                         {!user ? (

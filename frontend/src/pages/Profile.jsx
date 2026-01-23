@@ -38,6 +38,13 @@ const Profile = ({ usernameOverride }) => {
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('profile');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [featureFlags, setFeatureFlags] = useState({
+        userToolsEnabled: true,
+        userPromptsEnabled: true,
+        userOffersEnabled: true,
+        userLinksEnabled: true,
+        userUpdatesEnabled: true
+    });
 
     const isOwner = user && profile && user.username === profile.username;
 
@@ -67,8 +74,12 @@ const Profile = ({ usernameOverride }) => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/profiles/u/${username}`);
-                setProfile(data);
+                const [profileRes, featuresRes] = await Promise.all([
+                    axios.get(`${API_URL}/profiles/u/${username}`),
+                    axios.get(`${API_URL}/admin/features`)
+                ]);
+                setProfile(profileRes.data);
+                setFeatureFlags(featuresRes.data);
             } catch (err) {
                 if (err.response && err.response.status === 301) {
                     window.location.href = `/u/${err.response.data.redirect}`;
@@ -124,6 +135,7 @@ const Profile = ({ usernameOverride }) => {
                 setActiveTab={setActiveTab}
                 profile={profile}
                 updates={updates}
+                featureFlags={featureFlags}
             />
 
             {/* Main Content */}
@@ -131,7 +143,7 @@ const Profile = ({ usernameOverride }) => {
                 {/* PROFILE TAB */}
                 {activeTab === 'profile' && (
                     <div className="profile-tab">
-                        <ProfileHero profile={profile} username={username} />
+                        <ProfileHero profile={profile} username={username} featureFlags={featureFlags} />
                         <ProfileSocials socialLinks={profile?.socialLinks} getSocialIcon={getSocialIcon} />
                         {/* Important Links */}
                         <ProfileLinks importantLinks={profile?.importantLinks} />
@@ -139,7 +151,7 @@ const Profile = ({ usernameOverride }) => {
                 )}
 
                 {/* TOOLS TAB */}
-                {activeTab === 'tools' && (
+                {activeTab === 'tools' && featureFlags.userToolsEnabled && (
                     <div className="profile-courses">
                         <h2 className="profile-section-title" style={{ paddingLeft: '4px' }}>My Tools</h2>
                         <ProfileTools profile={profile} />
@@ -147,7 +159,7 @@ const Profile = ({ usernameOverride }) => {
                 )}
 
                 {/* PROMPTS TAB */}
-                {activeTab === 'prompts' && (
+                {activeTab === 'prompts' && featureFlags.userPromptsEnabled && (
                     <div className="profile-courses">
                         <h2 className="profile-section-title" style={{ paddingLeft: '4px' }}>Favorite Prompts</h2>
                         <ProfilePrompts profile={profile} />
@@ -155,7 +167,7 @@ const Profile = ({ usernameOverride }) => {
                 )}
 
                 {/* OFFERS TAB */}
-                {activeTab === 'offers' && (
+                {activeTab === 'offers' && featureFlags.userOffersEnabled && (
                     <div className="profile-courses">
                         <ProfileOffers profile={profile} />
                     </div>
@@ -163,7 +175,7 @@ const Profile = ({ usernameOverride }) => {
                 )}
 
                 {/* LINKS TAB */}
-                {activeTab === 'links' && (
+                {activeTab === 'links' && featureFlags.userLinksEnabled && (
                     <div className="profile-links">
                         <h2 className="profile-section-title">Important Links</h2>
                         <ProfileLinks importantLinks={profile?.importantLinks} />
@@ -212,7 +224,7 @@ const Profile = ({ usernameOverride }) => {
                 )}
 
                 {/* UPDATES TAB */}
-                {activeTab === 'updates' && (
+                {activeTab === 'updates' && featureFlags.userUpdatesEnabled && (
                     <div className="profile-updates">
                         <h2 className="profile-section-title">Recent Updates</h2>
                         <ProfileUpdates updates={updates} formatDate={formatDate} />
@@ -221,12 +233,15 @@ const Profile = ({ usernameOverride }) => {
             </main>
 
             {/* Bottom Navigation */}
-            <ProfileBottomNav
-                profile={profile}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                updates={updates}
-            />
+            {(featureFlags.userBottomNavEnabled !== false) && (
+                <ProfileBottomNav
+                    profile={profile}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    updates={updates}
+                    featureFlags={featureFlags}
+                />
+            )}
         </div>
     );
 };

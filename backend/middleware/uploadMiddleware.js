@@ -43,6 +43,8 @@ const storage = new CloudinaryStorage({
             folder = itemName ? `withub/tool_img/${itemName}` : `withub/tool_img`;
         } else if (context === 'prompt') {
             folder = itemName ? `withub/prompt_img/${itemName}` : `withub/prompt_img`;
+        } else if (context === 'offer') {
+            folder = `withub/offers_and_vouchers`;
         }
 
         // User Specific Uploads

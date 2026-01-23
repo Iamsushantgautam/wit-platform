@@ -2,8 +2,11 @@ import { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Users, Layout, Image, Plus, Search, Filter, Trash2, Edit2, CheckCircle, XCircle, MoreVertical, LogOut } from 'lucide-react';
+import { Users, Layout, Image, Plus, Search, Filter, Trash2, Edit2, CheckCircle, XCircle, MoreVertical, LogOut, Settings, Gift } from 'lucide-react';
 import '../styles/Admin.css';
+import AdminPanel from '../components/user/AdminPanel';
+import ToolCard from '../components/blocks/ToolCard';
+import PromptCard from '../components/blocks/PromptCard';
 
 // Sidebar Item Component
 const SidebarItem = ({ id, label, icon: Icon, activeTab, setActiveTab }) => (
@@ -23,6 +26,7 @@ const MasterAdminDashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [users, setUsers] = useState([]);
     const [tools, setTools] = useState([]);
+    const [offers, setOffers] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [stats, setStats] = useState({ totalUsers: 0, totalTools: 0, totalPrompts: 0 });
@@ -33,19 +37,22 @@ const MasterAdminDashboard = () => {
     const [formData, setFormData] = useState({
         name: '', description: '', url: '', logo: '', category: '',
         prompt: '', promptDescription: '', type: 'tool',
-        platform: 'Generic', tags: []
+        platform: 'Generic', tags: [],
+        code: '', discount: '', expires: '', isActive: true
     });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
-                const [usersRes, toolsRes] = await Promise.all([
+                const [usersRes, toolsRes, offersRes] = await Promise.all([
                     axios.get(`${API_URL}/user-manage`, config),
-                    axios.get(`${API_URL}/tools`)
+                    axios.get(`${API_URL}/tools`),
+                    axios.get(`${API_URL}/offers/admin`, config)
                 ]);
                 setUsers(usersRes.data);
                 setTools(toolsRes.data);
+                setOffers(offersRes.data);
 
                 // Calculate Stats
                 setStats({
@@ -65,6 +72,37 @@ const MasterAdminDashboard = () => {
     const handleSave = async (e) => {
         e.preventDefault();
 
+        // OFFER SUBMISSION
+        if (formData.type === 'offer') {
+            const payload = {
+                title: formData.name,
+                description: formData.description,
+                code: formData.code,
+                discount: formData.discount,
+                expires: formData.expires,
+                image: formData.logo,
+                tag: formData.category, // Use category field for tag
+                isActive: formData.isActive
+            };
+
+            try {
+                const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+                if (editingItem) {
+                    const res = await axios.put(`${API_URL}/offers/${editingItem._id}`, payload, config);
+                    setOffers(offers.map(o => o._id === editingItem._id ? res.data : o));
+                } else {
+                    const res = await axios.post(`${API_URL}/offers`, payload, config);
+                    setOffers([res.data, ...offers]);
+                }
+                closeForm();
+            } catch (error) {
+                console.error("Error saving offer", error);
+                alert('Failed to save offer');
+            }
+            return;
+        }
+
+        // TOOL/PROMPT SUBMISSION
         const payload = { ...formData }; // Clone to avoid mutation side effects
 
         // Validation & Defaults Logic
@@ -109,9 +147,14 @@ const MasterAdminDashboard = () => {
         if (!file) return;
         const form = new FormData();
         form.append('image', file);
+        // Determine context
+        let context = 'tool';
+        if (formData.type === 'offer') context = 'offer';
+        else if (formData.type === 'prompt') context = 'prompt';
+
         try {
             const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'multipart/form-data' } };
-            const res = await axios.post(`${API_URL}/upload`, form, config);
+            const res = await axios.post(`${API_URL}/upload?context=${context}`, form, config);
             // API returns the uploaded image path/url
             setFormData(prev => ({ ...prev, logo: res.data }));
         } catch (err) {
@@ -120,12 +163,17 @@ const MasterAdminDashboard = () => {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id, type) => {
         if (!window.confirm("Delete this item permanently?")) return;
         try {
             const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
-            await axios.delete(`${API_URL}/tools/${id}`, config);
-            setTools(tools.filter(t => t._id !== id));
+            if (type === 'offer') {
+                await axios.delete(`${API_URL}/offers/${id}`, config);
+                setOffers(offers.filter(o => o._id !== id));
+            } else {
+                await axios.delete(`${API_URL}/tools/${id}`, config);
+                setTools(tools.filter(t => t._id !== id));
+            }
         } catch (error) {
             console.error("Error deleting", error);
         }
@@ -144,18 +192,30 @@ const MasterAdminDashboard = () => {
     const openForm = (type = 'tool', item = null) => {
         if (item) {
             setEditingItem(item);
-            setFormData({
-                name: item.name, description: item.description, url: item.url || '',
-                logo: item.logo, category: item.category,
-                prompt: item.prompt || '', promptDescription: item.promptDescription || '',
-                type: item.type || 'tool', platform: item.platform || 'Generic', tags: item.tags || []
-            });
+            if (type === 'offer') {
+                setFormData({
+                    name: item.title, description: item.description, url: item.link || '',
+                    logo: item.image, category: item.tag || '',
+                    code: item.code || '', discount: item.discount || '',
+                    expires: item.expires || '', isActive: item.isActive,
+                    prompt: '', promptDescription: '', type: 'offer', platform: 'Generic', tags: []
+                });
+            } else {
+                setFormData({
+                    name: item.name, description: item.description, url: item.url || '',
+                    logo: item.logo, category: item.category,
+                    prompt: item.prompt || '', promptDescription: item.promptDescription || '',
+                    type: item.type || 'tool', platform: item.platform || 'Generic', tags: item.tags || [],
+                    code: '', discount: '', expires: '', isActive: true
+                });
+            }
         } else {
             setEditingItem(null);
             setFormData({
                 name: '', description: '', url: '', logo: '', category: '',
                 prompt: '', promptDescription: '', type: type,
-                platform: 'Generic', tags: []
+                platform: 'Generic', tags: [],
+                code: '', discount: '', expires: '', isActive: true
             });
         }
         setIsFormOpen(true);
@@ -170,67 +230,49 @@ const MasterAdminDashboard = () => {
 
     const OverviewTab = () => (
         <div className="space-y-6 animate-fade-up">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">System Overview</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="stat-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-blue-500 transition-colors cursor-pointer" onClick={() => setActiveTab('users')}>
-                    <div>
-                        <p className="text-slate-500 text-sm font-medium mb-1">Total Users</p>
-                        <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white">{stats.totalUsers}</h3>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">System Overview</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+                <div onClick={() => setActiveTab('users')} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-blue-500 cursor-pointer transition-all shadow-sm group">
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
+                            <Users size={20} />
+                        </div>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Users</span>
                     </div>
-                    <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Users size={24} />
-                    </div>
+                    <h3 className="text-3xl font-black text-slate-900 dark:text-white">{stats.totalUsers}</h3>
                 </div>
-                <div className="stat-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-purple-500 transition-colors cursor-pointer" onClick={() => setActiveTab('tools')}>
-                    <div>
-                        <p className="text-slate-500 text-sm font-medium mb-1">Active Tools</p>
-                        <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white">{stats.totalTools}</h3>
+
+                <div onClick={() => setActiveTab('tools')} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-purple-500 cursor-pointer transition-all shadow-sm group">
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="p-2 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-lg group-hover:scale-110 transition-transform">
+                            <Layout size={20} />
+                        </div>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Tools</span>
                     </div>
-                    <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/20 text-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Layout size={24} />
-                    </div>
+                    <h3 className="text-3xl font-black text-slate-900 dark:text-white">{stats.totalTools}</h3>
                 </div>
-                <div className="stat-card bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between group hover:border-pink-500 transition-colors cursor-pointer" onClick={() => setActiveTab('prompts')}>
-                    <div>
-                        <p className="text-slate-500 text-sm font-medium mb-1">Prompt Library</p>
-                        <h3 className="text-3xl font-extrabold text-slate-900 dark:text-white">{stats.totalPrompts}</h3>
+
+                <div onClick={() => setActiveTab('prompts')} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-pink-500 cursor-pointer transition-all shadow-sm group">
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="p-2 bg-pink-50 dark:bg-pink-900/20 text-pink-600 rounded-lg group-hover:scale-110 transition-transform">
+                            <Image size={20} />
+                        </div>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Prompt Library</span>
                     </div>
-                    <div className="w-12 h-12 bg-pink-50 dark:bg-pink-900/20 text-pink-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Image size={24} />
-                    </div>
+                    <h3 className="text-3xl font-black text-slate-900 dark:text-white">{stats.totalPrompts}</h3>
                 </div>
             </div>
 
-            {/* Recent Activity / Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl">
-                    <div className="relative z-10">
-                        <h3 className="text-2xl font-bold mb-2">Manage Prompts</h3>
-                        <p className="text-blue-100 mb-6 max-w-sm">Add exciting new prompts to the public library. Curate the best AI generation prompts for users.</p>
-                        <button onClick={() => { setActiveTab('prompts'); openForm('prompt'); }} className="glass-panel text-blue-900 px-6 py-3 rounded-xl font-bold hover:bg-white transition-colors shadow-lg btn btn-primary">
-                            Add New Prompt
-                        </button>
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Quick Stats</h3>
+                <div className="flex gap-6">
+                    <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
+                        <span className="font-medium text-sm text-slate-700 dark:text-slate-300">System Online</span>
                     </div>
-                    <Image size={200} className="absolute -bottom-10 -right-10 opacity-20 rotate-12" />
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 className="font-bold text-lg mb-4">Quick Stats</h3>
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                            <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                <span className="font-medium">Server Status</span>
-                            </div>
-                            <span className="text-green-600 font-bold text-sm">Online</span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                            <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                <span className="font-medium">Database</span>
-                            </div>
-                            <span className="text-blue-600 font-bold text-sm">Connected</span>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                        <span className="font-medium text-sm text-slate-700 dark:text-slate-300">Database Connected</span>
                     </div>
                 </div>
             </div>
@@ -356,46 +398,77 @@ const MasterAdminDashboard = () => {
                 ) : (
                     <div className="tool-grid-premium">
                         {filteredItems.map(item => (
-                            <div key={item._id} className="tool-admin-card group">
-                                <div className="flex items-start gap-4 mb-4">
-                                    <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-800 shadow-inner">
-                                        <img src={item.logo} alt={item.name} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 transition-colors">{item.name}</h3>
-                                        <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">{item.category}</p>
-                                    </div>
-                                </div>
-
-                                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4 flex-grow">
-                                    {item.description}
-                                </p>
-
-                                {type === 'prompt' && (
-                                    <div className="mb-4 space-y-3">
-                                        <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3 text-xs font-mono text-slate-500 dark:text-slate-400 line-clamp-2 border border-slate-100 dark:border-slate-800 italic">
-                                            "{item.prompt}"
-                                        </div>
-                                        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-                                            {(item.tags || []).map((tag, i) => (
-                                                <span key={i} className="whitespace-nowrap text-[10px] px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-md font-bold border border-blue-100 dark:border-blue-900/30">{tag}</span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="flex gap-2 mt-auto pt-4 border-t border-slate-50 dark:border-slate-800">
-                                    <button onClick={() => openForm(type, item)} className="tool-btn edit flex items-center justify-center gap-2">
-                                        <Edit2 size={14} /> <span>Edit</span>
-                                    </button>
-                                    <button onClick={() => handleDelete(item._id)} className="tool-btn delete flex items-center justify-center gap-2">
-                                        <Trash2 size={14} /> <span>Delete</span>
-                                    </button>
-                                </div>
-                            </div>
+                            type === 'tool' ? (
+                                <ToolCard
+                                    key={item._id}
+                                    tool={item}
+                                    type="public"
+                                    onEdit={() => openForm(type, item)}
+                                    onRemove={() => handleDelete(item._id)}
+                                />
+                            ) : (
+                                <PromptCard
+                                    key={item._id}
+                                    prompt={item}
+                                    type="public"
+                                    onEdit={() => openForm(type, item)}
+                                    onRemove={() => handleDelete(item._id)}
+                                />
+                            )
                         ))}
                     </div>
                 )}
+            </div>
+        );
+    };
+
+    const OffersTab = () => {
+        const filteredOffers = offers.filter(o =>
+            (o.title && o.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (o.description && o.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+
+        return (
+            <div className="space-y-6 animate-fade-up">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Manage Offers</h2>
+                    <button onClick={() => openForm('offer')} className="bg-blue-600 text-white font-bold py-2.5 px-6 rounded-xl flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30">
+                        <Plus size={18} /> Add Offer
+                    </button>
+                </div>
+
+                <div className="tool-grid-premium">
+                    {filteredOffers.map(offer => (
+                        <div key={offer._id} className="tool-admin-card group">
+                            {offer.image && (
+                                <div className="w-full h-32 mb-4 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+                                    <img src={offer.image} alt={offer.title} className="w-full h-full object-cover" />
+                                </div>
+                            )}
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="font-bold text-slate-900 dark:text-white truncate flex-1 pr-2">{offer.title}</h3>
+                                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${offer.isActive ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-600'}`}>
+                                    {offer.isActive ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mb-2 truncate">{offer.description}</p>
+                            <div className="flex gap-2 text-xs font-mono bg-slate-50 dark:bg-slate-800 p-2 rounded mb-4">
+                                <span className="font-bold">{offer.code || 'NO CODE'}</span>
+                                <span className="text-slate-400">|</span>
+                                <span className="text-blue-500">{offer.discount}</span>
+                            </div>
+
+                            <div className="flex gap-2 mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <button onClick={() => openForm('offer', offer)} className="tool-btn edit flex items-center justify-center gap-2 flex-1">
+                                    <Edit2 size={14} /> Edit
+                                </button>
+                                <button onClick={() => handleDelete(offer._id, 'offer')} className="tool-btn delete flex items-center justify-center gap-2 flex-1">
+                                    <Trash2 size={14} /> Delete
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     };
@@ -429,6 +502,8 @@ const MasterAdminDashboard = () => {
                         <SidebarItem id="users" label="User Management" icon={Users} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                         <SidebarItem id="tools" label="AI Tools" icon={Filter} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                         <SidebarItem id="prompts" label="Prompt Library" icon={Image} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
+                        <SidebarItem id="offers" label="Manage Offers" icon={Gift} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
+                        <SidebarItem id="settings" label="Feature Controls" icon={Settings} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                     </nav>
 
                     <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-800">
@@ -445,6 +520,8 @@ const MasterAdminDashboard = () => {
                     {activeTab === 'users' && <UsersTab />}
                     {activeTab === 'tools' && <ItemsTab type="tool" />}
                     {activeTab === 'prompts' && <ItemsTab type="prompt" />}
+                    {activeTab === 'offers' && <OffersTab />}
+                    {activeTab === 'settings' && <AdminPanel />}
                 </main>
             </div>
 
@@ -544,6 +621,66 @@ const MasterAdminDashboard = () => {
                                             value={formData.tags.join(', ')}
                                             onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()) })}
                                         />
+                                    </div>
+                                </div>
+                            ) : formData.type === 'offer' ? (
+                                /* --- OFFER FORM --- */
+                                <div className="space-y-6">
+                                    {/* Image Upload for Offer */}
+                                    <div className="flex flex-col items-center justify-center">
+                                        <span className="mb-2 text-sm font-bold text-slate-500 uppercase tracking-wider">Offer Banner</span>
+                                        <div className="relative group w-full aspect-[2/1] bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 transition-colors cursor-pointer">
+                                            {formData.logo ? (
+                                                <img src={formData.logo} alt="Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+                                                    <Image size={32} className="mb-2 opacity-50" />
+                                                    <span className="text-xs font-bold">Upload Image</span>
+                                                </div>
+                                            )}
+                                            <input type="file" accept="image/*" onChange={(e) => e.target.files && handleLogoFile(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer w-[100px] h-[100px] z-10" />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-grid">
+                                        <div>
+                                            <label className="label-premium">Title</label>
+                                            <input type="text" className="input-premium" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                                        </div>
+                                        <div>
+                                            <label className="label-premium">Tag/Label</label>
+                                            <input type="text" className="input-premium" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} placeholder="e.g. Hot Deal" />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="label-premium">Description</label>
+                                        <textarea className="input-premium" rows="2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} required />
+                                    </div>
+
+                                    <div className="form-grid">
+                                        <div>
+                                            <label className="label-premium">Promo Code</label>
+                                            <input type="text" className="input-premium font-mono" value={formData.code} onChange={e => setFormData({ ...formData, code: e.target.value })} placeholder="Leave empty if none" />
+                                        </div>
+                                        <div>
+                                            <label className="label-premium">Discount</label>
+                                            <input type="text" className="input-premium" value={formData.discount} onChange={e => setFormData({ ...formData, discount: e.target.value })} placeholder="e.g. 50% OFF" />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-grid">
+                                        <div>
+                                            <label className="label-premium">Expires</label>
+                                            <input type="text" className="input-premium" value={formData.expires} onChange={e => setFormData({ ...formData, expires: e.target.value })} placeholder="e.g. Dec 31 or Limited Time" />
+                                        </div>
+                                        <div>
+                                            <label className="label-premium">Status</label>
+                                            <select className="input-premium" value={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.value === 'true' })}>
+                                                <option value="true">Active</option>
+                                                <option value="false">Inactive</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (

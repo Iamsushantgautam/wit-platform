@@ -1,7 +1,7 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 
-const ProfileBottomNav = ({ profile, activeTab, setActiveTab, updates }) => {
+const ProfileBottomNav = ({ profile, activeTab, setActiveTab, updates, featureFlags = {} }) => {
     // Get icon component by name
     const getIconComponent = (iconName) => {
         const Icon = LucideIcons[iconName];
@@ -33,13 +33,36 @@ const ProfileBottomNav = ({ profile, activeTab, setActiveTab, updates }) => {
         }
     ];
 
+    // Map tab names to feature flags
+    const tabFeatureMap = {
+        'tools': 'userToolsEnabled',
+        'prompts': 'userPromptsEnabled',
+        'offers': 'userOffersEnabled',
+        'links': 'userLinksEnabled',
+        'updates': 'userUpdatesEnabled'
+    };
+
+    // Filter items based on feature flags
+    const filterByFeatureFlags = (items) => {
+        return items.filter(item => {
+            const featureKey = tabFeatureMap[item.tab];
+            // If there's no feature flag for this tab, always show it (e.g., profile tab)
+            if (!featureKey) return true;
+            // Otherwise, check if the feature is enabled
+            return featureFlags[featureKey] !== false;
+        });
+    };
+
     // Use custom nav items if available, otherwise use defaults
-    const navItems = (profile?.navigationSettings?.useDefaultBottomNav === false &&
+    let navItems = (profile?.navigationSettings?.useDefaultBottomNav === false &&
         profile?.navigationSettings?.bottomNavItems?.length > 0)
         ? profile.navigationSettings.bottomNavItems
             .filter(item => item.isVisible)
             .sort((a, b) => (a.order || 0) - (b.order || 0))
         : defaultNavItems;
+
+    // Apply feature flag filtering
+    navItems = filterByFeatureFlags(navItems);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);

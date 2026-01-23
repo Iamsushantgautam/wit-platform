@@ -1,11 +1,20 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 
-const ProfileDrawer = ({ isOpen, onClose, activeTab, setActiveTab, profile, updates }) => {
+const ProfileDrawer = ({ isOpen, onClose, activeTab, setActiveTab, profile, updates, featureFlags = {} }) => {
     // Get icon component by name
     const getIconComponent = (iconName) => {
         const Icon = LucideIcons[iconName];
         return Icon ? Icon : LucideIcons.Home;
+    };
+
+    // Map tab names to feature flags
+    const tabFeatureMap = {
+        'tools': 'userToolsEnabled',
+        'prompts': 'userPromptsEnabled',
+        'offers': 'userOffersEnabled',
+        'links': 'userLinksEnabled',
+        'updates': 'userUpdatesEnabled'
     };
 
     // Default menu items based on available content
@@ -70,13 +79,27 @@ const ProfileDrawer = ({ isOpen, onClose, activeTab, setActiveTab, profile, upda
         return items;
     };
 
+    // Filter items based on feature flags
+    const filterByFeatureFlags = (items) => {
+        return items.filter(item => {
+            const featureKey = tabFeatureMap[item.tab];
+            // If there's no feature flag for this tab, always show it (e.g., profile tab)
+            if (!featureKey) return true;
+            // Otherwise, check if the feature is enabled
+            return featureFlags[featureKey] !== false;
+        });
+    };
+
     // Use custom menu items if available, otherwise use defaults
-    const menuItems = (profile?.navigationSettings?.useDefaultHamburger === false &&
+    let menuItems = (profile?.navigationSettings?.useDefaultHamburger === false &&
         profile?.navigationSettings?.menuItems?.length > 0)
         ? profile.navigationSettings.menuItems
             .filter(item => item.isVisible)
             .sort((a, b) => (a.order || 0) - (b.order || 0))
         : getDefaultMenuItems();
+
+    // Apply feature flag filtering
+    menuItems = filterByFeatureFlags(menuItems);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);

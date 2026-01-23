@@ -1,22 +1,33 @@
 import React from 'react';
-import { Layout, CheckCircle, Trash2, ExternalLink, Wrench } from 'lucide-react';
+import { Layout, CheckCircle, Trash2, ExternalLink, Wrench, Edit } from 'lucide-react';
 import '../../styles/Blocks/AiTools.css';
 
-const ToolCard = ({ tool, type = 'library', isSelected, onToggle, onRemove }) => {
+const ToolCard = ({ tool, type = 'library', isSelected, onToggle, onRemove, onEdit }) => {
 
     // Custom or Public View (Detailed Card)
     if (type === 'custom' || type === 'public') {
         return (
             <article className="tool-card relative group">
-                {onRemove && (
-                    <button
-                        onClick={onRemove}
-                        className="absolute top-2 right-2 bg-red-100 text-red-500 p-1.5 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all z-20 hover:bg-red-200"
-                        title="Remove Tool"
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                )}
+                <div className="absolute top-2 right-2 flex gap-2 z-20 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
+                    {onEdit && (
+                        <button
+                            onClick={onEdit}
+                            className="bg-blue-100 text-blue-500 p-1.5 rounded-full hover:bg-blue-200"
+                            title="Edit Tool"
+                        >
+                            <Edit size={16} />
+                        </button>
+                    )}
+                    {onRemove && (
+                        <button
+                            onClick={onRemove}
+                            className="bg-red-100 text-red-500 p-1.5 rounded-full hover:bg-red-200"
+                            title="Remove Tool"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
+                </div>
 
                 <div className="tool-card-header">
                     <div className="tool-card-logo">
