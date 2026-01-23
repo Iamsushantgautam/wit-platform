@@ -1,12 +1,11 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import {
     Megaphone, Star, Link as LinkIcon, Plus, Image, EyeOff, Eye,
-    Tag, Ticket, AlignLeft, Edit, Save, X
+    Tag, Ticket, AlignLeft, Edit, Save, X, Heart, Globe
 } from 'lucide-react';
 import AuthContext from '../../context/AuthContext';
 import OfferCard from '../blocks/OfferCard';
-import '../../styles/Offers.css';
 
 const UserOffers = ({
     profileData,
@@ -15,6 +14,10 @@ const UserOffers = ({
     saving
 }) => {
     const { API_URL } = useContext(AuthContext);
+
+    // Global Offers State
+    const [globalOffers, setGlobalOffers] = useState([]);
+    const [loadingGlobal, setLoadingGlobal] = useState(true);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,6 +36,24 @@ const UserOffers = ({
         isVisible: true
     });
 
+    useEffect(() => {
+        const fetchGlobalOffers = async () => {
+            try {
+                const res = await axios.get(`${API_URL}/offers`);
+                setGlobalOffers(res.data);
+            } catch (error) {
+                console.error("Failed to fetch global offers", error);
+            } finally {
+                setLoadingGlobal(false);
+            }
+        };
+        fetchGlobalOffers();
+    }, [API_URL]);
+
+    // Categorize User Banners
+    const promoBanners = (profileData.banners || []).filter(b => b.promoCode && b.promoCode.trim() !== '');
+    const dealBanners = (profileData.banners || []).filter(b => !b.promoCode || b.promoCode.trim() === '');
+
     // Handlers
     const handleOpenAdd = () => {
         setTempBanner({
@@ -49,9 +70,10 @@ const UserOffers = ({
         setIsModalOpen(true);
     };
 
-    const handleOpenEdit = (index) => {
-        setTempBanner({ ...profileData.banners[index] });
-        setEditingIndex(index);
+    const handleOpenEdit = (originalIndex) => {
+        // Need to find the actual index in profileData.banners
+        setTempBanner({ ...profileData.banners[originalIndex] });
+        setEditingIndex(originalIndex);
         setShowPromo(false);
         setIsModalOpen(true);
     };
@@ -62,12 +84,23 @@ const UserOffers = ({
         setUploading(false);
     };
 
-    const removeBanner = (index) => {
-        const newBanners = profileData.banners.filter((_, i) => i !== index);
-        setProfileData({ ...profileData, banners: newBanners });
+    const removeBanner = async (originalIndex) => {
+        const newBanners = profileData.banners.filter((_, i) => i !== originalIndex);
+        const updatedProfile = { ...profileData, banners: newBanners };
+
+        setProfileData(updatedProfile);
+
+        // Auto-save
+        try {
+            await axios.post(`${API_URL}/profiles`, updatedProfile, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+        } catch (err) {
+            console.error("Failed to auto-save deletion", err);
+        }
     };
 
-    const handleSaveBanner = () => {
+    const handleSaveBanner = async () => {
         if (!tempBanner.title) {
             alert("Title is required");
             return;
@@ -80,8 +113,20 @@ const UserOffers = ({
             newBanners.push(tempBanner);
         }
 
-        setProfileData({ ...profileData, banners: newBanners });
+        const updatedProfile = { ...profileData, banners: newBanners };
+        setProfileData(updatedProfile);
+
         handleCloseModal();
+
+        // Auto-save
+        try {
+            await axios.post(`${API_URL}/profiles`, updatedProfile, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+        } catch (err) {
+            console.error("Failed to auto-save banner", err);
+            alert("Saved locally, but failed to sync to server.");
+        }
     };
 
     const handleImageUpload = async (e) => {
@@ -109,6 +154,43 @@ const UserOffers = ({
         }
     };
 
+    const toggleFavorite = async (offer) => {
+        try {
+            const config = {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            };
+            // Note: offer is the object, we need its ID.
+            // For user banners (local), they might not have an _id if strictly local, but here we likely mean Global Offers which do have _id.
+            if (offer._id) {
+                const { data } = await axios.post(`${API_URL}/profiles/favorites/offer`, { offerId: offer._id }, config);
+                setProfileData(data);
+            }
+        } catch (error) {
+            console.error("Error toggling favorite", error);
+        }
+    };
+
+    const getRealIndex = (banner) => {
+        return (profileData.banners || []).findIndex(b => b === banner);
+    };
+
+    const renderAddButton = () => (
+        <button
+            onClick={handleOpenAdd}
+            className="group relative flex flex-col items-center justify-center min-h-[320px] rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-gray-50/50 dark:bg-gray-800/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all duration-300"
+        >
+            <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-full shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 text-blue-500">
+                <Plus size={32} />
+            </div>
+            <span className="font-bold text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Add New Offer</span>
+        </button>
+    );
+
+    // Helpers to check if global offer is favorited
+    const isGlobalFavorite = (offerId) => {
+        return profileData.favoritesOffers?.some(fav => fav._id === offerId || fav === offerId);
+    };
+
     return (
         <div className="offers-section">
             <h2 className="dashboard-section-title">
@@ -116,8 +198,8 @@ const UserOffers = ({
                 <span>Offers & Banners</span>
             </h2>
 
-            {/* Hero Offer Editor - Enhanced Style */}
-            <div className="mb-10 relative group">
+            {/* Hero Offer Editor - Encapsulated in its own block logic */}
+            <div className="mb-12 relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                 <div className="relative p-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-xl overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-100 dark:bg-yellow-900/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
@@ -246,38 +328,114 @@ const UserOffers = ({
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 mb-6">
+            {/* My Promo Codes Section */}
+            <div className="flex items-center gap-3 mb-6 mt-12">
                 <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
-                    <Megaphone size={24} className="text-blue-600 dark:text-blue-400" />
+                    <Ticket size={24} className="text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Additional Banners</h3>
-                    <p className="text-sm text-gray-500">Manage your other promotional banners</p>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">My Promo Codes</h3>
+                    <p className="text-sm text-gray-500">Manage your discount coupons</p>
                 </div>
             </div>
 
-            {/* Changed to Grid Layout - Minimalist Style */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                {/* Add New Card - Styled to match proportions */}
-                <button
-                    onClick={handleOpenAdd}
-                    className="group relative flex flex-col items-center justify-center min-h-[320px] rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-gray-50/50 dark:bg-gray-800/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all duration-300"
-                >
-                    <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-full shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 text-blue-500">
-                        <Plus size={32} />
-                    </div>
-                    <span className="font-bold text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Add New Offer</span>
-                </button>
-
-                {(profileData.banners || []).map((banner, index) => (
-                    <OfferCard
-                        key={index}
-                        banner={banner}
-                        onEdit={() => handleOpenEdit(index)}
-                        onDelete={() => removeBanner(index)}
-                    />
-                ))}
+            <div className="grid grid-cols-3 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                {renderAddButton()}
+                {promoBanners.map((banner, index) => {
+                    const realIndex = getRealIndex(banner);
+                    return (
+                        <OfferCard
+                            key={`promo-${index}`}
+                            offer={{
+                                title: banner.title,
+                                image: banner.imageUrl,
+                                link: banner.link,
+                                code: banner.promoCode,
+                                description: banner.caption,
+                                discount: banner.tags && banner.tags.length > 0 ? banner.tags[0] : null
+                            }}
+                            onEdit={() => handleOpenEdit(realIndex)}
+                            onDelete={() => removeBanner(realIndex)}
+                            onToggleFavorite={() => toggleFavorite(banner)}
+                        />
+                    );
+                })}
             </div>
+
+            {/* My Deal Offers Section */}
+            <div className="flex items-center gap-3 mb-6 mt-16">
+                <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
+                    <Megaphone size={24} className="text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">My Direct Deals</h3>
+                    <p className="text-sm text-gray-500">Manage your promotional banners (No Code)</p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-3 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-16">
+                {/* Only show add button if no promos, or just rely on the top one. Let's add it here too for convenience if deal section is empty */}
+                {dealBanners.length === 0 && promoBanners.length > 0 && renderAddButton()}
+
+                {dealBanners.map((banner, index) => {
+                    const realIndex = getRealIndex(banner);
+                    return (
+                        <OfferCard
+                            key={`deal-${index}`}
+                            offer={{
+                                title: banner.title,
+                                image: banner.imageUrl,
+                                link: banner.link,
+                                code: banner.promoCode,
+                                description: banner.caption,
+                                discount: banner.tags && banner.tags.length > 0 ? banner.tags[0] : null
+                            }}
+                            onEdit={() => handleOpenEdit(realIndex)}
+                            onDelete={() => removeBanner(realIndex)}
+                            onToggleFavorite={() => toggleFavorite(banner)}
+                        />
+                    );
+                })}
+                {dealBanners.length === 0 && promoBanners.length === 0 && <p className="text-gray-400 italic">No direct deals added yet.</p>}
+            </div>
+
+
+            {/* Website All Offers Section - Carousel Style */}
+            <div className="flex items-center gap-3 mb-6 mt-16 pt-8 border-t border-gray-100 dark:border-gray-800">
+                <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg">
+                    <Globe size={24} className="text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Explore All Offers</h3>
+                    <p className="text-sm text-gray-500">Discover trending offers from the platform</p>
+                </div>
+            </div>
+
+            {loadingGlobal ? (
+                <div className="py-10 flex justify-center">
+                    <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                </div>
+            ) : (
+                <div className="relative">
+                    <div className="grid grid-cols-3 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-16" style={{ scrollBehavior: 'smooth' }}>
+                        {globalOffers.map((offer, idx) => (
+                            <div key={`global-${offer._id || idx}`} className="snap-center shrink-0 w-[300px] md:w-[350px]">
+                                <OfferCard
+                                    offer={offer}
+                                    onToggleFavorite={() => toggleFavorite(offer)}
+                                    // Use new helper to check favorite status
+                                    isFavorite={isGlobalFavorite(offer._id)}
+                                />
+                            </div>
+                        ))}
+                        {globalOffers.length === 0 && (
+                            <div className="w-full text-center text-gray-400 italic py-10 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                                No active global offers found.
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             <div className="sticky bottom-4 z-20 mt-8 flex justify-end">
                 <button

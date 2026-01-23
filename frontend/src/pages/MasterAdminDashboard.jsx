@@ -82,6 +82,7 @@ const MasterAdminDashboard = () => {
                 expires: formData.expires,
                 image: formData.logo,
                 tag: formData.category, // Use category field for tag
+                link: formData.url,
                 isActive: formData.isActive
             };
 
@@ -656,6 +657,11 @@ const MasterAdminDashboard = () => {
                                     <div>
                                         <label className="label-premium">Description</label>
                                         <textarea className="input-premium" rows="2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} required />
+                                    </div>
+
+                                    <div>
+                                        <label className="label-premium">Offer Link (URL)</label>
+                                        <input type="url" className="input-premium" value={formData.url} onChange={e => setFormData({ ...formData, url: e.target.value })} placeholder="https://example.com/deal" />
                                     </div>
 
                                     <div className="form-grid">

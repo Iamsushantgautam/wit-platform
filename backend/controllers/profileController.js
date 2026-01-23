@@ -80,7 +80,8 @@ const getProfileByUsername = asyncHandler(async (req, res) => {
     const profile = await Profile.findOne({ user: user._id })
         .populate('user', 'username email')
         .populate('activeTools')
-        .populate('favoritesPrompts'); // Populate tools details
+        .populate('favoritesPrompts')
+        .populate('favoritesOffers'); // Populate tools details
 
     if (!profile) {
         res.status(404);
@@ -144,10 +145,59 @@ const toggleFavoritePrompt = asyncHandler(async (req, res) => {
     res.json(populated);
 });
 
+// @desc    Toggle an offer in favoritesOffers
+// @route   POST /api/profiles/favorites/offer
+// @access  Private
+const toggleFavoriteOffer = asyncHandler(async (req, res) => {
+    const { offerId } = req.body;
+    if (!offerId) {
+        res.status(400);
+        throw new Error('offerId is required');
+    }
+
+    const Offer = require('../models/Offer');
+    const offer = await Offer.findById(offerId);
+    if (!offer) {
+        res.status(404);
+        throw new Error('Offer not found');
+    }
+
+    let profile = await Profile.findOne({ user: req.user._id });
+
+    if (!profile) {
+        profile = new Profile({
+            user: req.user._id,
+            name: req.user.username,
+            favoritesOffers: []
+        });
+    }
+
+    const exists = profile.favoritesOffers && profile.favoritesOffers.some(id => id.toString() === offerId);
+
+    // Initialize if undefined
+    if (!profile.favoritesOffers) profile.favoritesOffers = [];
+
+    if (exists) {
+        profile.favoritesOffers = profile.favoritesOffers.filter(id => id.toString() !== offerId);
+    } else {
+        profile.favoritesOffers.push(offerId);
+    }
+
+    await profile.save();
+
+    const populated = await Profile.findById(profile._id)
+        .populate('favoritesPrompts')
+        .populate('favoritesOffers')
+        .populate('user', 'username email');
+
+    res.json(populated);
+});
+
 module.exports = {
     getMyProfile,
     updateProfile,
     getProfileByUsername,
     getAllPublicProfiles,
-    toggleFavoritePrompt
+    toggleFavoritePrompt,
+    toggleFavoriteOffer
 };

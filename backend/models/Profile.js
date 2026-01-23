@@ -124,6 +124,10 @@ const profileSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tool'
     }],
+    favoritesOffers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Offer'
+    }],
     // Custom Pages
     customPages: [{
         slug: {

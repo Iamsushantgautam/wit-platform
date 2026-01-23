@@ -50,9 +50,9 @@ const storage = new CloudinaryStorage({
         // User Specific Uploads
         else if (context === 'avatar') {
             folder = `withub/users/${username}/profile_img`;
-        } else if (context === 'uploads') {
+        } else if (context === 'uploads' || context === 'banner') {
             // Used for Dashboard Banners/Offers
-            folder = `withub/users/${username}/user_offer_img`;
+            folder = `withub/${username}/offerandvoucher`;
         } else if (context === 'updates') {
             folder = `withub/users/${username}/user_update_img`;
         } else if (context === 'user_tool') {

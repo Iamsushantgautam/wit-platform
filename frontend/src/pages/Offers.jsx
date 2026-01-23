@@ -84,18 +84,19 @@ const Offers = () => {
                                         <OfferCard key={offer._id} offer={offer} index={idx} />
                                     ))}
                                 </div>
+                                <br />
                             </section>
                         )}
 
                         {/* Section 2: Direct Deals (Paginated) */}
                         {dealOffers.length > 0 && (
-                            <section className="animate-fade-up" style={{ animationDelay: '200ms' }}>
+                            <section className="mb-20 animate-fade-up" style={{ animationDelay: '200ms' }}>
                                 <div className="section-header-wrapper">
                                     <div className="offer-section-title">
                                         <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg text-amber-600">
 
                                         </div>
-                                        <h1><Percent size={24} />Hot Deals</h1>
+                                        <h1><Percent size={32} />Hot Deals</h1>
                                     </div>
 
                                     {/* Pagination Controls */}
