@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { MessageCircle } from 'lucide-react';
-import PromptCard from '../blocks/PromptCard';
 import { PromptCard } from '../components/public-profile';
 
 const ProfilePrompts = ({ profile }) => {
