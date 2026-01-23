@@ -1,5 +1,6 @@
-import React from 'react';
-import { Plus, X, Edit, Image, Link as LinkIcon, Ticket, Tag, EyeOff, AlignLeft } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, X, Edit, Image, Link as LinkIcon, Ticket, Tag, EyeOff, Eye, AlignLeft } from 'lucide-react';
+import '../../styles/Offers.css';
 
 const BannerModal = ({
     isOpen,
@@ -11,6 +12,8 @@ const BannerModal = ({
     uploading,
     isEdit
 }) => {
+    const [showPromo, setShowPromo] = useState(false);
+
     if (!isOpen) return null;
 
     return (
@@ -83,16 +86,25 @@ const BannerModal = ({
                             ) : (
                                 <div className="h-40 flex flex-col items-center justify-center text-gray-400">
                                     {uploading ? (
-                                        <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent mb-2"></div>
-                                    ) : (
-                                        <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-xl flex items-center justify-center mb-3 transform group-hover:scale-110 transition-transform">
-                                            <Image size={28} />
+                                        <div className="flex flex-col items-center">
+                                            <div className="relative w-16 h-16 mb-3">
+                                                <div className="absolute inset-0 border-4 border-blue-100 dark:border-blue-900/30 rounded-full"></div>
+                                                <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                                                <Image size={24} className="absolute inset-0 m-auto text-blue-500 animate-pulse" />
+                                            </div>
+                                            <p className="text-sm font-bold text-blue-500 animate-pulse">Uploading Image...</p>
                                         </div>
+                                    ) : (
+                                        <>
+                                            <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-xl flex items-center justify-center mb-3 transform group-hover:scale-110 transition-transform">
+                                                <Image size={28} />
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                                                Click to upload banner image
+                                            </p>
+                                            <p className="text-xs text-gray-400 mt-1">Supports JPG, PNG (Max 2MB)</p>
+                                        </>
                                     )}
-                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                                        {uploading ? 'Uploading...' : 'Click to upload banner image'}
-                                    </p>
-                                    <p className="text-xs text-gray-400 mt-1">Supports JPG, PNG (Max 2MB)</p>
                                 </div>
                             )}
                         </div>
@@ -137,10 +149,10 @@ const BannerModal = ({
                         {/* Promo Code */}
                         <div className="form-group">
                             <label className="label-premium">Promo Code</label>
-                            <div className="relative" style={{ position: 'relative' }}>
+                            <div className="relative group">
                                 <input
-                                    type="text"
-                                    className="input-premium pl-10 font-mono"
+                                    type={showPromo ? "text" : "password"}
+                                    className="input-premium pl-10 pr-10 font-mono tracking-wider transition-all duration-300 ease-in-out"
                                     value={tempBanner.promoCode}
                                     onChange={(e) => setTempBanner({ ...tempBanner, promoCode: e.target.value })}
                                     placeholder="SAVE20"
@@ -148,6 +160,13 @@ const BannerModal = ({
                                 <div style={{ position: 'absolute', top: '50%', left: '0.75rem', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9ca3af' }}>
                                     <Ticket size={18} />
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPromo(!showPromo)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none"
+                                >
+                                    {showPromo ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
                         </div>
 

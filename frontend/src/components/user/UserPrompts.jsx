@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import {
-    Megaphone, Plus, Trash2, Check, Copy, Search, Save, Heart, CheckCircle, Edit
-} from 'lucide-react';
+import { Megaphone, Plus, Search, Save } from 'lucide-react';
+import PromptCard from '../blocks/PromptCard';
 
 const UserPrompts = ({
     profileData,
@@ -11,6 +10,7 @@ const UserPrompts = ({
     removeCustomItem,
     toggleTool,
     toggleFavorite,
+    handleProfileChange,
     saveProfile,
     saving
 }) => {
@@ -29,8 +29,77 @@ const UserPrompts = ({
         setTimeout(() => setCopiedId(null), 2000);
     };
 
+    // State for View All toggles
+    const [viewAllFavorites, setViewAllFavorites] = useState(false);
+    const [viewAllCustom, setViewAllCustom] = useState(false);
+
+    // Helper to render section content based on count and view state
+    const renderSectionContent = (items, viewAllState, setViewAllState, type = 'library') => {
+        const count = items.length;
+        const isGrid = count <= 4 || viewAllState;
+
+        return (
+            <div className="space-y-4">
+                {isGrid ? (
+                    <div className="prompts-grid">
+                        {items.map((item, idx) => (
+                            <PromptCard
+                                key={item._id || idx}
+                                type={type}
+                                prompt={item}
+                                isFav={item.isFav}
+                                onToggle={type === 'library' ? () => toggleTool(item._id) : undefined}
+                                onEdit={type === 'custom' ? () => openEditPromptModal(idx) : undefined}
+                                onRemove={type === 'custom' ? () => removeCustomItem(item) : undefined}
+                                onFavorite={toggleFavorite}
+                                onCopy={handleCopyPrompt}
+                                copiedId={copiedId}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-purple-500/30 -mx-2 px-2">
+                        {items.map((item, idx) => (
+                            <div key={item._id || idx} className="min-w-[280px] w-[280px] snap-center">
+                                <PromptCard
+                                    key={item._id || idx}
+                                    type={type}
+                                    prompt={item}
+                                    isFav={item.isFav}
+                                    onToggle={type === 'library' ? () => toggleTool(item._id) : undefined}
+                                    onEdit={type === 'custom' ? () => openEditPromptModal(idx) : undefined}
+                                    onRemove={type === 'custom' ? () => removeCustomItem(item) : undefined}
+                                    onFavorite={toggleFavorite}
+                                    onCopy={handleCopyPrompt}
+                                    copiedId={copiedId}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {count > 4 && (
+                    <div className="flex justify-center mt-4">
+                        <button
+                            onClick={() => setViewAllState(!viewAllState)}
+                            className="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white px-6 py-2 rounded-full text-sm font-bold transition-all"
+                        >
+                            {viewAllState ? 'Show Less' : 'View All'}
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Favorites logic
+    const favoritePrompts = availableTools.filter(t =>
+        profileData.favoritesPrompts?.some(f => (f._id || f) === t._id)
+    );
+
     return (
         <div className="prompts-section">
+            {/* Header: Title + Search + Add Button */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
                     <h2 className="dashboard-section-title mb-1">
@@ -38,173 +107,114 @@ const UserPrompts = ({
                         <span>My Prompts Library</span>
                     </h2>
                     <p className="text-gray-500 dark:text-gray-400">
-                        Manage your prompts. Add custom prompts or select from library.
+                        Manage your prompts and public visibility.
                     </p>
                 </div>
-                <button onClick={openAddPromptModal} className="btn btn-outline flex items-center gap-2 py-2 px-4 whitespace-nowrap">
-                    <Plus size={18} /> Add Custom Prompt
-                </button>
+
+                <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                    {/* Search Bar MOVED TO TOP */}
+                    <div className="prompts-search-wrapper w-full md:w-64">
+                        <Search className="prompts-search-icon" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search prompts..."
+                            className="prompts-search-input"
+                            value={toolSearch}
+                            onChange={(e) => setToolSearch(e.target.value)}
+                        />
+                    </div>
+
+                    <button onClick={openAddPromptModal} className="btn btn-outline flex items-center justify-center gap-2 py-2 px-4 whitespace-nowrap">
+                        <Plus size={18} /> Add Custom
+                    </button>
+
+                    <button onClick={saveProfile} disabled={saving} className="btn btn-primary flex items-center justify-center gap-2 py-2 px-4 whitespace-nowrap">
+                        <Save size={18} /> {saving ? 'Saving...' : 'Save'}
+                    </button>
+                </div>
             </div>
 
-            {/* Custom Prompts  form */}
+            {/* Public Display Settings */}
+            <div className="mb-8 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Public Profile Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Which prompts to show on public profile?
+                        </label>
+                        <select
+                            name="publicPromptsDisplay"
+                            value={profileData.publicPromptsDisplay || 'all'}
+                            onChange={handleProfileChange}
+                            className="w-full p-2.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                        >
+                            <option value="all">Show All (Custom + Favorites + Library)</option>
+                            <option value="custom">Only Custom Prompts</option>
+                            <option value="favorites">Only Favorites</option>
+                            <option value="custom_favorites">Custom & Favorites</option>
+                            <option value="custom_library">Custom & Library (Selected)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <br />
+            {/* Favorite Prompts Section */}
+            {favoritePrompts.length > 0 && (
+                <div className="mb-10">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800 dark:text-white">
+                        <Save size={18} className="text-purple-500" /> Your Favorite Prompts
+                    </h3><br />
+                    {renderSectionContent(
+                        favoritePrompts.map(p => ({ ...p, isFav: true })),
+                        viewAllFavorites,
+                        setViewAllFavorites,
+                        'library'
+                    )}
+                </div>
+            )}
+            <br />
+            {/* Custom Prompts Section */}
             {profileData.customItems && profileData.customItems.filter(i => i.type === 'prompt').length > 0 && (
                 <div className="mb-10">
                     <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800 dark:text-white">
                         <Megaphone size={18} className="text-purple-500" /> Your Custom Prompts
-                    </h3>
-                    <div className="prompts-grid">
-                        {profileData.customItems.filter(i => i.type === 'prompt').map((prompt, idx) => (
-                            <article key={idx} className="prompt-card relative group">
-                                <div className="prompt-image-wrap">
-                                    {prompt.image ? (
-                                        <img src={prompt.image} alt={prompt.title} className="prompt-image" />
-                                    ) : (
-                                        <div className="prompt-image bg-slate-800 flex items-center justify-center">
-                                            <Megaphone className="text-slate-600" size={48} />
-                                        </div>
-                                    )}
-                                    <div className="prompt-overlay" />
-
-                                    <div className="prompt-top-row">
-                                        <span className="prompt-chip" title={prompt.title}>
-                                            {prompt.title}
-                                        </span>
-                                        <div className="prompt-top-row-actions">
-                                            <span className="prompt-chip prompt-chip--platform" style={{ background: 'linear-gradient(90deg, #ec4899, #8b5cf6)' }}>
-                                                {prompt.category || 'Custom'}
-                                            </span>
-                                            <button
-                                                onClick={() => openEditPromptModal(idx)}
-                                                className="prompt-icon-btn hover:bg-blue-500/20 hover:text-blue-400"
-                                                title="Edit Prompt"
-                                            >
-                                                <Edit size={14} />
-                                            </button>
-                                            <button
-                                                onClick={() => removeCustomItem(prompt)}
-                                                className="prompt-icon-btn hover:bg-red-500/20 hover:text-red-400"
-                                                title="Remove Prompt"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="prompt-body">
-                                        <p className="prompt-text line-clamp-3">
-                                            <span className="font-bold text-slate-400 mr-2">Prompt:</span>
-                                            {prompt.prompt}
-                                        </p>
-                                        <div className="prompt-footer">
-                                            <button
-                                                type="button"
-                                                className={`prompt-copy-btn ${copiedId === prompt ? 'prompt-copy-btn--success' : ''}`}
-                                                onClick={() => handleCopyPrompt(prompt.prompt, prompt)}
-                                            >
-                                                {copiedId === prompt ? (
-                                                    <><Check size={14} /> Copied</>
-                                                ) : (
-                                                    <><Copy size={14} /> Copy Prompt</>
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
+                    </h3><br />
+                    {renderSectionContent(
+                        profileData.customItems.filter(i => i.type === 'prompt').map(item => ({
+                            ...item,
+                            isFav: profileData.favoritesPrompts?.some(f => (f._id || f) === item._id)
+                        })),
+                        viewAllCustom,
+                        setViewAllCustom,
+                        'custom'
+                    )}
                 </div>
             )}
+            <br />
+            {/* Library Grid (Selection) */}
+            <div className="mb-6">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4">Select from Global Library</h3><br />
+                <div className="prompts-grid">
+                    {filteredAvailablePrompts.map(tool => {
+                        const isFav = profileData.favoritesPrompts?.some(f => (f._id || f) === tool._id);
+                        const isSelected = profileData.activeTools.includes(tool._id);
 
-            {/* Library Section Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white">Select from Library</h3>
-
-                {/* Search using modified Prompts.css classes */}
-                <div className="prompts-search-wrapper">
-                    <Search className="prompts-search-icon" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search prompts..."
-                        className="prompts-search-input"
-                        value={toolSearch}
-                        onChange={(e) => setToolSearch(e.target.value)}
-                    />
+                        return (
+                            <PromptCard
+                                key={tool._id}
+                                type="library"
+                                prompt={tool}
+                                isSelected={isSelected}
+                                isFav={isFav}
+                                onToggle={() => toggleTool(tool._id)}
+                                onFavorite={toggleFavorite}
+                                onCopy={handleCopyPrompt}
+                                copiedId={copiedId}
+                            />
+                        );
+                    })}
                 </div>
             </div>
-
-            <div className="prompts-grid">
-                {filteredAvailablePrompts.map(tool => {
-                    const isFav = profileData.favoritesPrompts?.some(f => (f._id || f) === tool._id);
-                    const isSelected = profileData.activeTools.includes(tool._id);
-
-                    return (
-                        <div
-                            key={tool._id}
-                            onClick={() => toggleTool(tool._id)}
-                            className={`prompt-card ${isSelected ? 'selected' : ''}`}
-                        >
-                            <div className="prompt-image-wrap">
-                                {tool.logo ? (
-                                    <img src={tool.logo} alt={tool.name} className="prompt-image" />
-                                ) : (
-                                    <div className="w-full h-full bg-gray-900 flex items-center justify-center text-gray-600">
-                                        <Megaphone size={40} />
-                                    </div>
-                                )}
-
-                                <div className="prompt-overlay" />
-
-                                <div className="prompt-top-row">
-                                    <span className="prompt-chip prompt-chip--platform">
-                                        {tool.platform || 'AI'}
-                                    </span>
-                                    {isSelected && (
-                                        <div className="ml-auto bg-purple-600 text-white rounded-full p-1 shadow-lg">
-                                            <CheckCircle size={16} fill="currentColor" />
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="prompt-body">
-                                    <div className="flex justify-between items-end mb-2">
-                                        <h3 className="text-white font-bold text-lg leading-tight drop-shadow-md line-clamp-1">{tool.name}</h3>
-                                        <button
-                                            className={`btn-favorite ${isFav ? 'active' : ''} bg-black/50 hover:bg-black/70`}
-                                            onClick={(e) => toggleFavorite(e, tool._id)}
-                                            style={{ borderRadius: '50%', padding: '0.4rem' }}
-                                        >
-                                            <Heart size={16} className={isFav ? "fill-red-500 text-red-500" : "text-white"} />
-                                        </button>
-                                    </div>
-                                    <p className="prompt-text line-clamp-3 text-sm text-gray-200 mb-3" title={tool.description}>
-                                        {tool.description}
-                                    </p>
-                                    <div className="flex items-center justify-between mt-auto">
-                                        <span className={`text-xs font-bold uppercase tracking-wider ${isSelected ? 'text-purple-300' : 'text-gray-400'}`}>
-                                            {isSelected ? 'Selected' : 'Tap to select'}
-                                        </span>
-                                        <span className="prompt-meta-tag text-xs bg-black/40 px-2 py-1 rounded">
-                                            {tool.category}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {isSelected && (
-                                    <div className="prompt-check-badge">
-                                        <CheckCircle size={32} fill="white" className="text-purple-600" />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3 w-full md:w-auto text-lg">
-                <Save size={20} />
-                {saving ? 'Saving...' : 'Save Library'}
-            </button>
         </div>
     );
 };

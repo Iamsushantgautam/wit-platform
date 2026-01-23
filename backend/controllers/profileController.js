@@ -22,7 +22,7 @@ const getMyProfile = asyncHandler(async (req, res) => {
 // @route   POST /api/profiles
 // @access  Private
 const updateProfile = asyncHandler(async (req, res) => {
-    const { name, bio, image, category, importantLinks, banners, activeTools, socialLinks, customItems, customSocials, favoritesPrompts, heroOffer, heroButtons, navigationSettings } = req.body;
+    const { name, bio, image, category, importantLinks, banners, activeTools, socialLinks, customItems, customSocials, favoritesPrompts, heroOffer, heroButtons, navigationSettings, publicPromptsDisplay } = req.body;
 
     const profileFields = {
         user: req.user._id,
@@ -39,7 +39,8 @@ const updateProfile = asyncHandler(async (req, res) => {
         favoritesPrompts,
         heroOffer,
         heroButtons,
-        navigationSettings
+        navigationSettings,
+        publicPromptsDisplay
     };
 
     let profile = await Profile.findOne({ user: req.user._id });

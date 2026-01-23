@@ -1,53 +1,27 @@
 import React from 'react';
-import { Bell, ExternalLink } from 'lucide-react';
-import '../../styles/UpdatesList.css';
+import { Bell } from 'lucide-react';
+import UpdateCard from '../blocks/UpdateCard';
 
-const ProfileUpdates = ({ updates, formatDate }) => {
+
+const ProfileUpdates = ({ updates }) => {
     if (!updates || updates.length === 0) {
         return (
-            <div className="updates-empty-state">
-                <Bell size={48} className="updates-empty-icon" />
-                <h3 className="updates-empty-title">No updates yet</h3>
-                <p className="updates-empty-subtitle">Check back later for news and announcements</p>
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-10 text-center border-2 border-dashed border-gray-200 dark:border-gray-700">
+                <Bell size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                <h3 className="text-xl font-bold text-gray-500 dark:text-gray-400">No updates yet</h3>
+                <p className="text-gray-400 dark:text-gray-500 mt-2">Check back later for news and announcements</p>
             </div>
         );
     }
 
     return (
-        <div className="profile-updates">
+        <div className="flex flex-col gap-4">
             {updates.map((update) => (
-                <div key={update._id} className="profile-update-item">
-                    {update.thumbnail && (
-                        <img
-                            src={update.thumbnail}
-                            alt=""
-                            className="profile-update-item__thumbnail"
-                        />
-                    )}
-                    <div className="profile-update-item__content">
-                        <div className="profile-update-item__title">
-                            <span className="profile-update-item__emoji">{update.emoji}</span>
-                            {update.title}
-                        </div>
-                        <p className="profile-update-item__text">{update.text}</p>
-
-                        {/* Link in Updates */}
-                        {update.link && (
-                            <a
-                                href={update.link}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-blue-600 font-semibold text-sm mb-2 hover:underline"
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#2563eb', fontWeight: 600, fontSize: '13px', marginBottom: '8px', textDecoration: 'none' }}
-                            >
-                                <ExternalLink size={14} />
-                                View Link
-                            </a>
-                        )}
-
-                        <div className="profile-update-item__time">{formatDate(update.createdAt)}</div>
-                    </div>
-                </div>
+                <UpdateCard
+                    key={update._id}
+                    update={update}
+                    layout="horizontal"
+                />
             ))}
         </div>
     );

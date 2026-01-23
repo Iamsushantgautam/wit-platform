@@ -63,20 +63,35 @@ const CustomPromptModal = ({
                         />
                     </div>
 
-                    <div className="form-group">
-                        <label className="label-premium">Category</label>
-                        <select
-                            className="input-premium"
-                            value={tempPrompt.category}
-                            onChange={(e) => setTempPrompt({ ...tempPrompt, category: e.target.value })}
-                        >
-                            <option value="General">General</option>
-                            <option value="Photography">Photography</option>
-                            <option value="Art">Art</option>
-                            <option value="Coding">Coding</option>
-                            <option value="Writing">Writing</option>
-                            <option value="Business">Business</option>
-                        </select>
+
+
+                    <div className="flex gap-4">
+                        <div className="form-group flex-1">
+                            <label className="label-premium">Category</label>
+                            <select
+                                className="input-premium"
+                                value={tempPrompt.category}
+                                onChange={(e) => setTempPrompt({ ...tempPrompt, category: e.target.value })}
+                            >
+                                <option value="General">General</option>
+                                <option value="Photography">Photography</option>
+                                <option value="Art">Art</option>
+                                <option value="Gimini">Gimini</option>
+                                <option value="ChatGPT">ChatGPT</option>
+                                <option value="Midjourney">Midjourney</option>
+                            </select>
+                        </div>
+                        <div className="form-group flex-1">
+                            <label className="label-premium">Visibility</label>
+                            <select
+                                className="input-premium"
+                                value={tempPrompt.visibility || 'public'}
+                                onChange={(e) => setTempPrompt({ ...tempPrompt, visibility: e.target.value })}
+                            >
+                                <option value="public">Public</option>
+                                <option value="private">Private</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div className="form-group">

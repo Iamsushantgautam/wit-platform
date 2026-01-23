@@ -11,8 +11,7 @@ import '../styles/DashboardAppearance.css';
 import '../styles/DashboardLinks.css';
 import '../styles/DashboardOffers.css';
 import '../styles/DashboardPrompts.css';
-import '../styles/AiTools.css';
-import '../styles/Prompts.css';
+
 
 // User Components
 import DashboardSidebar from '../components/user/DashboardSidebar';
@@ -668,6 +667,7 @@ const Dashboard = () => {
                             removeCustomItem={removeCustomItem}
                             toggleTool={toggleTool}
                             toggleFavorite={toggleFavorite}
+                            handleProfileChange={handleProfileChange}
                             saveProfile={saveProfile}
                             saving={saving}
                         />

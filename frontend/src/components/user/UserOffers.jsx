@@ -1,18 +1,114 @@
-import React from 'react';
+import React, { useState, useContext } from 'react';
+import axios from 'axios';
 import {
-    Megaphone, Star, Link as LinkIcon, Plus, Image, EyeOff,
-    Tag, Ticket, AlignLeft, Edit, Trash2, Save
+    Megaphone, Star, Link as LinkIcon, Plus, Image, EyeOff, Eye,
+    Tag, Ticket, AlignLeft, Edit, Save, X
 } from 'lucide-react';
+import AuthContext from '../../context/AuthContext';
+import OfferCard from '../blocks/OfferCard';
+import '../../styles/Offers.css';
 
 const UserOffers = ({
     profileData,
     setProfileData,
-    openAddBannerModal,
-    openEditBannerModal,
-    removeBanner,
     saveProfile,
     saving
 }) => {
+    const { API_URL } = useContext(AuthContext);
+
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingIndex, setEditingIndex] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [showPromo, setShowPromo] = useState(false);
+
+    // Temp Banner State
+    const [tempBanner, setTempBanner] = useState({
+        title: '',
+        imageUrl: '',
+        link: '',
+        promoCode: '',
+        tags: [],
+        caption: '',
+        isVisible: true
+    });
+
+    // Handlers
+    const handleOpenAdd = () => {
+        setTempBanner({
+            title: '',
+            imageUrl: '',
+            link: '',
+            promoCode: '',
+            tags: [],
+            caption: '',
+            isVisible: true
+        });
+        setEditingIndex(null);
+        setShowPromo(false);
+        setIsModalOpen(true);
+    };
+
+    const handleOpenEdit = (index) => {
+        setTempBanner({ ...profileData.banners[index] });
+        setEditingIndex(index);
+        setShowPromo(false);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setEditingIndex(null);
+        setUploading(false);
+    };
+
+    const removeBanner = (index) => {
+        const newBanners = profileData.banners.filter((_, i) => i !== index);
+        setProfileData({ ...profileData, banners: newBanners });
+    };
+
+    const handleSaveBanner = () => {
+        if (!tempBanner.title) {
+            alert("Title is required");
+            return;
+        }
+
+        let newBanners = [...(profileData.banners || [])];
+        if (editingIndex !== null) {
+            newBanners[editingIndex] = tempBanner;
+        } else {
+            newBanners.push(tempBanner);
+        }
+
+        setProfileData({ ...profileData, banners: newBanners });
+        handleCloseModal();
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        setUploading(true);
+
+        try {
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            };
+            const { data: imageUrl } = await axios.post(`${API_URL}/upload?context=banner`, formData, config);
+            setTempBanner(prev => ({ ...prev, imageUrl }));
+        } catch (error) {
+            console.error(error);
+            alert('Image upload failed');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     return (
         <div className="offers-section">
             <h2 className="dashboard-section-title">
@@ -20,199 +116,368 @@ const UserOffers = ({
                 <span>Offers & Banners</span>
             </h2>
 
-            {/* Hero Offer Editor */}
-            <div className="mb-10 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-yellow-400 to-orange-500"></div>
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Star className="text-yellow-500 fill-yellow-500" size={20} />
-                        Hero Offer Banner
-                    </h3>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                            type="checkbox"
-                            className="toggle-checkbox"
-                            checked={profileData.heroOffer?.isVisible !== false}
-                            onChange={(e) => setProfileData({
-                                ...profileData,
-                                heroOffer: { ...profileData.heroOffer, isVisible: e.target.checked }
-                            })}
-                        />
-                        <div className="toggle-slider"></div>
-                        <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {profileData.heroOffer?.isVisible !== false ? 'Visible' : 'Hidden'}
-                        </span>
-                    </label>
-                </div>
+            {/* Hero Offer Editor - Enhanced Style */}
+            <div className="mb-10 relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                <div className="relative p-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-xl overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-100 dark:bg-yellow-900/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="form-group">
-                        <label className="label-premium">Banner Title</label>
-                        <input
-                            type="text"
-                            className="input-premium font-bold"
-                            value={profileData.heroOffer?.title || ''}
-                            onChange={(e) => setProfileData({
-                                ...profileData,
-                                heroOffer: { ...profileData.heroOffer, title: e.target.value }
-                            })}
-                            placeholder="e.g. 5-in-1 AI Viral Offer Pack"
-                        />
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-gray-100 dark:border-gray-700 pb-6">
+                        <div>
+                            <h3 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
+                                <span className="bg-gradient-to-br from-yellow-400 to-orange-600 text-white p-2 rounded-lg shadow-lg">
+                                    <Star size={24} className="animate-spin-slow" style={{ animationDuration: '4s' }} />
+                                </span>
+                                Hero Offer Banner
+                            </h3>
+                            <p className="text-gray-500 mt-2 font-medium">The main featured offer at the top of your profile</p>
+                        </div>
+
+                        <label className="relative inline-flex items-center cursor-pointer bg-gray-50 dark:bg-gray-700/50 px-4 py-2 rounded-full border border-gray-200 dark:border-gray-600 hover:border-blue-400 transition-colors">
+                            <input
+                                type="checkbox"
+                                className="toggle-checkbox"
+                                checked={profileData.heroOffer?.isVisible !== false}
+                                onChange={(e) => setProfileData({
+                                    ...profileData,
+                                    heroOffer: { ...profileData.heroOffer, isVisible: e.target.checked }
+                                })}
+                            />
+                            <div className="toggle-slider"></div>
+                            <span className="ml-3 text-sm font-bold text-gray-700 dark:text-gray-200 w-16 text-center">
+                                {profileData.heroOffer?.isVisible !== false ? 'Active' : 'Hidden'}
+                            </span>
+                        </label>
                     </div>
-                    <div className="form-group">
-                        <label className="label-premium">Badge Text</label>
-                        <input
-                            type="text"
-                            className="input-premium"
-                            value={profileData.heroOffer?.badge || ''}
-                            onChange={(e) => setProfileData({
-                                ...profileData,
-                                heroOffer: { ...profileData.heroOffer, badge: e.target.value }
-                            })}
-                            placeholder="e.g. Limited Time Offer"
-                        />
-                    </div>
-                    <div className="form-group md:col-span-2">
-                        <label className="label-premium">Subtitle / Description</label>
-                        <input
-                            type="text"
-                            className="input-premium"
-                            value={profileData.heroOffer?.subtitle || ''}
-                            onChange={(e) => setProfileData({
-                                ...profileData,
-                                heroOffer: { ...profileData.heroOffer, subtitle: e.target.value }
-                            })}
-                            placeholder="Get 20% Off This Weekend Only!"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label className="label-premium">Button Text</label>
-                        <input
-                            type="text"
-                            className="input-premium"
-                            value={profileData.heroOffer?.ctaText || ''}
-                            onChange={(e) => setProfileData({
-                                ...profileData,
-                                heroOffer: { ...profileData.heroOffer, ctaText: e.target.value }
-                            })}
-                            placeholder="GRAB OFFER"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label className="label-premium">Button Link</label>
-                        <div className="relative">
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="form-group space-y-2">
+                            <label className="label-premium text-sm uppercase tracking-wider text-gray-500">Banner Title</label>
                             <input
                                 type="text"
-                                className="input-premium pl-9"
-                                value={profileData.heroOffer?.ctaLink || ''}
+                                className="input-premium font-bold text-lg border-2 focus:border-orange-400"
+                                value={profileData.heroOffer?.title || ''}
                                 onChange={(e) => setProfileData({
                                     ...profileData,
-                                    heroOffer: { ...profileData.heroOffer, ctaLink: e.target.value }
+                                    heroOffer: { ...profileData.heroOffer, title: e.target.value }
                                 })}
-                                placeholder="https://..."
+                                placeholder="e.g. 5-in-1 AI Viral Offer Pack"
                             />
-                            <LinkIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         </div>
-                    </div>
-                    <div className="form-group">
-                        <label className="label-premium">Background Color</label>
-                        <div className="flex items-center gap-3">
+                        <div className="form-group space-y-2">
+                            <label className="label-premium text-sm uppercase tracking-wider text-gray-500">Badge Text</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="input-premium pl-10"
+                                    value={profileData.heroOffer?.badge || ''}
+                                    onChange={(e) => setProfileData({
+                                        ...profileData,
+                                        heroOffer: { ...profileData.heroOffer, badge: e.target.value }
+                                    })}
+                                    placeholder="e.g. Limited Time Offer"
+                                />
+                                <Star size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-500" />
+                            </div>
+                        </div>
+                        <div className="form-group md:col-span-2 space-y-2">
+                            <label className="label-premium text-sm uppercase tracking-wider text-gray-500">Subtitle / Description</label>
                             <input
-                                type="color"
-                                className="h-10 w-20 rounded cursor-pointer border-0 p-0"
-                                value={profileData.heroOffer?.backgroundColor || '#1f2937'}
+                                type="text"
+                                className="input-premium"
+                                value={profileData.heroOffer?.subtitle || ''}
                                 onChange={(e) => setProfileData({
                                     ...profileData,
-                                    heroOffer: { ...profileData.heroOffer, backgroundColor: e.target.value }
+                                    heroOffer: { ...profileData.heroOffer, subtitle: e.target.value }
                                 })}
+                                placeholder="Get 20% Off This Weekend Only!"
                             />
-                            <span className="text-sm text-gray-500 font-mono">
-                                {profileData.heroOffer?.backgroundColor || '#1f2937'}
-                            </span>
+                        </div>
+                        <div className="form-group space-y-2">
+                            <label className="label-premium text-sm uppercase tracking-wider text-gray-500">Button Text</label>
+                            <input
+                                type="text"
+                                className="input-premium font-bold text-blue-600"
+                                value={profileData.heroOffer?.ctaText || ''}
+                                onChange={(e) => setProfileData({
+                                    ...profileData,
+                                    heroOffer: { ...profileData.heroOffer, ctaText: e.target.value }
+                                })}
+                                placeholder="GRAB OFFER"
+                            />
+                        </div>
+                        <div className="form-group space-y-2">
+                            <label className="label-premium text-sm uppercase tracking-wider text-gray-500">Button Link</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="input-premium pl-10 text-blue-500 underline decoration-blue-300"
+                                    value={profileData.heroOffer?.ctaLink || ''}
+                                    onChange={(e) => setProfileData({
+                                        ...profileData,
+                                        heroOffer: { ...profileData.heroOffer, ctaLink: e.target.value }
+                                    })}
+                                    placeholder="https://..."
+                                />
+                                <LinkIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            </div>
+                        </div>
+                        <div className="form-group space-y-2">
+                            <label className="label-premium text-sm uppercase tracking-wider text-gray-500">Background Color</label>
+                            <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <input
+                                    type="color"
+                                    className="h-12 w-20 rounded-lg cursor-pointer border-0 p-1 bg-white dark:bg-gray-600 shadow-sm"
+                                    value={profileData.heroOffer?.backgroundColor || '#1f2937'}
+                                    onChange={(e) => setProfileData({
+                                        ...profileData,
+                                        heroOffer: { ...profileData.heroOffer, backgroundColor: e.target.value }
+                                    })}
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-gray-500 font-bold uppercase">Color Hex</span>
+                                    <span className="text-base font-mono font-bold text-gray-800 dark:text-gray-200">
+                                        {profileData.heroOffer?.backgroundColor || '#1f2937'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Additional Banners</h3>
-                <button type="button" onClick={openAddBannerModal} className="btn btn-outline flex items-center gap-2 py-2 px-4 rounded-xl">
-                    <Plus size={18} /> Add Banner
+            <div className="flex items-center gap-3 mb-6">
+                <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
+                    <Megaphone size={24} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Additional Banners</h3>
+                    <p className="text-sm text-gray-500">Manage your other promotional banners</p>
+                </div>
+            </div>
+
+            {/* Changed to Grid Layout - Minimalist Style */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                {/* Add New Card - Styled to match proportions */}
+                <button
+                    onClick={handleOpenAdd}
+                    className="group relative flex flex-col items-center justify-center min-h-[320px] rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-400 bg-gray-50/50 dark:bg-gray-800/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all duration-300"
+                >
+                    <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-full shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 text-blue-500">
+                        <Plus size={32} />
+                    </div>
+                    <span className="font-bold text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Add New Offer</span>
+                </button>
+
+                {(profileData.banners || []).map((banner, index) => (
+                    <OfferCard
+                        key={index}
+                        banner={banner}
+                        onEdit={() => handleOpenEdit(index)}
+                        onDelete={() => removeBanner(index)}
+                    />
+                ))}
+            </div>
+
+            <div className="sticky bottom-4 z-20 mt-8 flex justify-end">
+                <button
+                    onClick={saveProfile}
+                    disabled={saving}
+                    className="btn btn-primary px-8 py-3 rounded-2xl shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 font-bold text-lg bg-gradient-to-r from-blue-600 to-indigo-600 border-none"
+                >
+                    <Save size={20} />
+                    {saving ? 'Saving...' : 'Save All Changes'}
                 </button>
             </div>
 
-            <div className="space-y-4">
-                {(profileData.banners || []).map((banner, index) => (
-                    <div key={index} className={`bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center gap-4 group transition-all hover:shadow-md ${!banner.isVisible ? 'opacity-60' : ''}`}>
-                        {/* Thumbnail */}
-                        <div className="w-24 h-16 bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 dark:border-gray-700 relative">
-                            {banner.imageUrl ? (
-                                <img src={banner.imageUrl} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                    <Image size={20} />
-                                </div>
-                            )}
-                            {!banner.isVisible && (
-                                <div className="absolute inset-0 bg-gray-900/10 flex items-center justify-center">
-                                    <EyeOff size={16} className="text-gray-500" />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                                <h4 className="font-bold text-gray-900 dark:text-white truncate text-base">{banner.title || 'Untitled Banner'}</h4>
-                                {!banner.isVisible && <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-500 px-2 py-px rounded">Hidden</span>}
+            {/* INTERNAL MODAL */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 border border-gray-200 dark:border-gray-800 flex flex-col">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 sticky top-0 z-10">
+                            <div>
+                                <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                                    {editingIndex !== null ? <Edit size={24} className="text-blue-500" /> : <Plus size={24} className="text-green-500" />}
+                                    {editingIndex !== null ? 'Edit Banner' : 'Create New Banner'}
+                                </h3>
+                                <p className="text-sm text-gray-500 mt-1">Add details for your promotional banner</p>
                             </div>
-
-                            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
-                                {banner.tags && banner.tags.length > 0 && (
-                                    <span className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-xs">
-                                        <Tag size={10} /> {banner.tags.length} tags
-                                    </span>
-                                )}
-                                {banner.promoCode && (
-                                    <span className="flex items-center gap-1 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 px-2 py-0.5 rounded text-xs border border-green-100 dark:border-green-900">
-                                        <Ticket size={10} /> {banner.promoCode}
-                                    </span>
-                                )}
-                                {banner.caption && (
-                                    <span className="flex items-center gap-1 text-xs truncate max-w-[200px]" title={banner.caption}>
-                                        <AlignLeft size={10} /> {banner.caption}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => openEditBannerModal(index)} className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 rounded-lg transition" title="Edit">
-                                <Edit size={18} />
+                            <button onClick={handleCloseModal} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition text-gray-500">
+                                <X size={24} />
                             </button>
-                            <button onClick={() => removeBanner(index)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition" title="Delete">
-                                <Trash2 size={18} />
+                        </div>
+
+                        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                            {/* Visibility Toggle */}
+                            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
+                                <span className="font-medium text-gray-900 dark:text-white">Banner Visibility</span>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="toggle-checkbox"
+                                        checked={tempBanner.isVisible}
+                                        onChange={(e) => setTempBanner({ ...tempBanner, isVisible: e.target.checked })}
+                                    />
+                                    <div className="toggle-slider"></div>
+                                </label>
+                            </div>
+
+                            {/* Title */}
+                            <div className="form-group">
+                                <label className="label-premium">Banner Title <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    className="input-premium"
+                                    value={tempBanner.title}
+                                    onChange={(e) => setTempBanner({ ...tempBanner, title: e.target.value })}
+                                    placeholder="e.g. Summer Sale 2024"
+                                />
+                            </div>
+
+                            {/* Banner Image Selection */}
+                            <div className="form-group">
+                                <label className="label-premium mb-3 block">Banner Image</label>
+                                <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl p-4 transition-all hover:border-blue-400 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-800/50 relative group">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="absolute inset-0 w-full h-full cursor-pointer z-10"
+                                        style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 10 }}
+                                        disabled={uploading}
+                                    />
+
+                                    {tempBanner.imageUrl ? (
+                                        <div className="relative h-48 w-full rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-inner">
+                                            <img src={tempBanner.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full font-medium flex items-center gap-2">
+                                                    <Image size={18} /> Change Image
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="h-40 flex flex-col items-center justify-center text-gray-400">
+                                            {uploading ? (
+                                                <div className="flex flex-col items-center">
+                                                    <div className="relative w-16 h-16 mb-3">
+                                                        <div className="absolute inset-0 border-4 border-blue-100 dark:border-blue-900/30 rounded-full"></div>
+                                                        <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                                                        <Image size={24} className="absolute inset-0 m-auto text-blue-500 animate-pulse" />
+                                                    </div>
+                                                    <p className="text-sm font-bold text-blue-500 animate-pulse">Uploading Image...</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-xl flex items-center justify-center mb-3 transform group-hover:scale-110 transition-transform">
+                                                        <Image size={28} />
+                                                    </div>
+                                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                                                        Click to upload banner image
+                                                    </p>
+                                                    <p className="text-xs text-gray-400 mt-1">Supports JPG, PNG (Max 2MB)</p>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-3">
+                                    <details className="text-xs">
+                                        <summary className="cursor-pointer text-gray-500 hover:text-blue-600 font-medium list-none flex items-center gap-1 w-max">
+                                            <LinkIcon size={12} /> Or paste direct image URL
+                                        </summary>
+                                        <div className="mt-2 animate-in slide-in-from-top-1">
+                                            <input
+                                                type="text"
+                                                className="input-premium pl-3 text-xs py-2 h-9"
+                                                value={tempBanner.imageUrl}
+                                                onChange={(e) => setTempBanner({ ...tempBanner, imageUrl: e.target.value })}
+                                                placeholder="https://example.com/image.jpg"
+                                            />
+                                        </div>
+                                    </details>
+                                </div>
+                            </div>
+
+                            {/* Link */}
+                            <div className="form-group">
+                                <label className="label-premium">Destination Link</label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className="input-premium pl-10"
+                                        value={tempBanner.link}
+                                        onChange={(e) => setTempBanner({ ...tempBanner, link: e.target.value })}
+                                        placeholder="https://yourstore.com/offer"
+                                    />
+                                    <LinkIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Promo Code */}
+                                <div className="form-group">
+                                    <label className="label-premium">Promo Code</label>
+                                    <div className="relative group">
+                                        <input
+                                            type={showPromo ? "text" : "password"}
+                                            className="input-premium pl-10 pr-10 font-mono tracking-wider transition-all duration-300 ease-in-out"
+                                            value={tempBanner.promoCode}
+                                            onChange={(e) => setTempBanner({ ...tempBanner, promoCode: e.target.value })}
+                                            placeholder="SAVE20"
+                                        />
+                                        <div style={{ position: 'absolute', top: '50%', left: '0.75rem', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9ca3af' }}>
+                                            <Ticket size={18} />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPromo(!showPromo)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none"
+                                        >
+                                            {showPromo ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Tags */}
+                                <div className="form-group">
+                                    <label className="label-premium">Tags (comma separated)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            className="input-premium pl-10"
+                                            value={Array.isArray(tempBanner.tags) ? tempBanner.tags.join(', ') : tempBanner.tags}
+                                            onChange={(e) => setTempBanner({ ...tempBanner, tags: e.target.value.split(',').map(tag => tag.trim()) })}
+                                            placeholder="sale, limited, new"
+                                        />
+                                        <Tag size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Caption */}
+                            <div className="form-group">
+                                <label className="label-premium">Caption / Description</label>
+                                <textarea
+                                    rows="3"
+                                    className="input-premium min-h-[80px]"
+                                    value={tempBanner.caption}
+                                    onChange={(e) => setTempBanner({ ...tempBanner, caption: e.target.value })}
+                                    placeholder="Add a short description or terms for this offer..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-white dark:bg-gray-900 sticky bottom-0 z-10">
+                            <button onClick={handleCloseModal} className="btn btn-ghost px-6 bg-gray-100/50 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg font-medium">Cancel</button>
+                            <button onClick={handleSaveBanner} className="btn btn-primary px-8 shadow-lg shadow-blue-500/20">
+                                {editingIndex !== null ? 'Save Changes' : 'Create Banner'}
                             </button>
                         </div>
                     </div>
-                ))}
-
-                {(!profileData.banners || profileData.banners.length === 0) && (
-                    <div className="text-center py-12 text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center gap-3">
-                        <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-full">
-                            <Megaphone size={24} className="text-gray-400" />
-                        </div>
-                        <p>No additional banners added yet.</p>
-                        <button onClick={openAddBannerModal} className="text-blue-600 font-semibold hover:underline text-sm">Create your first banner</button>
-                    </div>
-                )}
-            </div>
-
-            <button onClick={saveProfile} disabled={saving} className="btn btn-primary mt-10 px-8 py-3 w-full md:w-auto text-lg">
-                <Save size={20} />
-                {saving ? 'Saving...' : 'Save Offers'}
-            </button>
+                </div>
+            )}
         </div>
     );
 };

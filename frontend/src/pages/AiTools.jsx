@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { Search, ExternalLink, Wrench } from 'lucide-react';
-import '../styles/AiTools.css';
+import '../styles/Blocks/AiTools.css';
 
 const AiTools = () => {
     const { API_URL } = useContext(AuthContext);

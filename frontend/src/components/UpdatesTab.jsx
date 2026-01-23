@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Bell, Plus, Edit, Trash2, Upload, X, Link as LinkIcon, Image as ImageIcon, ChevronDown } from 'lucide-react';
+import { Bell, X, Link as LinkIcon, Image as ImageIcon, ChevronDown } from 'lucide-react';
 import axios from 'axios';
-import '../styles/UpdatesForm.css';
+import UpdateCard from './blocks/UpdateCard';
+import '../styles/Blocks/UpdatesForm.css';
 
 const UpdatesTab = ({ updates, addOrUpdateUpdate, deleteUpdate, startEditUpdate, cancelEditUpdate, editingUpdate, updateForm, setUpdateForm, saving, API_URL }) => {
     const [uploadingImage, setUploadingImage] = useState(false);
@@ -24,18 +25,6 @@ const UpdatesTab = ({ updates, addOrUpdateUpdate, deleteUpdate, startEditUpdate,
         { emoji: '⭐', label: 'Star' },
         { emoji: '💼', label: 'Business' }
     ];
-
-    const formatDate = (date) => {
-        const d = new Date(date);
-        const now = new Date();
-        const diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
-
-        if (diff === 0) return 'Today';
-        if (diff === 1) return 'Yesterday';
-        if (diff < 7) return `${diff} days ago`;
-        if (diff < 30) return `${Math.floor(diff / 7)} weeks ago`;
-        return d.toLocaleDateString();
-    };
 
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
@@ -364,116 +353,13 @@ const UpdatesTab = ({ updates, addOrUpdateUpdate, deleteUpdate, startEditUpdate,
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         {updates.map((update) => (
-                            <div
+                            <UpdateCard
                                 key={update._id}
-                                style={{
-                                    background: 'white',
-                                    borderRadius: '1.25rem',
-                                    overflow: 'hidden',
-                                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-                                    border: '1px solid #e5e7eb',
-                                    transition: 'all 0.3s ease'
-                                }}
-                                className="hover:shadow-lg hover:-translate-y-1"
-                            >
-                                {(update.image || update.thumbnail) && (
-                                    <img
-                                        src={update.image || update.thumbnail}
-                                        alt={update.title}
-                                        style={{
-                                            width: '100%',
-                                            height: '300px',
-                                            objectFit: 'cover'
-                                        }}
-                                    />
-                                )}
-                                <div style={{ padding: '1.25rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                                        <span style={{ fontSize: '2rem' }}>{update.emoji}</span>
-                                        <h4 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, flex: 1 }}>
-                                            {update.title}
-                                        </h4>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <button
-                                                onClick={() => handleEditClick(update)}
-                                                style={{
-                                                    width: '36px',
-                                                    height: '36px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: 'none',
-                                                    borderRadius: '0.5rem',
-                                                    background: 'transparent',
-                                                    color: '#3b82f6',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                                className="hover:bg-blue-50 hover:scale-110"
-                                                title="Edit"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => deleteUpdate(update._id)}
-                                                style={{
-                                                    width: '36px',
-                                                    height: '36px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    border: 'none',
-                                                    borderRadius: '0.5rem',
-                                                    background: 'transparent',
-                                                    color: '#ef4444',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s'
-                                                }}
-                                                className="hover:bg-red-50 hover:scale-110"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <p style={{ fontSize: '0.9375rem', color: '#4b5563', lineHeight: 1.6, marginBottom: '0.75rem' }}>
-                                        {update.text}
-                                    </p>
-                                    {update.link && (
-                                        <a
-                                            href={update.link}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                gap: '0.375rem',
-                                                fontSize: '0.875rem',
-                                                fontWeight: 600,
-                                                color: '#3b82f6',
-                                                textDecoration: 'none',
-                                                padding: '0.5rem 1rem',
-                                                background: '#eff6ff',
-                                                borderRadius: '0.5rem',
-                                                marginBottom: '0.75rem',
-                                                transition: 'all 0.2s'
-                                            }}
-                                            className="hover:bg-blue-100"
-                                        >
-                                            <LinkIcon size={16} />
-                                            View Link
-                                        </a>
-                                    )}
-                                    <div style={{
-                                        paddingTop: '0.75rem',
-                                        borderTop: '1px solid #e5e7eb',
-                                        fontSize: '0.75rem',
-                                        color: '#9ca3af'
-                                    }}>
-                                        📅 {formatDate(update.createdAt)}
-                                    </div>
-                                </div>
-                            </div>
+                                update={update}
+                                onEdit={() => handleEditClick(update)}
+                                onDelete={() => deleteUpdate(update._id)}
+                                layout="horizontal"
+                            />
                         ))}
                     </div>
                 )}

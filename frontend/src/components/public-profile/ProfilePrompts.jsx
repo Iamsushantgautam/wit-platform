@@ -1,84 +1,124 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { MessageCircle } from 'lucide-react';
+import PromptCard from '../blocks/PromptCard';
+import { PromptCard } from '../components/public-profile';
 
 const ProfilePrompts = ({ profile }) => {
-    const hasPrompts = profile?.favoritesPrompts?.length > 0 || profile?.customItems?.some(i => i.type === 'prompt');
+    const [copiedId, setCopiedId] = useState(null);
+    const mode = profile.publicPromptsDisplay || 'all';
 
-    if (!hasPrompts) {
+    const customPrompts = (profile?.customItems?.filter(i => i && i.type === 'prompt' && i.visibility !== 'private') || []);
+    // Ensure favoritesPrompts is an array of objects and filter out nulls
+    const favoritePrompts = (profile?.favoritesPrompts || []).filter(p => p);
+    // Ensure activeTools is an array of objects and filter out nulls
+    const libraryPrompts = (profile?.activeTools?.filter(t => t && t.type === 'prompt') || []);
+
+    const handleCopy = (text, prompt) => {
+        navigator.clipboard.writeText(text);
+        setCopiedId(prompt._id || prompt);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const handleShare = async (prompt) => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: prompt.title || prompt.name,
+                    text: prompt.prompt || prompt.description,
+                    url: window.location.href,
+                });
+            } catch (error) {
+                console.log('Error sharing', error);
+            }
+        } else {
+            handleCopy(prompt.prompt || prompt.description, prompt);
+        }
+    };
+
+    // Determine visibility
+    const showCustom = ['all', 'custom', 'custom_favorites', 'custom_library'].includes(mode);
+    const showFavorites = ['all', 'favorites', 'custom_favorites'].includes(mode);
+    const showLibrary = ['all', 'custom_library'].includes(mode);
+    // Note: If 'custom_library' implies "Custom and Selected Library", we use activeTools.
+
+
+    // Check if we have any prompts to show *based on settings*
+    const hasVisiblePrompts = (showCustom && customPrompts.length > 0) ||
+        (showFavorites && favoritePrompts.length > 0) ||
+        (showLibrary && libraryPrompts.length > 0);
+
+    if (!hasVisiblePrompts) {
         return (
             <div className="profile-empty-state">
                 <MessageCircle size={48} className="profile-empty-icon" />
-                <p className="profile-empty-text">No prompts saved yet</p>
+                <p className="profile-empty-text">No prompts visible</p>
             </div>
         );
     }
 
     return (
-        <div className="profile-course-grid">
-            {/* Favorite Prompts */}
-            {profile.favoritesPrompts?.map((prompt) => (
-                <div key={prompt._id} className="profile-course-card" style={{ cursor: 'default' }}>
-                    <div className="profile-course-card__body">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                            <span style={{ fontSize: '24px' }}>✨</span>
-                            <h3 className="profile-course-card__title" style={{ margin: 0 }}>{prompt.name}</h3>
-                        </div>
-                        <div style={{
-                            background: '#f3f4f6',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            border: '1px dashed #d1d5db',
-                            fontSize: '13px',
-                            color: '#374151',
-                            fontFamily: 'monospace',
-                            marginBottom: '12px',
-                            whiteSpace: 'pre-wrap'
-                        }}>
-                            {prompt.prompt}
-                        </div>
-                        <p style={{ fontSize: '13px', color: '#6b7280' }}>
-                            {prompt.description}
-                        </p>
+        <div className="flex flex-col gap-8">
+            {/* 1. Favorite Prompts Section (Carousel) */}
+            {showFavorites && favoritePrompts.length > 0 && (
+                <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-white px-1">Favorite Prompts</h3>
+                    <div className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent -mx-2 px-2">
+                        {favoritePrompts.map((prompt) => (
+                            <div key={prompt._id} className="min-w-[calc((100%-1rem)/2)] w-[calc((100%-1rem)/2)] md:min-w-[320px] md:w-[320px] snap-center flex-shrink-0">
+                                <PromptCard
+                                    prompt={prompt}
+                                    type="public"
+                                    onCopy={handleCopy}
+                                    onShare={handleShare}
+                                    copiedId={copiedId}
+                                />
+                            </div>
+                        ))}
                     </div>
                 </div>
-            ))}
+            )}
 
-            {/* Custom Prompts */}
-            {profile?.customItems?.filter(i => i.type === 'prompt').map((prompt, idx) => (
-                <div key={`custom-${idx}`} className="profile-course-card" style={{ cursor: 'default' }}>
-                    <div className="profile-course-card__body">
-                        {prompt.image && (
-                            <div style={{ marginBottom: '12px', borderRadius: '8px', overflow: 'hidden' }}>
-                                <img src={prompt.image} alt="" style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+            {/* 2. Custom Prompts Section (Grid) */}
+            {showCustom && customPrompts.length > 0 && (
+                <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-white px-1">Created By {profile.name}</h3>
+                    <div className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent -mx-2 px-2">
+                        {customPrompts.map((prompt, idx) => (
+                            <div key={prompt._id} className="min-w-[calc((100%-1rem)/2)] w-[calc((100%-1rem)/2)] md:min-w-[320px] md:w-[320px] snap-center flex-shrink-0">
+                                <PromptCard
+                                    key={`custom-${idx}`}
+                                    prompt={prompt}
+                                    type="public"
+                                    onCopy={handleCopy}
+                                    onShare={handleShare}
+                                    copiedId={copiedId}
+                                />
                             </div>
-                        )}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                            <span style={{ fontSize: '24px' }}>✨</span>
-                            <h3 className="profile-course-card__title" style={{ margin: 0 }}>{prompt.title}</h3>
-                        </div>
-                        <div style={{
-                            background: '#f3f4f6',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            border: '1px dashed #d1d5db',
-                            fontSize: '13px',
-                            color: '#374151',
-                            fontFamily: 'monospace',
-                            marginBottom: '12px',
-                            whiteSpace: 'pre-wrap'
-                        }}>
-                            {prompt.prompt}
-                        </div>
-                        {prompt.tags && prompt.tags.length > 0 && (
-                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                {prompt.tags.map(tag => (
-                                    <span key={tag} style={{ fontSize: '11px', background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '12px' }}>#{tag}</span>
-                                ))}
-                            </div>
-                        )}
+                        ))}
                     </div>
                 </div>
-            ))}
+            )}
+
+            {/* 3. Library/Selected Prompts Section (Grid) */}
+            {showLibrary && libraryPrompts.length > 0 && (
+                <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-white px-1">Curated Collection</h3>
+                    <div className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent -mx-2 px-2">
+                        {libraryPrompts.map((prompt) => (
+                            <div key={prompt._id} className="min-w-[calc((100%-1rem)/2)] w-[calc((100%-1rem)/2)] md:min-w-[320px] md:w-[320px] snap-center flex-shrink-0">
+                                <PromptCard
+                                    key={prompt._id}
+                                    prompt={prompt}
+                                    type="public"
+                                    onCopy={handleCopy}
+                                    onShare={handleShare}
+                                    copiedId={copiedId}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

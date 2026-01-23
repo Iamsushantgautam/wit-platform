@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Copy, Check, Search, Share2, Bookmark } from 'lucide-react';
-import { FaRobot } from 'react-icons/fa';
+import { Search } from 'lucide-react';
+import PromptCard from '../components/blocks/PromptCard';
 import '../styles/Prompts.css';
 
 const PromptsLibrary = () => {
@@ -43,9 +43,9 @@ const PromptsLibrary = () => {
         fetchData();
     }, [API_URL, user]);
 
-    const handleCopy = (text, id) => {
+    const handleCopy = (text, prompt) => {
         navigator.clipboard.writeText(text);
-        setCopiedId(id);
+        setCopiedId(prompt);
         setTimeout(() => setCopiedId(null), 2000);
     };
 
@@ -158,122 +158,19 @@ const PromptsLibrary = () => {
                     <div className="prompts-grid">
                         {filteredPrompts.map(prompt => {
                             const isFav = favorites.includes(prompt._id);
-                            const words = (prompt.prompt || '').trim().split(/\s+/);
-                            const isLong = words.length > 25;
-                            const previewText = isLong
-                                ? words.slice(0, 25).join(' ') + ' ...'
-                                : prompt.prompt;
-
                             return (
-                                <article
+                                <PromptCard
                                     key={prompt._id}
-                                    className="prompt-card"
-                                >
-                                    <div className="prompt-image-wrap">
-                                        <img
-                                            src={prompt.logo}
-                                            alt={prompt.name}
-                                            className="prompt-image"
-                                        />
-                                        <div className="prompt-overlay" />
+                                    prompt={prompt}
+                                    type="public"
+                                    isFav={isFav}
+                                    onFavorite={() => toggleFavorite(prompt)}
+                                    onShare={() => handleShare(prompt)}
+                                    onCopy={() => handleCopy(prompt.prompt, prompt)}
+                                    copiedId={copiedId}
 
-                                        <div className="prompt-top-row">
-                                            <span className="prompt-chip">
-                                                {prompt.name || 'Untitled Prompt'}
-                                            </span>
-                                            <div className="prompt-top-row-actions">
-                                                {prompt.platform && (
-                                                    <span className="prompt-chip prompt-chip--platform">
-                                                        <FaRobot size={10} />
-                                                        {prompt.platform}
-                                                    </span>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    className="prompt-icon-btn"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleShare(prompt);
-                                                    }}
-                                                    title="Share"
-                                                >
-                                                    <Share2 size={14} />
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className={`prompt-icon-btn ${isFav ? 'prompt-icon-btn--saved' : ''}`}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        toggleFavorite(prompt);
-                                                    }}
-                                                    title={isFav ? 'Saved to favourites' : 'Save to favourites'}
-                                                >
-                                                    <Bookmark size={14} />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="prompt-body">
-                                            <p className="prompt-text">
-                                                Prompt: {previewText}
-                                                {isLong && (
-                                                    <button
-                                                        type="button"
-                                                        style={{
-                                                            marginLeft: '0.25rem',
-                                                            fontSize: '0.75rem',
-                                                            fontWeight: 600,
-                                                            textDecoration: 'underline',
-                                                            background: 'transparent',
-                                                            border: 'none',
-                                                            color: '#a855f7',
-                                                            cursor: 'pointer'
-                                                        }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setModalPrompt(prompt);
-                                                        }}
-                                                    >
-                                                        more
-                                                    </button>
-                                                )}
-                                            </p>
-                                            <div className="prompt-footer">
-                                                <button
-                                                    type="button"
-                                                    className={
-                                                        'prompt-copy-btn' +
-                                                        (copiedId === prompt._id
-                                                            ? ' prompt-copy-btn--success'
-                                                            : '')
-                                                    }
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleCopy(prompt.prompt, prompt._id);
-                                                    }}
-                                                >
-                                                    {copiedId === prompt._id ? (
-                                                        <>
-                                                            <Check size={14} />
-                                                            Copied
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Copy size={14} />
-                                                            Copy Prompt
-                                                        </>
-                                                    )}
-                                                </button>
-                                                {prompt.category && (
-                                                    <span className="prompt-meta-tag">
-                                                        {prompt.category}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </article>
-                            )
+                                />
+                            );
                         })}
                     </div>
                 ) : (
@@ -296,43 +193,7 @@ const PromptsLibrary = () => {
                 )}
             </div>
 
-            {/* Modal for full prompt */}
-            {modalPrompt && (
-                <div
-                    className="prompt-modal-backdrop"
-                    onClick={() => setModalPrompt(null)}
-                >
-                    <div
-                        className="prompt-modal"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {modalPrompt.logo && (
-                            <img
-                                src={modalPrompt.logo}
-                                alt={modalPrompt.name}
-                                className="prompt-modal-image"
-                            />
-                        )}
-                        <div className="prompt-modal-body">
-                            <h3 className="prompt-modal-title">
-                                {modalPrompt.name || 'Prompt'}
-                            </h3>
-                            <p className="prompt-modal-text">
-                                {modalPrompt.prompt}
-                            </p>
-                            <div className="prompt-modal-footer">
-                                <button
-                                    type="button"
-                                    className="prompt-modal-close"
-                                    onClick={() => setModalPrompt(null)}
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 };

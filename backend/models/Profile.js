@@ -115,6 +115,11 @@ const profileSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tool'
     }],
+    publicPromptsDisplay: {
+        type: String,
+        enum: ['all', 'custom', 'favorites', 'custom_favorites', 'custom_library'],
+        default: 'all'
+    },
     favoritesPrompts: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tool'
