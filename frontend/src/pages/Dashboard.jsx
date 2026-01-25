@@ -573,9 +573,9 @@ const Dashboard = () => {
                     <Link to="/" className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors" title="Go Home">
                         <Home size={30} />
                     </Link>
-                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
+                    <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
                         WitHub <span className="text-gray-400">Dashboard</span>
-                    </h1>
+                    </h3>
                 </div>
 
                 <div className="flex items-center gap-3">
