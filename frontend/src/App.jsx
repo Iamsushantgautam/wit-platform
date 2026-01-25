@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -60,8 +60,8 @@ function App() {
     <AuthProvider>
       <ThemeProvider>
         <Router>
-          <Layout>
-            <Routes>
+          <Routes>
+            <Route element={<Layout><Outlet /></Layout>}>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -76,18 +76,20 @@ function App() {
               </Route>
 
               {/* Public Routes */}
-              <Route path="/u/:username" element={<Profile />} />
               <Route path="/about" element={<About />} />
               <Route path="/tools" element={<AiTools />} />
               <Route path="/prompts" element={<PromptsLibrary />} />
               <Route path="/community" element={<Profiles />} />
               <Route path="/roadmap" element={<Roadmap />} />
               <Route path="/offers" element={<Offers />} />
+            </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </Layout>
+            {/* Profile Route - No Header/Layout */}
+            <Route path="/:username" element={<Profile />} />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
         </Router>
       </ThemeProvider>
     </AuthProvider>

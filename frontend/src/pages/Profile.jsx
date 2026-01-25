@@ -82,7 +82,7 @@ const Profile = ({ usernameOverride }) => {
                 setFeatureFlags(featuresRes.data);
             } catch (err) {
                 if (err.response && err.response.status === 301) {
-                    window.location.href = `/u/${err.response.data.redirect}`;
+                    window.location.href = `/${err.response.data.redirect}`;
                 } else {
                     setError('User not found');
                 }

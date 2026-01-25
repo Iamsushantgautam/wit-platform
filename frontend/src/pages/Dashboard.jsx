@@ -2,7 +2,8 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import {
-    ExternalLink, CheckCircle, AlertCircle, Megaphone
+    ExternalLink, CheckCircle, AlertCircle, Megaphone, Eye, X,
+    Smartphone, Tablet, Monitor
 } from 'lucide-react';
 import ProfileCustomizer from '../components/ProfileCustomizer';
 import UpdatesTab from '../components/UpdatesTab';
@@ -28,10 +29,14 @@ import UserShare from '../components/user/UserShare';
 import BannerModal from '../components/user/BannerModal';
 import CustomToolModal from '../components/user/CustomToolModal';
 import CustomPromptModal from '../components/user/CustomPromptModal';
+import DashboardProfilePreview from '../components/user/DashboardProfilePreview'; // Import Preview
+import '../styles/DashboardLayout.css'; // Import Helper CSS
 
 const Dashboard = () => {
     const { user, logout, API_URL } = useContext(AuthContext);
     const [activeTab, setActiveTab] = useState('profile');
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false); // Tablet Preview Toggle
+    const [previewMode, setPreviewMode] = useState('mobile'); // mobile, tablet, desktop
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState(null);
@@ -91,6 +96,7 @@ const Dashboard = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
+    const [previewKey, setPreviewKey] = useState(0); // Key to force refresh iframe
 
     // Updates state
     const [updates, setUpdates] = useState([]);
@@ -187,6 +193,7 @@ const Dashboard = () => {
         setBannerModalOpen(false);
         setSuccessMsg(currentBannerIndex !== null ? 'Banner updated!' : 'Banner added!');
         setTimeout(() => setSuccessMsg(''), 2000);
+        setPreviewKey(prev => prev + 1);
     };
 
     const handleTempBannerImageUpload = async (e) => {
@@ -272,6 +279,7 @@ const Dashboard = () => {
             });
             setSuccessMsg('Custom tool saved successfully!');
             setTimeout(() => setSuccessMsg(''), 2000);
+            setPreviewKey(prev => prev + 1);
         } catch (error) {
             console.error("Auto-save failed", error);
             setMessage({ type: 'error', text: 'Tool added locally but failed to save to server.' });
@@ -375,6 +383,7 @@ const Dashboard = () => {
             });
             setSuccessMsg(currentPromptIndex !== null ? 'Prompt updated successfully!' : 'Custom prompt saved successfully!');
             setTimeout(() => setSuccessMsg(''), 2000);
+            setPreviewKey(prev => prev + 1);
         } catch (error) {
             console.error("Auto-save failed", error);
             setMessage({ type: 'error', text: 'Prompt saved locally but failed to save to server.' });
@@ -499,6 +508,7 @@ const Dashboard = () => {
             setMessage({ type: 'error', text: 'Image upload failed' });
         } finally {
             setUploading(false);
+            setPreviewKey(prev => prev + 1); // Refresh preview
         }
     };
 
@@ -518,6 +528,7 @@ const Dashboard = () => {
             setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update profile.' });
         } finally {
             setSaving(false);
+            setPreviewKey(prev => prev + 1);
         }
     };
 
@@ -549,179 +560,250 @@ const Dashboard = () => {
     if (!user) return <div className="p-10 text-center">Please login</div>;
     if (loading) return <div className="p-10 text-center py-20"><div className="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-blue-600 rounded-full" role="status"></div><p className="mt-4 text-gray-500">Loading your workspace...</p></div>;
 
-    const publicProfileUrl = window.location.hostname.includes('localhost')
-        ? `http://${user.username}.localhost:5173`
-        : `http://${user.username}.${window.location.host}`;
+    // Use path-based URL for preview and link
+    const publicProfileUrl = `${window.location.origin}/${user.username}`;
     const favouritesUrl = `${publicProfileUrl}?tab=prompts`;
 
     return (
         <div className="container dashboard-container min-h-screen">
-            <header className="dashboard-header flex justify-between items-end mb-10 pt-8">
-                <div>
-                    <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white mb-2">Workspace</h1>
-                    <p className="text-lg text-gray-500 dark:text-gray-400">Design your digital identity</p>
+            {/* HEADER - Updated to include Preview Toggle for Tablets */}
+            <header className="dashboard-header flex justify-between items-center bg-white border-b border-gray-200 px-6 h-16 fixed top-0 w-full z-50">
+                <div className="flex items-center gap-4">
+                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
+                        WitHub
+                    </h1>
                 </div>
-                <div className="flex gap-3 items-center">
-                    <a
-                        href={publicProfileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-primary flex items-center gap-2 px-6 py-3"
+
+                <div className="flex items-center gap-3">
+                    {/* Tablet-Only Preview Toggle Button (769px - 1240px) */}
+                    {/* Tablet-Only Preview Toggle Button (769px - 1240px) */}
+                    <button
+                        onClick={() => setIsPreviewOpen(true)}
+                        className="tablet-preview-btn"
                     >
-                        <ExternalLink size={18} /> <span>Live Preview</span>
-                    </a>
-                    <a
-                        href={favouritesUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn btn-outline flex items-center gap-2 px-4 py-3"
-                    >
-                        <Megaphone size={18} /> <span>Favourite Prompts</span>
-                    </a>
+                        <Eye size={18} />
+                        <span>Preview</span>
+                    </button>
+
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                            {user?.username?.[0]?.toUpperCase()}
+                        </div>
+                    </div>
                 </div>
             </header>
 
             {message && (
-                <div className={`p-4 mb-8 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100 shadow-sm' : 'bg-red-50 text-red-700 border border-red-100 shadow-sm'}`}>
-                    {message.type === 'success' ? <CheckCircle size={22} /> : <AlertCircle size={22} />}
+                <div className="fixed top-20 right-6 z-[60] p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 bg-white shadow-lg border border-gray-100">
+                    {message.type === 'success' ? <CheckCircle size={22} className="text-green-500" /> : <AlertCircle size={22} className="text-red-500" />}
                     <span className="font-semibold">{message.text}</span>
                     <button onClick={() => setMessage(null)} className="ml-auto opacity-50 hover:opacity-100">&times;</button>
                 </div>
             )}
 
-            <div className="dashboard-layout">
-                {/* Sidebar Navigation */}
-                <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} featureFlags={featureFlags} />
+            <div className="dashboard-layout-new">
+                {/* 1. SIDEBAR COLUMN */}
+                <div className="layout-sidebar">
+                    <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} user={user} featureFlags={featureFlags} />
 
-                {/* Main Content Area */}
-                <main className="content-card">
+                    {/* Move Live Preview button to Sidebar for smaller screens or keep in header? Header is fine. */}
+                </div>
 
-                    {activeTab === 'profile' && (
-                        <UserProfile
-                            profileData={profileData}
-                            handleProfileChange={handleProfileChange}
-                            saveProfile={saveProfile}
-                            saving={saving}
-                        />
-                    )}
+                {/* 2. MAIN CONTENT COLUMN */}
+                {(activeTab || window.innerWidth > 768) && (
+                    <main className="layout-content custom-scrollbar">
+                        {/* Mobile Close Button to return to Preview (md:hidden) */}
+                        {activeTab && (
+                            <button
+                                onClick={() => setActiveTab(null)}
+                                className="content-close-mobile-btn"
+                            >
+                                <X size={20} />
+                            </button>
+                        )}
+                        <div className="content-card"> {/* Keep card styling but it wraps inner content */}
 
-                    {activeTab === 'appearance' && (
-                        <UserAppearance
-                            profileData={profileData}
-                            handleProfileChange={handleProfileChange}
-                            handleImageUpload={handleImageUpload}
-                            uploading={uploading}
-                            saveProfile={saveProfile}
-                            saving={saving}
-                        />
-                    )}
+                            {activeTab === 'profile' && (
+                                <UserProfile
+                                    profileData={profileData}
+                                    handleProfileChange={handleProfileChange}
+                                    saveProfile={saveProfile}
+                                    saving={saving}
+                                />
+                            )}
 
-                    {activeTab === 'heroButtons' && featureFlags.userHeroButtonsEnabled && (
-                        <UserHeroButtons
-                            profileData={profileData}
-                            setProfileData={setProfileData}
-                            saveProfile={saveProfile}
-                            saving={saving}
-                        />
-                    )}
+                            {activeTab === 'appearance' && (
+                                <UserAppearance
+                                    profileData={profileData}
+                                    handleProfileChange={handleProfileChange}
+                                    handleImageUpload={handleImageUpload}
+                                    uploading={uploading}
+                                    saveProfile={saveProfile}
+                                    saving={saving}
+                                />
+                            )}
 
-                    {activeTab === 'navigation' && featureFlags.userNavigationEnabled && (
-                        <UserNavigation
-                            profileData={profileData}
-                            setProfileData={setProfileData}
-                            saveProfile={saveProfile}
-                            saving={saving}
-                        />
-                    )}
+                            {activeTab === 'heroButtons' && featureFlags.userHeroButtonsEnabled && (
+                                <UserHeroButtons
+                                    profileData={profileData}
+                                    setProfileData={setProfileData}
+                                    saveProfile={saveProfile}
+                                    saving={saving}
+                                />
+                            )}
 
-                    {activeTab === 'links' && featureFlags.userLinksEnabled && (
-                        <UserLinks
-                            profileData={profileData}
-                            handleLinkChange={handleLinkChange}
-                            removeLink={removeLink}
-                            addLink={addLink}
-                            setProfileData={setProfileData}
-                            saveProfile={saveProfile}
-                            saving={saving}
-                            successMsg={successMsg}
-                        />
-                    )}
+                            {activeTab === 'navigation' && featureFlags.userNavigationEnabled && (
+                                <UserNavigation
+                                    profileData={profileData}
+                                    setProfileData={setProfileData}
+                                    saveProfile={saveProfile}
+                                    saving={saving}
+                                />
+                            )}
 
-                    {activeTab === 'offers' && featureFlags.userOffersEnabled && (
-                        <UserOffers
-                            profileData={profileData}
-                            setProfileData={setProfileData}
-                            openAddBannerModal={openAddBannerModal}
-                            openEditBannerModal={openEditBannerModal}
-                            removeBanner={removeBanner}
-                            saveProfile={saveProfile}
-                            saving={saving}
-                        />
-                    )}
+                            {activeTab === 'links' && featureFlags.userLinksEnabled && (
+                                <UserLinks
+                                    profileData={profileData}
+                                    handleLinkChange={handleLinkChange}
+                                    removeLink={removeLink}
+                                    addLink={addLink}
+                                    setProfileData={setProfileData}
+                                    saveProfile={saveProfile}
+                                    saving={saving}
+                                    successMsg={successMsg}
+                                />
+                            )}
 
-                    {activeTab === 'tools' && featureFlags.userToolsEnabled && (
-                        <UserTools
-                            profileData={profileData}
-                            availableTools={availableTools}
-                            openAddToolModal={openAddToolModal}
-                            removeCustomItem={removeCustomItem}
-                            toggleTool={toggleTool}
-                            saveProfile={saveProfile}
-                            saving={saving}
-                        />
-                    )}
+                            {activeTab === 'offers' && featureFlags.userOffersEnabled && (
+                                <UserOffers
+                                    profileData={profileData}
+                                    setProfileData={setProfileData}
+                                    openAddBannerModal={openAddBannerModal}
+                                    openEditBannerModal={openEditBannerModal}
+                                    removeBanner={removeBanner}
+                                    saveProfile={saveProfile}
+                                    saving={saving}
+                                />
+                            )}
 
-                    {activeTab === 'prompts' && featureFlags.userPromptsEnabled && (
-                        <UserPrompts
-                            profileData={profileData}
-                            availableTools={availableTools}
-                            openAddPromptModal={openAddPromptModal}
-                            openEditPromptModal={openEditPromptModal}
-                            removeCustomItem={removeCustomItem}
-                            toggleTool={toggleTool}
-                            toggleFavorite={toggleFavorite}
-                            handleProfileChange={handleProfileChange}
-                            saveProfile={saveProfile}
-                            saving={saving}
-                        />
-                    )}
+                            {activeTab === 'tools' && featureFlags.userToolsEnabled && (
+                                <UserTools
+                                    profileData={profileData}
+                                    availableTools={availableTools}
+                                    openAddToolModal={openAddToolModal}
+                                    removeCustomItem={removeCustomItem}
+                                    toggleTool={toggleTool}
+                                    saveProfile={saveProfile}
+                                    saving={saving}
+                                />
+                            )}
 
-                    {activeTab === 'account' && (
-                        <UserAccount
-                            username={username}
-                            setUsername={setUsername}
-                            password={password}
-                            setPassword={setPassword}
-                            showPassword={showPassword}
-                            setShowPassword={setShowPassword}
-                            updateAccount={updateAccount}
-                            saving={saving}
-                        />
-                    )}
+                            {activeTab === 'prompts' && featureFlags.userPromptsEnabled && (
+                                <UserPrompts
+                                    profileData={profileData}
+                                    availableTools={availableTools}
+                                    openAddPromptModal={openAddPromptModal}
+                                    openEditPromptModal={openEditPromptModal}
+                                    removeCustomItem={removeCustomItem}
+                                    toggleTool={toggleTool}
+                                    toggleFavorite={toggleFavorite}
+                                    handleProfileChange={handleProfileChange}
+                                    saveProfile={saveProfile}
+                                    saving={saving}
+                                />
+                            )}
 
-                    {activeTab === 'updates' && featureFlags.userUpdatesEnabled && (
-                        <UpdatesTab
-                            updates={updates}
-                            addOrUpdateUpdate={(e) => {
-                                e.preventDefault();
-                                addOrUpdateUpdate(API_URL, editingUpdate, updateForm, setUpdates, setMessage, setEditingUpdate, setUpdateForm, setSaving);
+                            {activeTab === 'account' && (
+                                <UserAccount
+                                    username={username}
+                                    setUsername={setUsername}
+                                    password={password}
+                                    setPassword={setPassword}
+                                    showPassword={showPassword}
+                                    setShowPassword={setShowPassword}
+                                    updateAccount={updateAccount}
+                                    saving={saving}
+                                />
+                            )}
+
+                            {activeTab === 'updates' && featureFlags.userUpdatesEnabled && (
+                                <UpdatesTab
+                                    updates={updates}
+                                    addOrUpdateUpdate={(e) => {
+                                        e.preventDefault();
+                                        addOrUpdateUpdate(API_URL, editingUpdate, updateForm, setUpdates, setMessage, setEditingUpdate, setUpdateForm, setSaving);
+                                    }}
+                                    deleteUpdate={(id) => deleteUpdate(API_URL, id, setUpdates, setMessage)}
+                                    startEditUpdate={(update) => startEditUpdate(update, setEditingUpdate, setUpdateForm)}
+                                    cancelEditUpdate={() => cancelEditUpdate(setEditingUpdate, setUpdateForm)}
+                                    editingUpdate={editingUpdate}
+                                    updateForm={updateForm}
+                                    setUpdateForm={setUpdateForm}
+                                    saving={saving}
+                                    API_URL={API_URL}
+                                />
+                            )}
+
+                            {activeTab === 'customize' && <ProfileCustomizer />}
+
+                            {activeTab === 'share' && <UserShare user={user} />}
+                        </div>
+                    </main>
+                )}
+
+                {/* 3. LIVE PREVIEW COLUMN */}
+                <div className={`layout-preview ${isPreviewOpen ? 'visible' : ''}`}>
+
+                    {/* Close Button for Tablet Overlay Mode (769-1240px) */}
+                    <button
+                        onClick={() => setIsPreviewOpen(false)}
+                        className="absolute top-6 right-6 p-2 bg-white rounded-full shadow-lg text-gray-700 hover:bg-gray-100 z-50 md:flex xl:hidden hidden"
+                    >
+                        <X size={24} />
+                    </button>
+
+
+
+
+                    <div
+                        className="flex items-start justify-center overflow-hidden"
+                        style={{ height: 'calc(100% - 60px)', width: '100%' }}
+                    >
+                        <div
+                            className={`transition-all duration-300 ease-in-out bg-white relative shadow-xl ${previewMode === 'mobile' ? 'phone-mockup-override' : ''}`}
+                            style={{
+                                width: previewMode === 'mobile' ? '320px' : '1280px',
+                                height: '100%',
+                                maxHeight: previewMode === 'mobile' ? '700px' : '100%',
+                                transform: previewMode === 'mobile' ? 'scale(1)' : 'scale(0.28)',
+                                transformOrigin: 'top center',
+                                border: previewMode === 'mobile' ? '12px solid #1f2937' : '1px solid #e5e7eb',
+                                borderRadius: previewMode === 'mobile' ? '30px' : '8px',
                             }}
-                            deleteUpdate={(id) => deleteUpdate(API_URL, id, setUpdates, setMessage)}
-                            startEditUpdate={(update) => startEditUpdate(update, setEditingUpdate, setUpdateForm)}
-                            cancelEditUpdate={() => cancelEditUpdate(setEditingUpdate, setUpdateForm)}
-                            editingUpdate={editingUpdate}
-                            updateForm={updateForm}
-                            setUpdateForm={setUpdateForm}
-                            saving={saving}
-                            API_URL={API_URL}
-                        />
-                    )}
-
-                    {activeTab === 'customize' && <ProfileCustomizer />}
-
-                    {activeTab === 'share' && <UserShare user={user} />}
-
-                </main>
+                        >
+                            {previewMode === 'mobile' && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-900 rounded-b-2xl z-20"></div>}
+                            <iframe
+                                height="100%"
+                                width="100%"
+                                key={previewKey}
+                                src={publicProfileUrl}
+                                className="w-full h-full bg-white border-none"
+                                title="Live Preview"
+                                style={{
+                                    borderRadius: previewMode === 'mobile' ? '18px' : '8px'
+                                }}
+                            />
+                        </div>
+                    </div>
+                    <a
+                        href={publicProfileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-6 flex items-center gap-2 text-sm text-blue-600 hover:underline xl:flex hidden"
+                    >
+                        <ExternalLink size={14} /> View Live Site
+                    </a>
+                </div>
             </div>
 
             {/* MODALS */}
@@ -756,7 +838,7 @@ const Dashboard = () => {
                 uploading={bannerUploading === 'prompt'}
             />
 
-        </div>
+        </div >
     );
 };
 
