@@ -1,9 +1,10 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import {
     ExternalLink, CheckCircle, AlertCircle, Megaphone, Eye, X,
-    Smartphone, Tablet, Monitor
+    Smartphone, Tablet, Monitor, Home
 } from 'lucide-react';
 import ProfileCustomizer from '../components/ProfileCustomizer';
 import UpdatesTab from '../components/UpdatesTab';
@@ -569,14 +570,15 @@ const Dashboard = () => {
             {/* HEADER - Updated to include Preview Toggle for Tablets */}
             <header className="dashboard-header flex justify-between items-center bg-white border-b border-gray-200 px-6 h-16 fixed top-0 w-full z-50">
                 <div className="flex items-center gap-4">
+                    <Link to="/" className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors" title="Go Home">
+                        <Home size={30} />
+                    </Link>
                     <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
-                        WitHub
+                        WitHub <span className="text-gray-400">Dashboard</span>
                     </h1>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* Tablet-Only Preview Toggle Button (769px - 1240px) */}
-                    {/* Tablet-Only Preview Toggle Button (769px - 1240px) */}
                     <button
                         onClick={() => setIsPreviewOpen(true)}
                         className="tablet-preview-btn"
@@ -587,7 +589,7 @@ const Dashboard = () => {
 
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                            {user?.username?.[0]?.toUpperCase()}
+                            {user?.username}
                         </div>
                     </div>
                 </div>

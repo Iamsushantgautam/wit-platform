@@ -113,6 +113,11 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex: 1;
+    overflow-y: auto;
+    /* Custom Scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
 }
 
 .profile-drawer__item {
