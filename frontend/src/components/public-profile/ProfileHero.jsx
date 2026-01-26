@@ -35,13 +35,25 @@ const ProfileHero = ({ profile, username, featureFlags }) => {
 
     return (
         <div className="profile-hero-card">
+            {/* Logo - Controlled by Admin 'userPublicBranding' flag */}
+            {(featureFlags?.userPublicBranding !== false) && (
+                <div className="profile-hero-card__logo-wrapper">
+                    <img
+                        src={profile.logo || '/witlogo.png'}
+                        alt="Brand Logo"
+                        className="profile-hero-card__logo"
+                    />
+                </div>
+            )}
             <div className="profile-hero-card__avatar-wrapper">
                 <img
                     src={profile.image || `https://ui-avatars.com/api/?name=${username}`}
                     alt={profile.name}
                     className="profile-hero-card__avatar"
                 />
-                <div className="profile-hero-card__badge">AI</div>
+                {/* <div className="profile-hero-card__badge">
+                    ai (add the blue trick icon)
+                </div> */}
             </div>
             <h1 className="profile-hero-card__name">{profile.name || username}</h1>
             <p className="profile-hero-card_bio profile-hero-card_username">

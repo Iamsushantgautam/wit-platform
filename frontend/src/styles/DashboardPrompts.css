@@ -129,6 +129,7 @@
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -161,6 +162,7 @@
     line-height: 1.6;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin-bottom: 1rem;
@@ -220,44 +222,126 @@
 /* ========================================
    PROMPT FILTER TABS
    ======================================== */
-.prompt-filters {
+.prompts-tabs-container {
     display: flex;
+    padding: 0.25rem;
+    background: #f1f5f9;
+    border-radius: 1rem;
+    margin-bottom: 2rem;
+}
+
+.dark .prompts-tabs-container {
+    background: #1e293b;
+}
+
+.prompts-tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 0.5rem;
-    padding: 0.5rem;
-    background: #f8fafc;
+    padding: 0.75rem 1rem;
     border-radius: 0.75rem;
-    margin-bottom: 1.5rem;
-}
-
-.dark .prompt-filters {
-    background: #fafbfc;
-}
-
-.filter-tab {
-    padding: 0.5rem 1.25rem;
-    border-radius: 0.5rem;
     border: none;
-    background: transparent;
-    color: #64748b;
-    font-weight: 600;
     font-size: 0.875rem;
+    font-weight: 700;
+    color: #64748b;
+    background: transparent;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
 }
 
-.filter-tab:hover {
-    background: #e2e8f0;
-    color: #334155;
+.prompts-tab-btn.active {
+    background: white;
+    color: #8b5cf6;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.dark .filter-tab:hover {
+.dark .prompts-tab-btn.active {
     background: #334155;
-    color: #cbd5e1;
+    color: #a78bfa;
 }
 
-.filter-tab.active {
-    background: #8b5cf6;
-    color: white;
+/* Stats Area */
+.prompts-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.prompts-stat-card {
+    background: white;
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark .prompts-stat-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.prompts-stat-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+}
+
+.prompts-stat-value {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #1e293b;
+}
+
+.dark .prompts-stat-value {
+    color: #f8fafc;
+}
+
+/* Settings Card */
+.prompts-settings-card {
+    background: white;
+    border-radius: 2rem;
+    padding: 2rem;
+    border: 1px solid #f1f5f9;
+}
+
+.dark .prompts-settings-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.prompts-radio-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+    border: 2px solid #f1f5f9;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dark .prompts-radio-option {
+    border-color: #334155;
+}
+
+.prompts-radio-option:hover {
+    border-color: #ddd6fe;
+}
+
+.prompts-radio-option.selected {
+    border-color: #8b5cf6;
+    background: #f5f3ff;
+}
+
+.dark .prompts-radio-option.selected {
+    border-color: #a78bfa;
+    background: rgba(139, 92, 246, 0.1);
 }
 
 /* ========================================

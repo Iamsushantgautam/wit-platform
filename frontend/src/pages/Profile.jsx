@@ -162,7 +162,7 @@ const Profile = ({ usernameOverride }) => {
                 {activeTab === 'prompts' && featureFlags.userPromptsEnabled && (
                     <div className="profile-courses">
                         <h2 className="profile-section-title" style={{ paddingLeft: '4px' }}>Favorite Prompts</h2>
-                        <ProfilePrompts profile={profile} />
+                        <ProfilePrompts profile={profile} featureFlags={featureFlags} />
                     </div>
                 )}
 

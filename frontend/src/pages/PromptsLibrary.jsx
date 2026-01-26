@@ -1,9 +1,11 @@
 import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Search } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import PromptCard from '../components/blocks/PromptCard';
 import '../styles/Prompts.css';
+
+const PROMPTS_PER_PAGE = 9;
 
 const PromptsLibrary = () => {
     const { API_URL, user } = useContext(AuthContext);
@@ -13,14 +15,18 @@ const PromptsLibrary = () => {
     const [search, setSearch] = useState('');
     const [copiedId, setCopiedId] = useState(null);
     const [favorites, setFavorites] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
     const [modalPrompt, setModalPrompt] = useState(null);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filter, search]);
 
     useEffect(() => {
         const fetchPrompts = async () => {
             try {
-                const res = await axios.get(`${API_URL}/tools`);
-                const promptItems = res.data.filter(t => t.type === 'prompt');
-                setPrompts(promptItems);
+                const res = await axios.get(`${API_URL}/prompts`);
+                setPrompts(res.data);
             } catch (error) {
                 console.error("Error fetching prompts", error);
             } finally {
@@ -92,13 +98,20 @@ const PromptsLibrary = () => {
     const filteredPrompts = prompts.filter(p => {
         const matchesFilter = filter === 'All' || p.category === filter || p.platform === filter;
         const matchesSearch =
-            p.name.toLowerCase().includes(search.toLowerCase()) ||
+            (p.title || p.name || '').toLowerCase().includes(search.toLowerCase()) ||
             (p.description || '').toLowerCase().includes(search.toLowerCase()) ||
             (p.tags && p.tags.some(t => t.toLowerCase().includes(search.toLowerCase())));
         return matchesFilter && matchesSearch;
     });
 
     const uniqueCategories = ['All', ...new Set(prompts.map(p => p.category).filter(Boolean))];
+
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredPrompts.length / PROMPTS_PER_PAGE);
+    const paginatedPrompts = filteredPrompts.slice(
+        (currentPage - 1) * PROMPTS_PER_PAGE,
+        currentPage * PROMPTS_PER_PAGE
+    );
 
     return (
         <div className="prompts-page">
@@ -155,24 +168,58 @@ const PromptsLibrary = () => {
                         <p className="prompts-loading-text">Scanning the library...</p>
                     </div>
                 ) : filteredPrompts.length > 0 ? (
-                    <div className="prompts-grid">
-                        {filteredPrompts.map(prompt => {
-                            const isFav = favorites.includes(prompt._id);
-                            return (
-                                <PromptCard
-                                    key={prompt._id}
-                                    prompt={prompt}
-                                    type="public"
-                                    isFav={isFav}
-                                    onFavorite={() => toggleFavorite(prompt)}
-                                    onShare={() => handleShare(prompt)}
-                                    onCopy={() => handleCopy(prompt.prompt, prompt)}
-                                    copiedId={copiedId}
+                    <>
+                        <div className="prompts-grid">
+                            {paginatedPrompts.map(prompt => {
+                                const isFav = favorites.includes(prompt._id);
+                                return (
+                                    <PromptCard
+                                        key={prompt._id}
+                                        prompt={prompt}
+                                        type="public"
+                                        isFav={isFav}
+                                        onFavorite={() => toggleFavorite(prompt)}
+                                        onShare={() => handleShare(prompt)}
+                                        onCopy={() => handleCopy(prompt.prompt, prompt)}
+                                        copiedId={copiedId}
+                                    />
+                                );
+                            })}
+                        </div>
 
-                                />
-                            );
-                        })}
-                    </div>
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                            <div className="prompts-pagination">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="pagination-btn"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+
+                                <div className="pagination-numbers">
+                                    {[...Array(totalPages)].map((_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            onClick={() => setCurrentPage(i + 1)}
+                                            className={`pagination-number ${currentPage === i + 1 ? 'pagination-number--active' : ''}`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="pagination-btn"
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+                        )}
+                    </>
                 ) : (
                     <div className="prompts-empty">
                         <h2 className="prompts-empty-title">No prompts found</h2>

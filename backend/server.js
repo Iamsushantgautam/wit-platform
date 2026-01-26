@@ -44,6 +44,7 @@ app.use('/api/profiles/customize', require('./routes/profileCustomizationRoutes'
 app.use('/api/profiles/updates', require('./routes/updatesRoutes'));
 app.use('/api/profiles/pages', require('./routes/customPagesRoutes'));
 app.use('/api/tools', require('./routes/toolRoutes'));
+app.use('/api/prompts', require('./routes/promptRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/offers', require('./routes/offerRoutes'));

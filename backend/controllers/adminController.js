@@ -3,6 +3,24 @@ const Settings = require('../models/Settings');
 // @desc    Get platform settings
 // @route   GET /api/admin/settings
 // @access  Admin only
+// Feature defaults to ensure backward compatibility
+const defaultFeatures = {
+    userToolsEnabled: true,
+    userPromptsEnabled: true,
+    userOffersEnabled: true,
+    userLinksEnabled: true,
+    userUpdatesEnabled: true,
+    userNavigationEnabled: true,
+    userBottomNavEnabled: true,
+    userHeroButtonsEnabled: true,
+    userPublicBranding: true,
+    globalLibraryEnabled: true,
+    globalLibraryPublicEnabled: true
+};
+
+// @desc    Get platform settings
+// @route   GET /api/admin/settings
+// @access  Admin only
 exports.getSettings = async (req, res) => {
     try {
         let settings = await Settings.findOne({ singleton: 'settings' });
@@ -11,20 +29,18 @@ exports.getSettings = async (req, res) => {
         if (!settings) {
             settings = await Settings.create({
                 singleton: 'settings',
-                features: {
-                    userToolsEnabled: true,
-                    userPromptsEnabled: true,
-                    userOffersEnabled: true,
-                    userLinksEnabled: true,
-                    userUpdatesEnabled: true,
-                    userNavigationEnabled: true,
-                    userBottomNavEnabled: true,
-                    userHeroButtonsEnabled: true
-                }
+                features: defaultFeatures
             });
         }
 
-        res.json(settings);
+        // Merge with defaults to ensure all keys are present for the frontend
+        const mergedFeatures = { ...defaultFeatures, ...(settings.features || {}) };
+
+        // Return structured response
+        res.json({
+            ...settings.toObject(),
+            features: mergedFeatures
+        });
     } catch (error) {
         console.error('Error fetching settings:', error);
         res.status(500).json({ message: 'Failed to fetch settings' });
@@ -46,7 +62,14 @@ exports.updateSettings = async (req, res) => {
                 features
             });
         } else {
-            settings.features = { ...settings.features, ...features };
+            // Merge existing, new, and defaults to ensure integrity
+            const mergedFeatures = {
+                ...defaultFeatures,
+                ...(settings.features || {}),
+                ...features
+            };
+
+            settings.features = mergedFeatures;
             await settings.save();
         }
 
@@ -67,20 +90,17 @@ exports.getFeatureFlags = async (req, res) => {
         if (!settings) {
             settings = await Settings.create({
                 singleton: 'settings',
-                features: {
-                    userToolsEnabled: true,
-                    userPromptsEnabled: true,
-                    userOffersEnabled: true,
-                    userLinksEnabled: true,
-                    userUpdatesEnabled: true,
-                    userNavigationEnabled: true,
-                    userBottomNavEnabled: true,
-                    userHeroButtonsEnabled: true
-                }
+                features: defaultFeatures
             });
         }
 
-        res.json(settings.features);
+        // Return just the merged features object
+        const mergedFeatures = {
+            ...defaultFeatures,
+            ...(settings.features || {})
+        };
+
+        res.json(mergedFeatures);
     } catch (error) {
         console.error('Error fetching feature flags:', error);
         res.status(500).json({ message: 'Failed to fetch feature flags' });

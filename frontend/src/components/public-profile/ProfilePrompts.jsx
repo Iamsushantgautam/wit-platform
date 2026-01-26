@@ -1,16 +1,87 @@
-import React, { useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import React, { useState, useEffect, useContext } from 'react';
+import axios from 'axios';
+import { MessageCircle, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import AuthContext from '../../context/AuthContext';
 import PromptCard from '../blocks/PromptCard';
 
-const ProfilePrompts = ({ profile }) => {
+
+const PROMPTS_PER_PAGE = 9;
+
+const ProfilePrompts = ({ profile, featureFlags = {} }) => {
+    const { API_URL } = useContext(AuthContext);
     const [copiedId, setCopiedId] = useState(null);
+    const [globalPrompts, setGlobalPrompts] = useState([]);
+    const [loadingGlobal, setLoadingGlobal] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
+
     const mode = profile.publicPromptsDisplay || 'all';
 
+    // 1. Custom Prompts
     const customPrompts = (profile?.customItems?.filter(i => i && i.type === 'prompt' && i.visibility !== 'private') || []);
-    // Ensure favoritesPrompts is an array of objects and filter out nulls
-    const favoritePrompts = (profile?.favoritesPrompts || []).filter(p => p);
-    // Ensure activeTools is an array of objects and filter out nulls
-    const libraryPrompts = (profile?.activeTools?.filter(t => t && t.type === 'prompt') || []);
+
+    // 2. Favorites
+    const showGlobalPublic = featureFlags.globalLibraryPublicEnabled !== false;
+    const favoritePrompts = showGlobalPublic
+        ? (profile?.favoritesPrompts || []).filter(p => p)
+        : [];
+
+    // 3. Website Prompts (Global Library) - Replaces "Selected" prompts
+    // Fetch if logic permits
+    // Logic: If 'all' or 'custom_library' is selected AND global library is public enabled.
+    const showLibrary = showGlobalPublic && ['all', 'custom_library'].includes(mode);
+
+    useEffect(() => {
+        const fetchGlobalPrompts = async () => {
+            if (showLibrary) {
+                setLoadingGlobal(true);
+                try {
+                    const res = await axios.get(`${API_URL}/prompts`);
+                    setGlobalPrompts(res.data);
+                } catch (error) {
+                    console.error("Error fetching global prompts", error);
+                } finally {
+                    setLoadingGlobal(false);
+                }
+            }
+        };
+        fetchGlobalPrompts();
+    }, [showLibrary, API_URL]);
+
+    // Filter Global Prompts
+    // Deduplication: If favorites are SHOWN, hide them from the main list.
+    const showFavorites = showGlobalPublic && ['all', 'favorites', 'custom_favorites'].includes(mode) && favoritePrompts.length > 0;
+
+    // We also show custom prompts if mode allows
+    const showCustom = ['all', 'custom', 'custom_favorites', 'custom_library'].includes(mode) && customPrompts.length > 0;
+
+    const filteredGlobalPrompts = globalPrompts.filter(gp => {
+        // Search filter
+        const lowerSearch = searchTerm.toLowerCase();
+        const matchesSearch = (gp.name || gp.title || '').toLowerCase().includes(lowerSearch) ||
+            (gp.description || '').toLowerCase().includes(lowerSearch) ||
+            (gp.category || '').toLowerCase().includes(lowerSearch);
+        if (!matchesSearch) return false;
+
+        // Deduplicate against favorites if favorites are visible
+        if (showFavorites) {
+            const gpId = (gp._id || gp).toString();
+            const isFav = favoritePrompts.some(fp => (fp._id || fp).toString() === gpId);
+            if (isFav) return false;
+        }
+        return true;
+    });
+
+    // Pagination Logic
+    const indexOfLastPrompt = currentPage * PROMPTS_PER_PAGE;
+    const indexOfFirstPrompt = indexOfLastPrompt - PROMPTS_PER_PAGE;
+    const currentGlobalPrompts = filteredGlobalPrompts.slice(indexOfFirstPrompt, indexOfLastPrompt);
+    const totalPages = Math.ceil(filteredGlobalPrompts.length / PROMPTS_PER_PAGE);
+
+    // Reset page on search
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     const handleCopy = (text, prompt) => {
         navigator.clipboard.writeText(text);
@@ -34,19 +105,7 @@ const ProfilePrompts = ({ profile }) => {
         }
     };
 
-    // Determine visibility
-    const showCustom = ['all', 'custom', 'custom_favorites', 'custom_library'].includes(mode);
-    const showFavorites = ['all', 'favorites', 'custom_favorites'].includes(mode);
-    const showLibrary = ['all', 'custom_library'].includes(mode);
-    // Note: If 'custom_library' implies "Custom and Selected Library", we use activeTools.
-
-
-    // Check if we have any prompts to show *based on settings*
-    const hasVisiblePrompts = (showCustom && customPrompts.length > 0) ||
-        (showFavorites && favoritePrompts.length > 0) ||
-        (showLibrary && libraryPrompts.length > 0);
-
-    if (!hasVisiblePrompts) {
+    if (!showCustom && !showFavorites && !showLibrary) {
         return (
             <div className="profile-empty-state">
                 <MessageCircle size={48} className="profile-empty-icon" />
@@ -56,36 +115,74 @@ const ProfilePrompts = ({ profile }) => {
     }
 
     return (
-        <div className="flex flex-col gap-8">
-            {/* 1. Favorite Prompts Section (Carousel) */}
-            {showFavorites && favoritePrompts.length > 0 && (
+        <div className="flex flex-col gap-12">
+
+            {/* Custom Prompts Section (Horizontal Scroll) */}
+            {showCustom && (
+                <section className="space-y-4">
+                    <h3 className="text-xl font-bold text-white px-1">
+                        Created By {profile.name}
+                    </h3>
+
+                    {/* MASK */}
+                    <div className="carousel-mask">
+                        {/* SCROLL TRACK */}
+                        <div className="carousel-track">
+                            {customPrompts.map((prompt, idx) => (
+                                <div
+                                    key={`custom-${idx}`}
+                                    className="carousel-card-wrapper"
+                                >
+                                    <PromptCard
+                                        prompt={prompt}
+                                        type="public"
+                                        onCopy={handleCopy}
+                                        onShare={handleShare}
+                                        copiedId={copiedId}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
+
+
+            {/* Favorites Section (Horizontal Scroll) */}
+            {showFavorites && (
                 <div className="space-y-4">
                     <h3 className="text-xl font-bold text-white px-1">Favorite Prompts</h3>
-                    <div className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent -mx-2 px-2">
-                        {favoritePrompts.map((prompt) => (
-                            <div key={prompt._id} className="min-w-[calc((100%-1rem)/2)] w-[calc((100%-1rem)/2)] md:min-w-[320px] md:w-[320px] snap-center flex-shrink-0">
-                                <PromptCard
-                                    prompt={prompt}
-                                    type="public"
-                                    onCopy={handleCopy}
-                                    onShare={handleShare}
-                                    copiedId={copiedId}
-                                />
-                            </div>
-                        ))}
+                    <div className="carousel-mask">
+                        {/* SCROLL TRACK */}
+                        <div className="carousel-track">
+                            {favoritePrompts.map((prompt, idx) => (
+                                <div key={`fav-${idx}`} className="carousel-card-wrapper">
+                                    <PromptCard
+                                        prompt={prompt}
+                                        type="public"
+                                        onCopy={handleCopy}
+                                        onShare={handleShare}
+                                        copiedId={copiedId}
+                                    />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* 2. Custom Prompts Section (Grid) */}
-            {showCustom && customPrompts.length > 0 && (
-                <div className="space-y-4">
-                    <h3 className="text-xl font-bold text-white px-1">Created By {profile.name}</h3>
-                    <div className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent -mx-2 px-2">
-                        {customPrompts.map((prompt, idx) => (
-                            <div key={prompt._id} className="min-w-[calc((100%-1rem)/2)] w-[calc((100%-1rem)/2)] md:min-w-[320px] md:w-[320px] snap-center flex-shrink-0">
+            {/* Website Prompts (Global Library) - Carousel Layout */}
+            {filteredGlobalPrompts.length > 0 ? (
+                <div className="carousel-mask -mx-2 px-2">
+                    <div className="carousel-track">
+                        <h3 className="text-xl font-bold text-white px-1">Website Prompts</h3>
+                        {filteredGlobalPrompts.map((prompt, idx) => (
+                            <div
+                                key={`global-${prompt._id || idx}`}
+                                className="carousel-card-wrapper"
+                            >
                                 <PromptCard
-                                    key={`custom-${idx}`}
                                     prompt={prompt}
                                     type="public"
                                     onCopy={handleCopy}
@@ -95,29 +192,13 @@ const ProfilePrompts = ({ profile }) => {
                             </div>
                         ))}
                     </div>
+                </div>
+            ) : (
+                <div className="py-12 text-center text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl bg-gray-900/30">
+                    <p>No website prompts found.</p>
                 </div>
             )}
 
-            {/* 3. Library/Selected Prompts Section (Grid) */}
-            {showLibrary && libraryPrompts.length > 0 && (
-                <div className="space-y-4">
-                    <h3 className="text-xl font-bold text-white px-1">Curated Collection</h3>
-                    <div className="flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-purple-500/30 scrollbar-track-transparent -mx-2 px-2">
-                        {libraryPrompts.map((prompt) => (
-                            <div key={prompt._id} className="min-w-[calc((100%-1rem)/2)] w-[calc((100%-1rem)/2)] md:min-w-[320px] md:w-[320px] snap-center flex-shrink-0">
-                                <PromptCard
-                                    key={prompt._id}
-                                    prompt={prompt}
-                                    type="public"
-                                    onCopy={handleCopy}
-                                    onShare={handleShare}
-                                    copiedId={copiedId}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
-    User, Image, Link as LinkIcon, Megaphone, Layout, Bell,
+    User, Link as LinkIcon, Megaphone, Layout, Bell,
     Palette, QrCode, ShieldAlert, ChevronRight, Settings, MousePointerClick, Navigation,
     Grid, X
 } from 'lucide-react';
@@ -18,7 +18,7 @@ const DashboardSidebar = ({ activeTab, setActiveTab, user, featureFlags = {} }) 
     // Define all tabs in an array for better management
     const allTabs = [
         { id: 'profile', label: 'Profile', icon: User },
-        { id: 'appearance', label: 'Theme', icon: Image },
+
         { id: 'tools', label: 'Tools', icon: Layout, condition: featureFlags.userToolsEnabled },
         { id: 'links', label: 'Links', icon: LinkIcon, condition: featureFlags.userLinksEnabled },
         { id: 'offers', label: 'Offers', icon: Megaphone, condition: featureFlags.userOffersEnabled },
@@ -54,7 +54,7 @@ const DashboardSidebar = ({ activeTab, setActiveTab, user, featureFlags = {} }) 
                     className={`sidebar-menu-btn ${activeTab === tab.id ? 'active' : ''}`}
                 >
                     <tab.icon size={24} />
-                    <span>{tab.label === 'Theme' ? 'Appearance' : tab.label}</span>
+                    <span>{tab.label}</span>
                 </button>
             ))}
 

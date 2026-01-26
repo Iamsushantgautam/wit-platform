@@ -3,6 +3,7 @@ const Profile = require('../models/Profile');
 const User = require('../models/User');
 const UsernameHistory = require('../models/UsernameHistory');
 const Tool = require('../models/Tool');
+const Prompt = require('../models/Prompt');
 
 // @desc    Get current user profile
 // @route   GET /api/profiles/me
@@ -80,6 +81,7 @@ const getProfileByUsername = asyncHandler(async (req, res) => {
     const profile = await Profile.findOne({ user: user._id })
         .populate('user', 'username email')
         .populate('activeTools')
+        .populate('activePrompts')
         .populate('favoritesPrompts')
         .populate('favoritesOffers'); // Populate tools details
 
@@ -112,8 +114,8 @@ const toggleFavoritePrompt = asyncHandler(async (req, res) => {
         throw new Error('toolId is required');
     }
 
-    const tool = await Tool.findById(toolId);
-    if (!tool || tool.type !== 'prompt') {
+    const prompt = await Prompt.findById(toolId);
+    if (!prompt) {
         res.status(404);
         throw new Error('Prompt not found');
     }

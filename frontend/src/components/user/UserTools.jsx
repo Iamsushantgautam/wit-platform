@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout, Plus, Wrench, Search, Save } from 'lucide-react';
+import { Layout, Plus, Wrench, Search, Save, Globe } from 'lucide-react';
 import ToolCard from '../blocks/ToolCard';
 
 const UserTools = ({
@@ -21,7 +21,7 @@ const UserTools = ({
 
     return (
         <div>
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                 <div>
                     <h2 className="dashboard-section-title mb-1">
                         <Layout className="text-accent" />
@@ -37,8 +37,8 @@ const UserTools = ({
             {/* Custom Tools Section */}
             {profileData.customItems && profileData.customItems.filter(i => (!i.type || i.type === 'tool')).length > 0 && (
                 <div className="mb-10">
-                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-800 dark:text-white">
-                        <Wrench size={18} className="text-blue-500" /> Your Custom Tools
+                    <h3 className="section-subtitle flex items-center gap-2 mb-6">
+                        <Wrench size={20} className="text-blue-500" /> Your Custom Tools
                     </h3>
                     <div className="tools-grid">
                         {profileData.customItems.filter(i => (!i.type || i.type === 'tool')).map((tool, idx) => (
@@ -54,24 +54,12 @@ const UserTools = ({
             )}
 
             {/* Global Tools Section */}
-            <div className="mb-4">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                    <h3 className="text-lg font-bold text-gray-800 dark:text-white">Select from Library</h3>
-
-                    {/* Search using AiTools.css classes */}
-                    <div className="tools-search-wrapper w-full md:w-64" style={{ margin: 0, paddingBottom: 0, animation: 'none' }}>
-                        <div className="tools-search-container">
-                            <Search className="tools-search-icon" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Search library..."
-                                className="tools-search-input"
-                                style={{ padding: '0.5rem 0.5rem 0.5rem 2.5rem', fontSize: '0.875rem' }}
-                                value={toolSearch}
-                                onChange={(e) => setToolSearch(e.target.value)}
-                            />
-                        </div>
-                    </div>
+            <div className="mb-8 mt-8">
+                <div className="flex items-center gap-4 mb-6">
+                    <h3 className="section-subtitle flex items-center gap-2">
+                        <Globe size={20} className="text-indigo-500" /> Global Library
+                    </h3>
+                    <div className="h-px bg-gray-200 dark:bg-gray-700 flex-1"></div>
                 </div>
 
                 {/* Grid using AiTools.css classes */}

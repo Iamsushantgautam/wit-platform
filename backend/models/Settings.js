@@ -34,6 +34,18 @@ const settingsSchema = mongoose.Schema({
         userHeroButtonsEnabled: {
             type: Boolean,
             default: true
+        },
+        userPublicBranding: {
+            type: Boolean,
+            default: true
+        },
+        globalLibraryEnabled: {
+            type: Boolean,
+            default: true
+        },
+        globalLibraryPublicEnabled: {
+            type: Boolean,
+            default: true
         }
     },
     // Singleton pattern: only one settings document

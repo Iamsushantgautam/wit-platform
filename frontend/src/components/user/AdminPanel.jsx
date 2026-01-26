@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Shield, Save, AlertCircle, CheckCircle, Settings as SettingsIcon, Layout, MessageCircle, Gift, Link2, Bell, Navigation, MousePointerClick, Users, Eye, EyeOff } from 'lucide-react';
+import { Shield, Save, AlertCircle, CheckCircle, Settings as SettingsIcon, Layout, MessageCircle, Gift, Link2, Bell, Navigation, MousePointerClick, Users, Eye, EyeOff, Globe } from 'lucide-react';
 import AuthContext from '../../context/AuthContext';
 import axios from 'axios';
 
@@ -16,7 +16,10 @@ const AdminPanel = () => {
         userUpdatesEnabled: true,
         userNavigationEnabled: true,
         userBottomNavEnabled: true,
-        userHeroButtonsEnabled: true
+        userHeroButtonsEnabled: true,
+        userPublicBranding: true,
+        globalLibraryEnabled: true,
+        globalLibraryPublicEnabled: true
     });
 
 
@@ -85,6 +88,30 @@ const AdminPanel = () => {
             icon: MousePointerClick,
             color: 'cyan',
             impact: 'Dashboard Only'
+        },
+        {
+            key: 'userPublicBranding',
+            label: 'Public Profile Branding',
+            description: 'Enable "WitHub" logo on public profiles. Users cannot disable this.',
+            icon: Shield,
+            color: 'red',
+            impact: 'Public Profile Only'
+        },
+        {
+            key: 'globalLibraryEnabled',
+            label: 'Global Prompts (Library)',
+            description: 'Disable this to stop showing website prompts in user dashboard',
+            icon: Globe,
+            color: 'blue',
+            impact: 'Dashboard Only'
+        },
+        {
+            key: 'globalLibraryPublicEnabled',
+            label: 'Global Prompts (Public Profile)',
+            description: 'Disable this to hide website collection from public profiles',
+            icon: Eye,
+            color: 'purple',
+            impact: 'Public Profile Only'
         }
     ];
 
@@ -97,7 +124,8 @@ const AdminPanel = () => {
             const { data } = await axios.get(`${API_URL}/admin/settings`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-            setFeatures(data.features);
+            // Merge defaults with fetched data
+            setFeatures(prev => ({ ...prev, ...(data.features || {}) }));
         } catch (error) {
             console.error('Error fetching settings:', error);
             setMessage({

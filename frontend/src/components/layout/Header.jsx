@@ -50,11 +50,7 @@ const Header = () => {
 
                         <Link to="/prompts" className="nav-link">Prompts</Link>
                         <Link to="/tools" className="nav-link">AI Tools</Link>
-                        {!user ? (
-                            <Link to="/login" className="nav-link">Profile</Link>
-                        ) : (
-                            <Link to="/dashboard" className="nav-link">Profile</Link>
-                        )}
+                        <Link to="/offers" className="nav-link">Offers</Link>
                         {!user ? (
                             <>
                                 <Link to="/login" className="nav-link">Login</Link>
@@ -145,11 +141,7 @@ const Header = () => {
 
                         <Link to="/prompts" onClick={toggleDrawer} className="nav-link block">Prompts</Link>
                         <Link to="/tools" onClick={toggleDrawer} className="nav-link block">AI Tools</Link>
-                        {!user ? (
-                            <Link to="/login" onClick={toggleDrawer} className="nav-link block">Profile</Link>
-                        ) : (
-                            <Link to="/dashboard" onClick={toggleDrawer} className="nav-link block">Profile</Link>
-                        )}
+                        <Link to="/offers" onClick={toggleDrawer} className="nav-link block">Offers</Link>
                         {!user ? (
                             <>
                                 <Link to="/login" onClick={toggleDrawer} className="nav-link block">Login</Link>

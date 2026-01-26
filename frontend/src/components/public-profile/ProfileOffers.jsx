@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { ArrowRight, Ticket, Megaphone, Heart, Tag, Filter, X } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { ArrowRight, Ticket, Megaphone, Heart, Tag, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import OfferCard from '../blocks/OfferCard';
 
 const ProfileOffers = ({ profile }) => {
@@ -78,6 +78,15 @@ const ProfileOffers = ({ profile }) => {
     };
 
     const filteredOffers = getFilteredOffers();
+    const scrollContainerRef = useRef(null);
+
+    const scroll = (direction) => {
+        if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            const scrollAmount = direction === 'left' ? -320 : 320;
+            container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    };
 
     return (
         <div className="w-full">
@@ -168,25 +177,54 @@ const ProfileOffers = ({ profile }) => {
                 )}
             </div>
 
-            {/* Offer Grid */}
-            <div className="grid grid-cols-4 md:grid-cols-2 gap-6">
-                {filteredOffers.map((banner, idx) => (
-                    <OfferCard
-                        key={idx}
-                        offer={banner.isGlobal ? banner : {
-                            title: banner.title,
-                            image: banner.imageUrl,
-                            link: banner.link,
-                            code: banner.promoCode,
-                            description: banner.caption,
-                            discount: banner.tags && banner.tags.length > 0 ? banner.tags[0] : null
-                        }}
-                        // Public view: no toggle favorite action for visitors yet (unless signed in, but this component is generic)
-                        // If we want to show it's a favorite OF THE OWNER, we can just pass isFavorite={true} if filterType is favorites
-                        isFavorite={filterType === 'favorites'}
-                        className="h-full"
-                    />
-                ))}
+            {/* Offer Carousel */}
+            <div className="relative group">
+                {/* Scroll Controls (Desktop) */}
+                {filteredOffers.length > 0 && (
+                    <>
+                        <button
+                            onClick={() => scroll('left')}
+                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white/90 dark:bg-gray-800/90 p-3 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hidden md:flex items-center justify-center cursor-pointer"
+                            aria-label="Scroll left"
+                        >
+                            <ChevronLeft size={24} />
+                        </button>
+                        <button
+                            onClick={() => scroll('right')}
+                            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white/90 dark:bg-gray-800/90 p-3 rounded-full shadow-lg border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-300 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hidden md:flex items-center justify-center cursor-pointer"
+                            aria-label="Scroll right"
+                        >
+                            <ChevronRight size={24} />
+                        </button>
+                    </>
+                )}
+
+                <div
+                    ref={scrollContainerRef}
+                    className="flex overflow-x-auto gap-6 pb-8 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory scrollbar-hide scroll-smooth"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                    {filteredOffers.map((banner, idx) => (
+                        <div
+                            key={idx}
+                            className="min-w-[85vw] md:min-w-[320px] max-w-[320px] snap-center flex-shrink-0"
+                        >
+                            <OfferCard
+                                index={idx}
+                                offer={banner.isGlobal ? banner : {
+                                    title: banner.title,
+                                    image: banner.imageUrl,
+                                    link: banner.link,
+                                    code: banner.promoCode,
+                                    description: banner.caption,
+                                    discount: banner.tags && banner.tags.length > 0 ? banner.tags[0] : null
+                                }}
+                                isFavorite={filterType === 'favorites'}
+                                className="h-full shadow-sm hover:shadow-md transition-shadow border-gray-200 dark:border-gray-800"
+                            />
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {filteredOffers.length === 0 && (

@@ -12,7 +12,11 @@ const toolSchema = mongoose.Schema({
     },
     logo: {
         type: String,
-        required: [true, 'Please add a tool logo']
+        required: false // Changed to false to allow Icon instead
+    },
+    icon: {
+        type: String,
+        required: false
     },
     url: {
         type: String,

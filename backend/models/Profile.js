@@ -19,6 +19,14 @@ const profileSchema = mongoose.Schema({
         type: String,
         default: ''
     },
+    logo: {
+        type: String,
+        default: ''
+    },
+    showLogo: {
+        type: Boolean,
+        default: true
+    },
     category: {
         type: String,
         default: 'General'
@@ -115,6 +123,10 @@ const profileSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Tool'
     }],
+    activePrompts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Prompt'
+    }],
     publicPromptsDisplay: {
         type: String,
         enum: ['all', 'custom', 'favorites', 'custom_favorites', 'custom_library'],
@@ -122,7 +134,7 @@ const profileSchema = mongoose.Schema({
     },
     favoritesPrompts: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tool'
+        ref: 'Prompt'
     }],
     favoritesOffers: [{
         type: mongoose.Schema.Types.ObjectId,

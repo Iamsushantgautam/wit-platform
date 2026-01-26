@@ -2,8 +2,16 @@ import { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Users, Layout, Image, Plus, Search, Filter, Trash2, Edit2, CheckCircle, XCircle, MoreVertical, LogOut, Settings, Gift } from 'lucide-react';
+import { Users, Layout, Image, Plus, Search, Filter, Trash2, Edit2, CheckCircle, XCircle, MoreVertical, LogOut, Settings, Gift, ChevronDown, Zap, Activity, Box, Briefcase, Calendar, Camera, Clock, Code, Cpu, Database, File, Globe, Heart, Home, Layers, Link as LinkIcon, Lock, Mail, Map, MessageCircle, Music, PenTool, Shield, Smartphone, Star, Sun, Table, Terminal, Wrench as ToolIcon, Truck, Video, Wifi } from 'lucide-react';
+import * as Icons from 'lucide-react';
 import '../styles/Admin.css';
+
+const ICON_LIST = [
+    'Zap', 'Activity', 'Box', 'Briefcase', 'Calendar', 'Camera', 'CheckCircle', 'Clock', 'Code', 'Cpu',
+    'Database', 'File', 'Globe', 'Heart', 'Home', 'Image', 'Layers', 'Link', 'Lock',
+    'Mail', 'Map', 'MessageCircle', 'Music', 'PenTool', 'Search', 'Settings', 'Shield', 'Smartphone',
+    'Star', 'Sun', 'Table', 'Terminal', 'Truck', 'User', 'Video', 'Wifi'
+];
 import AdminPanel from '../components/user/AdminPanel';
 import ToolCard from '../components/blocks/ToolCard';
 import PromptCard from '../components/blocks/PromptCard';
@@ -26,16 +34,18 @@ const MasterAdminDashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [users, setUsers] = useState([]);
     const [tools, setTools] = useState([]);
+    const [prompts, setPrompts] = useState([]);
     const [offers, setOffers] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
     const [searchTerm, setSearchTerm] = useState('');
     const [stats, setStats] = useState({ totalUsers: 0, totalTools: 0, totalPrompts: 0 });
+    const [showIconSelector, setShowIconSelector] = useState(false);
 
     // Form State
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [formData, setFormData] = useState({
-        name: '', description: '', url: '', logo: '', category: '',
+        name: '', description: '', url: '', logo: '', icon: '', category: '',
         prompt: '', promptDescription: '', type: 'tool',
         platform: 'Generic', tags: [],
         code: '', discount: '', expires: '', isActive: true
@@ -45,20 +55,22 @@ const MasterAdminDashboard = () => {
         const fetchData = async () => {
             try {
                 const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
-                const [usersRes, toolsRes, offersRes] = await Promise.all([
+                const [usersRes, toolsRes, offersRes, promptsRes] = await Promise.all([
                     axios.get(`${API_URL}/user-manage`, config),
                     axios.get(`${API_URL}/tools`),
-                    axios.get(`${API_URL}/offers/admin`, config)
+                    axios.get(`${API_URL}/offers/admin`, config),
+                    axios.get(`${API_URL}/prompts`)
                 ]);
                 setUsers(usersRes.data);
                 setTools(toolsRes.data);
                 setOffers(offersRes.data);
+                setPrompts(promptsRes.data);
 
                 // Calculate Stats
                 setStats({
                     totalUsers: usersRes.data.length,
-                    totalTools: toolsRes.data.filter(t => t.type !== 'prompt').length,
-                    totalPrompts: toolsRes.data.filter(t => t.type === 'prompt').length
+                    totalTools: toolsRes.data.length,
+                    totalPrompts: promptsRes.data.length
                 });
             } catch (error) {
                 console.error("Error loading admin data", error);
@@ -103,43 +115,74 @@ const MasterAdminDashboard = () => {
             return;
         }
 
-        // TOOL/PROMPT SUBMISSION
-        const payload = { ...formData }; // Clone to avoid mutation side effects
-
-        // Validation & Defaults Logic
+        // PROMPT SUBMISSION (New Collection)
         if (formData.type === 'prompt') {
             if (!formData.name) return alert('Please give this prompt a Title/Name.');
-            if (!formData.logo) return alert('An image upload is required for prompts.');
+            if (!formData.logo) return alert('An image upload is required for prompts (result example).');
             if (!formData.prompt) return alert('The prompt text is required.');
 
-            // Defaults for schema compliance
-            if (!payload.description) payload.description = payload.prompt.substring(0, 100) + (payload.prompt.length > 100 ? '...' : '');
-            if (!payload.url) payload.url = '#'; // Prompts don't have a link usually
-            if (!payload.category || payload.category === '') payload.category = 'AI Image';
-        } else {
-            // Tool Validation
+            const payload = {
+                title: formData.name,
+                prompt: formData.prompt,
+                description: formData.description || formData.prompt.substring(0, 100),
+                image: formData.logo, // Map 'logo' state to 'image'
+                platform: formData.platform,
+                tags: formData.tags,
+                category: formData.category || 'AI Image'
+            };
+
+            try {
+                const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+                if (editingItem) {
+                    const res = await axios.put(`${API_URL}/prompts/${editingItem._id}`, payload, config);
+                    setPrompts(prompts.map(p => p._id === editingItem._id ? res.data : p));
+                } else {
+                    const res = await axios.post(`${API_URL}/prompts`, payload, config);
+                    setPrompts([res.data, ...prompts]);
+                }
+                closeForm();
+            } catch (error) {
+                console.error("Error saving prompt", error);
+                alert('Failed to save prompt: ' + (error.response?.data?.message || error.message));
+            }
+            return;
+        }
+
+        // TOOL SUBMISSION (Tools Collection)
+        if (formData.type === 'tool') {
             if (!formData.name || formData.name.trim() === '') {
                 return alert('Name is required.');
             }
-            if (formData.type === 'tool' && !formData.url && !formData.logo) {
-                return alert('Provide a tool URL or upload a logo image.');
+            if (!formData.url && !formData.logo && !formData.icon) {
+                return alert('Provide a tool URL, or upload a logo, or select an icon.');
             }
-        }
 
-        try {
-            const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
-            if (editingItem) {
-                const res = await axios.put(`${API_URL}/tools/${editingItem._id}`, payload, config);
-                setTools(tools.map(t => t._id === editingItem._id ? res.data : t));
-            } else {
-                const res = await axios.post(`${API_URL}/tools`, payload, config);
-                setTools([res.data, ...tools]);
+            const payload = {
+                name: formData.name,
+                description: formData.description,
+                url: formData.url,
+                logo: formData.logo,
+                icon: formData.icon, // Add icon field
+                category: formData.category,
+                type: 'tool',
+                platform: formData.platform,
+                tags: formData.tags
+            };
+
+            try {
+                const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+                if (editingItem) {
+                    const res = await axios.put(`${API_URL}/tools/${editingItem._id}`, payload, config);
+                    setTools(tools.map(t => t._id === editingItem._id ? res.data : t));
+                } else {
+                    const res = await axios.post(`${API_URL}/tools`, payload, config);
+                    setTools([res.data, ...tools]);
+                }
+                closeForm();
+            } catch (error) {
+                console.error("Error saving tool", error);
+                alert('Failed to save tool: ' + (error.response?.data?.message || error.message));
             }
-            closeForm();
-        } catch (error) {
-            console.error("Error saving item", error);
-            const message = error.response?.data?.message || error.message || 'Failed to save item';
-            alert(`Failed to save item: ${message}`);
         }
     };
 
@@ -171,6 +214,9 @@ const MasterAdminDashboard = () => {
             if (type === 'offer') {
                 await axios.delete(`${API_URL}/offers/${id}`, config);
                 setOffers(offers.filter(o => o._id !== id));
+            } else if (type === 'prompt') {
+                await axios.delete(`${API_URL}/prompts/${id}`, config);
+                setPrompts(prompts.filter(p => p._id !== id));
             } else {
                 await axios.delete(`${API_URL}/tools/${id}`, config);
                 setTools(tools.filter(t => t._id !== id));
@@ -204,7 +250,7 @@ const MasterAdminDashboard = () => {
             } else {
                 setFormData({
                     name: item.name, description: item.description, url: item.url || '',
-                    logo: item.logo, category: item.category,
+                    logo: item.logo, icon: item.icon || '', category: item.category,
                     prompt: item.prompt || '', promptDescription: item.promptDescription || '',
                     type: item.type || 'tool', platform: item.platform || 'Generic', tags: item.tags || [],
                     code: '', discount: '', expires: '', isActive: true
@@ -213,12 +259,13 @@ const MasterAdminDashboard = () => {
         } else {
             setEditingItem(null);
             setFormData({
-                name: '', description: '', url: '', logo: '', category: '',
+                name: '', description: '', url: '', logo: '', icon: '', category: '',
                 prompt: '', promptDescription: '', type: type,
                 platform: 'Generic', tags: [],
                 code: '', discount: '', expires: '', isActive: true
             });
         }
+        setShowIconSelector(false);
         setIsFormOpen(true);
     };
 
@@ -355,10 +402,10 @@ const MasterAdminDashboard = () => {
     };
 
     const ItemsTab = ({ type }) => {
-        const items = tools.filter(t => (t.type || 'tool') === type);
+        const items = type === 'prompt' ? prompts : tools;
         const filteredItems = items.filter(item =>
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (item.name || item.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
         );
 
@@ -738,29 +785,106 @@ const MasterAdminDashboard = () => {
                                     </div>
 
                                     <div>
-                                        <label className="label-premium">Logo URL</label>
-                                        <div className="file-input-row">
-                                            <div style={{ flex: 1 }}>
-                                                <input
-                                                    type="url"
-                                                    className="input-premium"
-                                                    value={formData.logo}
-                                                    onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
-                                                    placeholder="https://example.com/logo.png"
-                                                />
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={(e) => {
-                                                        const f = e.target.files && e.target.files[0];
-                                                        if (f) handleLogoFile(f);
-                                                    }}
-                                                    style={{ marginTop: '0.5rem' }}
-                                                />
+                                        <label className="label-premium">Logo / Icon</label>
+                                        <div className="flex flex-col gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                                            <div className="flex items-start gap-4">
+                                                {/* Preview Box */}
+                                                <div className="w-20 h-20 flex-shrink-0 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden relative group">
+                                                    {formData.logo ? (
+                                                        <>
+                                                            <img src={formData.logo} alt="Logo" className="w-full h-full object-contain p-1" />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setFormData({ ...formData, logo: '' })}
+                                                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <XCircle size={14} />
+                                                            </button>
+                                                        </>
+                                                    ) : formData.icon ? (
+                                                        <div onClick={() => setShowIconSelector(!showIconSelector)} className="cursor-pointer text-blue-500">
+                                                            {(() => {
+                                                                const Icon = Icons[formData.icon] || Icons.Box;
+                                                                return <Icon size={32} />;
+                                                            })()}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-slate-400 flex flex-col items-center">
+                                                            <Image size={24} />
+                                                            <span className="text-[10px] mt-1">None</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Controls */}
+                                                <div className="flex-1 space-y-3">
+                                                    {/* File Upload */}
+                                                    <div>
+                                                        <div className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Option 1: Upload Image</div>
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => {
+                                                                const f = e.target.files && e.target.files[0];
+                                                                if (f) {
+                                                                    handleLogoFile(f);
+                                                                    setFormData(prev => ({ ...prev, icon: '' })); // Clear icon if image uploaded
+                                                                }
+                                                            }}
+                                                            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/20 dark:file:text-blue-400"
+                                                        />
+                                                    </div>
+
+                                                    {/* URL Input */}
+                                                    <div>
+                                                        <input
+                                                            type="url"
+                                                            className="input-premium py-1 px-3 text-xs"
+                                                            value={formData.logo}
+                                                            onChange={(e) => setFormData({ ...formData, logo: e.target.value, icon: '' })}
+                                                            placeholder="Or paste image URL..."
+                                                        />
+                                                    </div>
+
+                                                    {/* Icon Selector Button */}
+                                                    <div>
+                                                        <div className="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider mt-2">Option 2: Select Icon</div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setShowIconSelector(!showIconSelector);
+                                                                if (!showIconSelector && formData.logo) setFormData(prev => ({ ...prev, logo: '' })); // Optional: Clear logo if opening icon selector? No, let user decide.
+                                                            }}
+                                                            className={`text-sm font-bold flex items-center gap-2 ${formData.icon ? 'text-blue-600' : 'text-slate-600 dark:text-slate-400 hover:text-blue-500'}`}
+                                                        >
+                                                            {showIconSelector ? 'Close Icons' : 'Browse Icons'} <ChevronDown size={14} className={`transition-transform ${showIconSelector ? 'rotate-180' : ''}`} />
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="file-preview" aria-hidden>
-                                                {formData.logo ? <img src={formData.logo} alt="preview" /> : <div style={{ fontSize: 12, color: 'var(--text-secondary)', padding: 6 }}>No image</div>}
-                                            </div>
+
+                                            {/* Icon Grid */}
+                                            {showIconSelector && (
+                                                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 grid grid-cols-8 sm:grid-cols-10 gap-2 max-h-40 overflow-y-auto shadow-inner">
+                                                    {ICON_LIST.map(icon => {
+                                                        const Icon = Icons[icon];
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={icon}
+                                                                onClick={() => {
+                                                                    setFormData({ ...formData, icon: icon, logo: '' }); // Set icon, clear logo
+                                                                    setShowIconSelector(false);
+                                                                }}
+                                                                className={`p-2 rounded-lg flex items-center justify-center hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${formData.icon === icon ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600' : 'text-slate-500'}`}
+                                                                title={icon}
+                                                            >
+                                                                <Icon size={20} />
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

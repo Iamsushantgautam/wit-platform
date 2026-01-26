@@ -18,7 +18,7 @@ import '../styles/DashboardPrompts.css';
 // User Components
 import DashboardSidebar from '../components/user/DashboardSidebar';
 import UserProfile from '../components/user/UserProfile';
-import UserAppearance from '../components/user/UserAppearance';
+
 import UserHeroButtons from '../components/user/UserHeroButtons';
 import UserNavigation from '../components/user/UserNavigation';
 import UserLinks from '../components/user/UserLinks';
@@ -46,6 +46,8 @@ const Dashboard = () => {
         name: '',
         bio: '',
         image: '',
+        logo: '',
+        showLogo: true,
         category: 'Developer',
         importantLinks: [],
         banners: [],
@@ -93,6 +95,7 @@ const Dashboard = () => {
     });
 
     const [availableTools, setAvailableTools] = useState([]);
+    const [availablePrompts, setAvailablePrompts] = useState([]);
     const [username, setUsername] = useState(user?.username || '');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -399,7 +402,7 @@ const Dashboard = () => {
     };
 
     const toggleTool = (toolId) => {
-        const currentTools = [...profileData.activeTools];
+        const currentTools = [...(profileData.activeTools || [])];
         const index = currentTools.indexOf(toolId);
         if (index > -1) {
             currentTools.splice(index, 1);
@@ -407,6 +410,17 @@ const Dashboard = () => {
             currentTools.push(toolId);
         }
         setProfileData({ ...profileData, activeTools: currentTools });
+    };
+
+    const togglePrompt = (promptId) => {
+        const currentPrompts = [...(profileData.activePrompts || [])];
+        const index = currentPrompts.indexOf(promptId);
+        if (index > -1) {
+            currentPrompts.splice(index, 1);
+        } else {
+            currentPrompts.push(promptId);
+        }
+        setProfileData({ ...profileData, activePrompts: currentPrompts });
     };
 
     const toggleFavorite = async (e, toolId) => {
@@ -429,11 +443,12 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [profileRes, toolsRes, updatesRes, featuresRes] = await Promise.all([
+                const [profileRes, toolsRes, promptsRes, updatesRes, featuresRes] = await Promise.all([
                     axios.get(`${API_URL}/profiles/me`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                     }),
                     axios.get(`${API_URL}/tools`),
+                    axios.get(`${API_URL}/prompts`),
                     axios.get(`${API_URL}/profiles/updates`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
                     }),
@@ -441,6 +456,7 @@ const Dashboard = () => {
                 ]);
                 setProfileData(profileRes.data);
                 setAvailableTools(toolsRes.data);
+                setAvailablePrompts(promptsRes.data);
                 setUpdates(updatesRes.data);
                 setFeatureFlags(featuresRes.data);
                 setUsername(user.username);
@@ -507,6 +523,41 @@ const Dashboard = () => {
         } catch (error) {
             console.error(error);
             setMessage({ type: 'error', text: 'Image upload failed' });
+        } finally {
+            setUploading(false);
+            setPreviewKey(prev => prev + 1); // Refresh preview
+        }
+    };
+
+
+    const handleLogoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        setUploading(true);
+
+        try {
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            };
+            // reusing 'avatar' context or 'uploads', maybe 'logo' context if backend supports it, defaulting to uploads
+            const { data: imageUrl } = await axios.post(`${API_URL}/upload?context=uploads`, formData, config);
+
+            // Auto-save logic
+            const updatedProfile = { ...profileData, logo: imageUrl };
+            setProfileData(updatedProfile);
+            await axios.post(`${API_URL}/profiles`, updatedProfile, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            setMessage({ type: 'success', text: 'Logo uploaded!' });
+        } catch (error) {
+            console.error(error);
+            setMessage({ type: 'error', text: 'Logo upload failed' });
         } finally {
             setUploading(false);
             setPreviewKey(prev => prev + 1); // Refresh preview
@@ -629,21 +680,15 @@ const Dashboard = () => {
                                 <UserProfile
                                     profileData={profileData}
                                     handleProfileChange={handleProfileChange}
-                                    saveProfile={saveProfile}
-                                    saving={saving}
-                                />
-                            )}
-
-                            {activeTab === 'appearance' && (
-                                <UserAppearance
-                                    profileData={profileData}
-                                    handleProfileChange={handleProfileChange}
                                     handleImageUpload={handleImageUpload}
+                                    handleLogoUpload={handleLogoUpload}
                                     uploading={uploading}
                                     saveProfile={saveProfile}
                                     saving={saving}
                                 />
                             )}
+
+
 
                             {activeTab === 'heroButtons' && featureFlags.userHeroButtonsEnabled && (
                                 <UserHeroButtons
@@ -704,10 +749,12 @@ const Dashboard = () => {
                                 <UserPrompts
                                     profileData={profileData}
                                     availableTools={availableTools}
+                                    availablePrompts={availablePrompts}
+                                    featureFlags={featureFlags}
                                     openAddPromptModal={openAddPromptModal}
                                     openEditPromptModal={openEditPromptModal}
                                     removeCustomItem={removeCustomItem}
-                                    toggleTool={toggleTool}
+                                    toggleTool={togglePrompt}
                                     toggleFavorite={toggleFavorite}
                                     handleProfileChange={handleProfileChange}
                                     saveProfile={saveProfile}
