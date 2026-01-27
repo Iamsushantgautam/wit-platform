@@ -1,13 +1,17 @@
+import { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { Twitter, Github, Linkedin, MessageCircle } from 'lucide-react';
+import AuthContext from '../../context/AuthContext';
 
 const Footer = () => {
+    const { siteName } = useContext(AuthContext);
+
     return (
         <footer className="app-footer">
             <div className="container">
                 <div className="footer-grid">
                     <div className="footer-brand">
-                        <h3 className="footer-logo">WitHub</h3>
+                        <h3 className="footer-logo">{siteName || 'WitHub'}</h3>
                         <p className="footer-desc">
                             The ultimate platform for showcasing your profile, managing AI tools, and connecting with the world. Built for creators, developers, and innovators.
                         </p>
@@ -38,7 +42,7 @@ const Footer = () => {
                     </div>
                 </div>
                 <div className="footer-bottom">
-                    &copy; {new Date().getFullYear()} WitHub. All rights reserved.
+                    &copy; {new Date().getFullYear()} {siteName || 'WitHub'}. All rights reserved.
                 </div>
             </div>
         </footer>

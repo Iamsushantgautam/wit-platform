@@ -21,8 +21,12 @@ const AdminPanel = () => {
         globalLibraryEnabled: true,
         globalLibraryPublicEnabled: true
     });
-
-
+    const [siteName, setSiteName] = useState('WitHub');
+    const [siteLogo, setSiteLogo] = useState('');
+    const [siteFavicon, setSiteFavicon] = useState('');
+    const [publicProfileLogoSource, setPublicProfileLogoSource] = useState('site_logo');
+    const [customPublicLogo, setCustomPublicLogo] = useState('');
+    const [uploadingImage, setUploadingImage] = useState(null);
 
     const featuresList = [
         {
@@ -126,6 +130,13 @@ const AdminPanel = () => {
             });
             // Merge defaults with fetched data
             setFeatures(prev => ({ ...prev, ...(data.features || {}) }));
+
+            setSiteName(data.siteName || 'WitHub');
+            setSiteLogo(data.siteLogo || '');
+            setSiteFavicon(data.siteFavicon || '');
+            setPublicProfileLogoSource(data.publicProfileLogoSource || 'site_logo');
+            setCustomPublicLogo(data.customPublicLogo || '');
+
         } catch (error) {
             console.error('Error fetching settings:', error);
             setMessage({
@@ -144,16 +155,50 @@ const AdminPanel = () => {
         }));
     };
 
+    const handleImageUpload = async (e, type) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        // Map types to proper item name
+        let itemName = `platform_${type}`;
+        if (type === 'custom') itemName = 'platform_custom_logo';
+
+        setUploadingImage(type);
+
+        try {
+            const res = await axios.post(`${API_URL}/upload?context=tool&itemName=${itemName}`, formData, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            if (type === 'logo') setSiteLogo(res.data);
+            if (type === 'favicon') setSiteFavicon(res.data);
+            if (type === 'custom') setCustomPublicLogo(res.data);
+
+            setMessage({ type: 'success', text: `${type === 'custom' ? 'Custom Logo' : type === 'logo' ? 'Logo' : 'Favicon'} uploaded successfully` });
+        } catch (err) {
+            console.error('Upload failed', err);
+            setMessage({ type: 'error', text: 'Upload failed: ' + (err.response?.data?.message || err.message) });
+        } finally {
+            setUploadingImage(null);
+        }
+    };
+
     const saveSettings = async () => {
         setSaving(true);
         setMessage(null);
         try {
             await axios.put(
                 `${API_URL}/admin/settings`,
-                { features },
+                { features, siteName, siteLogo, siteFavicon, publicProfileLogoSource, customPublicLogo },
                 { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
             );
             setMessage({ type: 'success', text: 'Settings updated successfully!' });
+            // Reload page to reflect changes globally? Or just update context if we had one for settings.
             setTimeout(() => setMessage(null), 3000);
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -228,6 +273,214 @@ const AdminPanel = () => {
                     <button onClick={() => setMessage(null)} className="text-2xl opacity-70 hover:opacity-100 transition-opacity">&times;</button>
                 </div>
             )}
+
+            {/* Branding Section */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm animate-fade-up">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl">
+                        <Globe size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Platform Branding</h2>
+                        <p className="text-sm text-gray-500">Customize the identity of your platform globally</p>
+                    </div>
+                </div>
+
+                <div className="admin-branding-grid">
+                    <div className="admin-input-group">
+                        <label className="admin-label">
+                            Website Name
+                        </label>
+                        <input
+                            type="text"
+                            value={siteName}
+                            onChange={(e) => setSiteName(e.target.value)}
+                            className="admin-text-input"
+                            placeholder="e.g. WitHub"
+                        />
+                        <p className="admin-helper-text">Appears in browser titles, headers, and footer.</p>
+                    </div>
+
+                    <div className="admin-input-group">
+                        <label className="admin-label">
+                            Website Logo
+                        </label>
+                        <div className="admin-upload-row">
+                            <div className="admin-upload-preview group">
+                                {uploadingImage === 'logo' && (
+                                    <div className="admin-upload-loading">
+                                        <div className="admin-spinner"></div>
+                                    </div>
+                                )}
+                                {siteLogo ? (
+                                    <>
+                                        <img src={siteLogo} alt="Logo" />
+                                        <button
+                                            onClick={() => setSiteLogo('')}
+                                            className="admin-remove-btn group-hover:opacity-100"
+                                            title="Remove Logo"
+                                        >
+                                            &times;
+                                        </button>
+                                    </>
+                                ) : (
+                                    <Shield size={24} className="text-gray-300" />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <label className="admin-upload-btn">
+                                    <Layout size={16} />
+                                    Choose
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        disabled={uploadingImage === 'logo'}
+                                        onChange={(e) => handleImageUpload(e, 'logo')}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="admin-input-group">
+                        <label className="admin-label">
+                            Website Favicon
+                        </label>
+                        <div className="admin-upload-row">
+                            <div className="admin-upload-preview group">
+                                {uploadingImage === 'favicon' && (
+                                    <div className="admin-upload-loading">
+                                        <div className="admin-spinner"></div>
+                                    </div>
+                                )}
+                                {siteFavicon ? (
+                                    <>
+                                        <img src={siteFavicon} alt="Favicon" />
+                                        <button
+                                            onClick={() => setSiteFavicon('')}
+                                            className="admin-remove-btn group-hover:opacity-100"
+                                            title="Remove Favicon"
+                                        >
+                                            &times;
+                                        </button>
+                                    </>
+                                ) : (
+                                    <Globe size={24} className="text-gray-300" />
+                                )}
+                            </div>
+                            <div className="flex-1">
+                                <label className="admin-upload-btn">
+                                    <Layout size={16} />
+                                    Choose
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        disabled={uploadingImage === 'favicon'}
+                                        onChange={(e) => handleImageUpload(e, 'favicon')}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="admin-divider">
+                    <label className="admin-label">
+                        Public Profile Logo Source
+                    </label>
+                    <div className="admin-logo-source-grid">
+                        <button
+                            type="button"
+                            onClick={() => setPublicProfileLogoSource('site_logo')}
+                            className={`logo-source-btn ${publicProfileLogoSource === 'site_logo' ? 'active' : ''}`}
+                        >
+                            {siteLogo ? (
+                                <img src={siteLogo} alt="Site Logo" className="logo-source-img-preview" />
+                            ) : (
+                                <Layout size={24} />
+                            )}
+                            <div>
+                                <span>Website Logo</span>
+                            </div>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setPublicProfileLogoSource('site_favicon')}
+                            className={`logo-source-btn ${publicProfileLogoSource === 'site_favicon' ? 'active' : ''}`}
+                        >
+                            {siteFavicon ? (
+                                <img src={siteFavicon} alt="Favicon" className="logo-source-img-preview" />
+                            ) : (
+                                <Globe size={24} />
+                            )}
+                            <div>
+                                <span>Website Favicon</span>
+                            </div>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => setPublicProfileLogoSource('custom_logo')}
+                            className={`logo-source-btn ${publicProfileLogoSource === 'custom_logo' ? 'active' : ''}`}
+                        >
+                            {customPublicLogo ? (
+                                <img src={customPublicLogo} alt="Custom" className="logo-source-img-preview" />
+                            ) : (
+                                <Layout size={24} />
+                            )}
+                            <div>
+                                <span>Custom Upload</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    {/* Custom Logo Upload Area - Show when Custom Logo is selected */}
+                    {publicProfileLogoSource === 'custom_logo' && (
+                        <div className="custom-logo-dropzone">
+                            <label className="dropzone-label">
+                                Upload Custom Logo for Public Profiles
+                            </label>
+                            <div className="dropzone-content">
+                                <div className="dropzone-preview group">
+                                    {uploadingImage === 'custom' && (
+                                        <div className="admin-upload-loading">
+                                            <div className="admin-spinner"></div>
+                                        </div>
+                                    )}
+                                    {customPublicLogo ? (
+                                        <>
+                                            <img src={customPublicLogo} alt="Custom Logo" />
+                                            <button
+                                                onClick={() => setCustomPublicLogo('')}
+                                                className="admin-remove-btn group-hover:opacity-100"
+                                            >
+                                                &times;
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <Layout size={24} className="dropzone-placeholder-icon" />
+                                    )}
+                                </div>
+                                <label className="dropzone-upload-btn">
+                                    <Layout size={16} />
+                                    Upload Custom Logo
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        disabled={uploadingImage === 'custom'}
+                                        onChange={(e) => handleImageUpload(e, 'custom')}
+                                    />
+                                </label>
+                            </div>
+                            <p className="dropzone-helper-text">This logo will effectively override the site logo on users public profiles.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* Feature Cards Grid */}
             <div className="feature-grid animate-fade-up" style={{ animationDelay: '0.1s' }}>

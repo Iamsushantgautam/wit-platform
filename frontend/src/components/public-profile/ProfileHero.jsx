@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import * as LucideIcons from 'lucide-react';
 import ProfileSocials from './ProfileSocials';
 
-const ProfileHero = ({ profile, username, featureFlags }) => {
+const ProfileHero = ({ profile, username, featureFlags, branding }) => {
     // Get Lucide icon component by name
     const getIconComponent = (iconName) => {
         const Icon = LucideIcons[iconName];
@@ -33,15 +33,37 @@ const ProfileHero = ({ profile, username, featureFlags }) => {
         return link.startsWith('/') || link.startsWith('#');
     };
 
+    // Helper to determine logic source
+    const getLogoSource = () => {
+        const source = branding?.publicProfileLogoSource || 'site_logo';
+        switch (source) {
+            case 'custom_logo':
+                return branding?.customPublicLogo || branding?.siteLogo;
+            case 'site_favicon':
+                return branding?.siteFavicon || branding?.siteLogo;
+            case 'site_logo':
+            default:
+                return branding?.siteLogo;
+        }
+    };
+
+    // Fallback image handling
+    const handleImageError = (e) => {
+        e.target.style.display = 'none'; // Or set src to a fallback image path
+    };
+
+    const logoSrc = getLogoSource() || '/witlogo.png';
+
     return (
         <div className="profile-hero-card">
             {/* Logo - Controlled by Admin 'userPublicBranding' flag */}
             {(featureFlags?.userPublicBranding !== false) && (
                 <div className="profile-hero-card__logo-wrapper">
                     <img
-                        src={profile.logo || '/witlogo.png'}
+                        src={logoSrc}
                         alt="Brand Logo"
                         className="profile-hero-card__logo"
+                        onError={handleImageError}
                     />
                 </div>
             )}
@@ -54,7 +76,7 @@ const ProfileHero = ({ profile, username, featureFlags }) => {
                 {/* <div className="profile-hero-card__badge">
                     ai (add the blue trick icon)
                 </div> */}
-            </div>
+            </div >
             <h1 className="profile-hero-card__name">{profile.name || username}</h1>
             <p className="profile-hero-card_bio profile-hero-card_username">
                 <span>@ {username}</span>
@@ -62,55 +84,57 @@ const ProfileHero = ({ profile, username, featureFlags }) => {
             <p className="profile-hero-card__bio">
                 {profile.bio || 'AI Course Creator | Educator'}
             </p>
-            {(!featureFlags || featureFlags.userHeroButtonsEnabled !== false) && (
-                <div className="profile-hero-card__actions">
-                    {button1.isVisible && (
-                        isInternalLink(button1.link) ? (
-                            <Link
-                                to={button1.link}
-                                className="profile-hero-card__btn profile-hero-card__btn--secondary"
-                            >
-                                <Button1Icon size={18} />
-                                {button1.label}
-                            </Link>
-                        ) : (
-                            <a
-                                href={button1.link}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="profile-hero-card__btn profile-hero-card__btn--secondary"
-                            >
-                                <Button1Icon size={18} />
-                                {button1.label}
-                            </a>
-                        )
-                    )}
-                    {button2.isVisible && (
-                        isInternalLink(button2.link) ? (
-                            <Link
-                                to={button2.link}
-                                className="profile-hero-card__btn profile-hero-card__btn--primary"
-                            >
-                                <Button2Icon size={18} />
-                                {button2.label}
-                            </Link>
-                        ) : (
-                            <a
-                                href={button2.link}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="profile-hero-card__btn profile-hero-card__btn--primary"
-                            >
-                                <Button2Icon size={18} />
-                                {button2.label}
-                            </a>
-                        )
-                    )}
+            {
+                (!featureFlags || featureFlags.userHeroButtonsEnabled !== false) && (
+                    <div className="profile-hero-card__actions">
+                        {button1.isVisible && (
+                            isInternalLink(button1.link) ? (
+                                <Link
+                                    to={button1.link}
+                                    className="profile-hero-card__btn profile-hero-card__btn--secondary"
+                                >
+                                    <Button1Icon size={18} />
+                                    {button1.label}
+                                </Link>
+                            ) : (
+                                <a
+                                    href={button1.link}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="profile-hero-card__btn profile-hero-card__btn--secondary"
+                                >
+                                    <Button1Icon size={18} />
+                                    {button1.label}
+                                </a>
+                            )
+                        )}
+                        {button2.isVisible && (
+                            isInternalLink(button2.link) ? (
+                                <Link
+                                    to={button2.link}
+                                    className="profile-hero-card__btn profile-hero-card__btn--primary"
+                                >
+                                    <Button2Icon size={18} />
+                                    {button2.label}
+                                </Link>
+                            ) : (
+                                <a
+                                    href={button2.link}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="profile-hero-card__btn profile-hero-card__btn--primary"
+                                >
+                                    <Button2Icon size={18} />
+                                    {button2.label}
+                                </a>
+                            )
+                        )}
 
-                </div>
-            )}
+                    </div>
+                )
+            }
 
-        </div>
+        </div >
     );
 };
 

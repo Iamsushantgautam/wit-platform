@@ -1,6 +1,28 @@
 const mongoose = require('mongoose');
 
 const settingsSchema = mongoose.Schema({
+    // General Platform Settings
+    siteName: {
+        type: String,
+        default: 'WitHub'
+    },
+    siteLogo: {
+        type: String,
+        default: ''
+    },
+    siteFavicon: {
+        type: String,
+        default: ''
+    },
+    publicProfileLogoSource: {
+        type: String,
+        enum: ['site_logo', 'site_favicon', 'custom_logo'],
+        default: 'site_logo'
+    },
+    customPublicLogo: {
+        type: String, // Special logo just for public profiles if 'custom_logo' is selected
+        default: ''
+    },
     // Feature flags for controlling user access to features
     features: {
         userToolsEnabled: {

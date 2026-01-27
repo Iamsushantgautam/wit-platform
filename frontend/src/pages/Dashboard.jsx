@@ -458,7 +458,14 @@ const Dashboard = () => {
                 setAvailableTools(toolsRes.data);
                 setAvailablePrompts(promptsRes.data);
                 setUpdates(updatesRes.data);
-                setFeatureFlags(featuresRes.data);
+
+                // Fix: Handle the new API response structure where features are nested
+                if (featuresRes.data.features) {
+                    setFeatureFlags(featuresRes.data.features);
+                } else {
+                    setFeatureFlags(featuresRes.data);
+                }
+
                 setUsername(user.username);
             } catch (error) {
                 console.error("Error fetching dashboard data", error);
@@ -625,7 +632,7 @@ const Dashboard = () => {
                         <Home size={30} />
                     </Link>
                     <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
-                        WitHub <span className="text-gray-400">Dashboard</span>
+                        <span className="text-gray-400">Dashboard</span>
                     </h3>
                 </div>
 

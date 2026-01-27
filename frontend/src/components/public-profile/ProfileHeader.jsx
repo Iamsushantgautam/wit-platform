@@ -1,8 +1,10 @@
 import React from 'react';
 import { Menu } from 'lucide-react';
 
-const ProfileHeader = ({ activeTab, profile, username, onMenuToggle }) => {
+const ProfileHeader = ({ activeTab, profile, username, onMenuToggle, branding }) => {
     const getTabTitle = () => {
+        // If visible branding logo is present, we might want to show that instead, or alongside.
+        // For now, let's keep tab title but add logo on left if available.
         switch (activeTab) {
             case 'offers': return 'Offers';
             case 'profile': return 'Profile';
@@ -22,8 +24,12 @@ const ProfileHeader = ({ activeTab, profile, username, onMenuToggle }) => {
             >
                 <Menu size={24} />
             </button>
-            <div className="profile-mobile-header__title">
-                {getTabTitle()}
+            <div className="profile-mobile-header__title flex items-center justify-center gap-2">
+                {branding?.siteLogo ? (
+                    <img src={branding.siteLogo} alt={branding.siteName} style={{ height: '24px', width: 'auto' }} />
+                ) : (
+                    <span>{branding?.siteName || 'WitHub'}</span>
+                )}
             </div>
             <img
                 src={profile.image || `https://ui-avatars.com/api/?name=${username}`}

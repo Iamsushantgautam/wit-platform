@@ -2622,3 +2622,303 @@ main.flex-grow {
         overflow-y: auto;
     }
 }
+/* Admin Panel Branding Section Styles */
+.admin-branding-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .admin-branding-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.admin-input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.admin-text-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.admin-text-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.admin-text-input::placeholder {
+    color: #9ca3af;
+}
+
+.admin-helper-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.admin-upload-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.admin-upload-preview {
+    width: 4rem;
+    height: 4rem;
+    border-radius: var(--radius-xl);
+    background-color: var(--bg-secondary);
+    border: 2px dashed var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    transition: border-color 0.2s;
+}
+
+.admin-upload-preview:hover {
+    border-color: var(--primary-color);
+}
+
+.admin-upload-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 0.25rem;
+}
+
+.admin-remove-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    background-color: var(--danger-color);
+    color: white;
+    border-bottom-left-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.2s;
+    cursor: pointer;
+}
+
+.admin-upload-preview:hover .admin-remove-btn {
+    opacity: 1;
+}
+
+.admin-upload-btn {
+    cursor: pointer;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-weight: 500;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-lg);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.admin-upload-btn:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--text-secondary);
+    transform: translateY(-1px);
+}
+
+
+/* Public Profile Logo Source Section */
+.admin-divider {
+    margin-top: 2rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+}
+
+.admin-logo-source-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .admin-logo-source-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.logo-source-btn {
+    padding: 0.75rem;
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--border-color);
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.5rem;
+    height: 7rem;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.logo-source-btn:hover {
+    border-color: #93c5fd; /* blue-300 */
+}
+
+.logo-source-btn.active {
+    border-color: var(--primary-color);
+    background-color: rgba(37, 99, 235, 0.05); /* blue-50 approx */
+    color: var(--primary-color);
+}
+
+.dark .logo-source-btn.active {
+    background-color: rgba(30, 58, 138, 0.2); /* blue-900/20 */
+    color: #93c5fd; /* blue-300 */
+}
+
+.logo-source-btn span {
+    display: block;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.logo-source-img-preview {
+    height: 2rem;
+    object-fit: contain;
+    margin-bottom: 0.25rem;
+}
+
+/* Custom Logo Dropzone Area */
+.custom-logo-dropzone {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--bg-card-secondary);
+    border-radius: var(--radius-xl);
+    border: 1px dashed var(--border-color);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-0.5rem); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropzone-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.dropzone-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dropzone-preview {
+    width: 4rem;
+    height: 4rem;
+    border-radius: var(--radius-xl);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.dropzone-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 0.25rem;
+}
+
+.dropzone-placeholder-icon {
+    opacity: 0.3;
+}
+
+.dropzone-upload-btn {
+    cursor: pointer;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: var(--shadow-md);
+}
+
+.dropzone-upload-btn:hover {
+    background-color: var(--primary-hover);
+    box-shadow: var(--shadow-lg);
+}
+
+.dropzone-helper-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+
+/* Upload Loading State */
+.admin-upload-loading {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.dark .admin-upload-loading {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.admin-spinner {
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+

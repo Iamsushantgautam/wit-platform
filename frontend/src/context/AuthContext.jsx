@@ -11,7 +11,35 @@ export const AuthProvider = ({ children }) => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     console.log("Current API_URL:", API_URL);
 
+    const [siteName, setSiteName] = useState('WitHub');
+    const [siteLogo, setSiteLogo] = useState('');
+
     useEffect(() => {
+        const fetchGlobalSettings = async () => {
+            try {
+                const { data } = await axios.get(`${API_URL}/admin/features`); // Public endpoint
+                if (data.siteName) setSiteName(data.siteName);
+                if (data.siteLogo) setSiteLogo(data.siteLogo);
+
+                if (data.siteName) document.title = data.siteName;
+
+                // Update favicon
+                if (data.siteFavicon) {
+                    const link = document.querySelector("link[rel~='icon']");
+                    if (link) {
+                        link.href = data.siteFavicon;
+                    } else {
+                        const newLink = document.createElement('link');
+                        newLink.rel = 'icon';
+                        newLink.href = data.siteFavicon;
+                        document.head.appendChild(newLink);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch global settings", error);
+            }
+        };
+
         const checkUserLoggedIn = async () => {
             const token = localStorage.getItem('token');
             if (token) {
@@ -31,6 +59,9 @@ export const AuthProvider = ({ children }) => {
             }
             setLoading(false);
         };
+
+        // Run both
+        fetchGlobalSettings();
         checkUserLoggedIn();
     }, []);
 
@@ -54,7 +85,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading, API_URL }}>
+        <AuthContext.Provider value={{ user, login, register, logout, loading, API_URL, siteName, siteLogo }}>
             {children}
         </AuthContext.Provider>
     );

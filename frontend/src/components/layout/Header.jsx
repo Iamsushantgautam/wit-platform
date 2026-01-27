@@ -6,7 +6,7 @@ import ThemeToggle from '../common/ThemeToggle';
 import { Menu, X, User, LogOut, LayoutDashboard, Settings, Trash2 } from 'lucide-react';
 
 const Header = () => {
-    const { user, logout, API_URL } = useContext(AuthContext);
+    const { user, logout, API_URL, siteName, siteLogo } = useContext(AuthContext);
     const navigate = useNavigate();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -38,8 +38,9 @@ const Header = () => {
                 <div className="header-container">
                     {/* Logo */}
                     <div className="logo-container">
-                        <Link to="/" className="text-2xl font-bold logo-text text-accent">
-                            WitHub
+                        <Link to="/" className="text-2xl font-bold logo-text text-accent flex items-center gap-2">
+                            {/* {siteLogo && <img src={siteLogo} alt={siteName} className=" h-8 w-8 object-contain" />} */}
+                            <span>{siteName || 'WitHub'}</span>
                         </Link>
                     </div>
 

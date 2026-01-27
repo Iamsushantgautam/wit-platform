@@ -21,6 +21,15 @@ const defaultFeatures = {
 // @desc    Get platform settings
 // @route   GET /api/admin/settings
 // @access  Admin only
+// @desc    Get platform settings
+// @route   GET /api/admin/settings
+// @access  Admin only
+// @desc    Get platform settings
+// @route   GET /api/admin/settings
+// @access  Admin only
+// @desc    Get platform settings
+// @route   GET /api/admin/settings
+// @access  Admin only
 exports.getSettings = async (req, res) => {
     try {
         let settings = await Settings.findOne({ singleton: 'settings' });
@@ -29,7 +38,12 @@ exports.getSettings = async (req, res) => {
         if (!settings) {
             settings = await Settings.create({
                 singleton: 'settings',
-                features: defaultFeatures
+                features: defaultFeatures,
+                siteName: 'WitHub',
+                siteLogo: '',
+                siteFavicon: '',
+                publicProfileLogoSource: 'site_logo',
+                customPublicLogo: ''
             });
         }
 
@@ -52,17 +66,21 @@ exports.getSettings = async (req, res) => {
 // @access  Admin only
 exports.updateSettings = async (req, res) => {
     try {
-        const { features } = req.body;
+        const { features, siteName, siteLogo, siteFavicon, publicProfileLogoSource, customPublicLogo } = req.body;
 
         let settings = await Settings.findOne({ singleton: 'settings' });
 
         if (!settings) {
             settings = await Settings.create({
                 singleton: 'settings',
-                features
+                features,
+                siteName: siteName || 'WitHub',
+                siteLogo: siteLogo || '',
+                siteFavicon: siteFavicon || '',
+                publicProfileLogoSource: publicProfileLogoSource || 'site_logo',
+                customPublicLogo: customPublicLogo || ''
             });
         } else {
-            // Merge existing, new, and defaults to ensure integrity
             const mergedFeatures = {
                 ...defaultFeatures,
                 ...(settings.features || {}),
@@ -70,6 +88,12 @@ exports.updateSettings = async (req, res) => {
             };
 
             settings.features = mergedFeatures;
+            if (siteName !== undefined) settings.siteName = siteName;
+            if (siteLogo !== undefined) settings.siteLogo = siteLogo;
+            if (siteFavicon !== undefined) settings.siteFavicon = siteFavicon;
+            if (publicProfileLogoSource !== undefined) settings.publicProfileLogoSource = publicProfileLogoSource;
+            if (customPublicLogo !== undefined) settings.customPublicLogo = customPublicLogo;
+
             await settings.save();
         }
 
@@ -90,17 +114,28 @@ exports.getFeatureFlags = async (req, res) => {
         if (!settings) {
             settings = await Settings.create({
                 singleton: 'settings',
-                features: defaultFeatures
+                features: defaultFeatures,
+                siteName: 'WitHub',
+                siteLogo: '',
+                siteFavicon: '',
+                publicProfileLogoSource: 'site_logo',
+                customPublicLogo: ''
             });
         }
 
-        // Return just the merged features object
         const mergedFeatures = {
             ...defaultFeatures,
             ...(settings.features || {})
         };
 
-        res.json(mergedFeatures);
+        res.json({
+            features: mergedFeatures,
+            siteName: settings.siteName,
+            siteLogo: settings.siteLogo,
+            siteFavicon: settings.siteFavicon,
+            publicProfileLogoSource: settings.publicProfileLogoSource || 'site_logo',
+            customPublicLogo: settings.customPublicLogo || ''
+        });
     } catch (error) {
         console.error('Error fetching feature flags:', error);
         res.status(500).json({ message: 'Failed to fetch feature flags' });

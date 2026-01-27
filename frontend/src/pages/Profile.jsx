@@ -45,6 +45,13 @@ const Profile = ({ usernameOverride }) => {
         userLinksEnabled: true,
         userUpdatesEnabled: true
     });
+    const [branding, setBranding] = useState({
+        siteName: 'WitHub',
+        siteLogo: '',
+        siteFavicon: '',
+        publicProfileLogoSource: 'site_logo',
+        customPublicLogo: ''
+    });
 
     const isOwner = user && profile && user.username === profile.username;
 
@@ -79,7 +86,21 @@ const Profile = ({ usernameOverride }) => {
                     axios.get(`${API_URL}/admin/features`)
                 ]);
                 setProfile(profileRes.data);
-                setFeatureFlags(featuresRes.data);
+
+                // Handle new API structure vs old (if any)
+                if (featuresRes.data.features) {
+                    setFeatureFlags(featuresRes.data.features);
+                    setBranding({
+                        siteName: featuresRes.data.siteName || 'WitHub',
+                        siteLogo: featuresRes.data.siteLogo || '',
+                        siteFavicon: featuresRes.data.siteFavicon || '',
+                        publicProfileLogoSource: featuresRes.data.publicProfileLogoSource || 'site_logo',
+                        customPublicLogo: featuresRes.data.customPublicLogo || ''
+                    });
+                } else {
+                    setFeatureFlags(featuresRes.data);
+                }
+
             } catch (err) {
                 if (err.response && err.response.status === 301) {
                     window.location.href = `/${err.response.data.redirect}`;
@@ -125,6 +146,7 @@ const Profile = ({ usernameOverride }) => {
                 profile={profile}
                 username={username}
                 onMenuToggle={() => setIsMenuOpen(true)}
+                branding={branding}
             />
 
             {/* Menu Drawer */}
@@ -143,7 +165,7 @@ const Profile = ({ usernameOverride }) => {
                 {/* PROFILE TAB */}
                 {activeTab === 'profile' && (
                     <div className="profile-tab">
-                        <ProfileHero profile={profile} username={username} featureFlags={featureFlags} />
+                        <ProfileHero profile={profile} username={username} featureFlags={featureFlags} branding={branding} />
                         <ProfileSocials socialLinks={profile?.socialLinks} getSocialIcon={getSocialIcon} />
                         {/* Important Links */}
                         <ProfileLinks importantLinks={profile?.importantLinks} />
