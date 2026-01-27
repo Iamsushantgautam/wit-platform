@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowRight, Gift, Zap, ExternalLink, Edit, Trash2, Heart } from 'lucide-react';
 import '../../styles/Offers.css';
 
-const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggleFavorite, isFavorite = false }) => {
+const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggleFavorite, isFavorite = false, showFullDetails = false }) => {
     const [isRevealed, setIsRevealed] = useState(false);
 
     // Guard clause
@@ -72,7 +72,7 @@ const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggl
                         )}
                     </div>
 
-                    <p className="text-sm text-slate-500 mb-4 line-clamp-2">{offer.description}</p>
+                    <p className={`text-sm text-slate-500 mb-4 ${showFullDetails ? '' : 'line-clamp-2'}`}>{offer.description}</p>
 
 
                     <div className="mt-auto pt-4 border-t border-dashed border-slate-200 dark:border-slate-800 w-full flex justify-between items-center text-xs">
@@ -119,7 +119,7 @@ const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggl
                     )}
                 </div>
 
-                <p className="text-sm text-slate-500 mb-4 line-clamp-2">{offer.description}</p>
+                <p className={`text-sm text-slate-500 mb-4 ${showFullDetails ? '' : 'line-clamp-2'}`}>{offer.description}</p>
 
                 {/* Promo Code Reveal */}
                 <div className="promo-reveal-container">

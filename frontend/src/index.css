@@ -2422,25 +2422,7 @@ main.flex-grow {
     padding-bottom: 1rem;
 }
 
-.carousel-card-wrapper {
-    flex: 0 0 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-}
 
-/* Tablet */
-@media (min-width: 640px) {
-    .carousel-card-wrapper {
-        flex: 0 0 50%;
-    }
-}
-
-/* Desktop exactly 3 cards */
-@media (min-width: 1024px) {
-    .carousel-card-wrapper {
-        flex: 0 0 calc(100% / 3);
-    }
-}
 
 .carousel-nav {
     position: absolute;
@@ -2450,7 +2432,7 @@ main.flex-grow {
     width: 42px;
     height: 42px;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.6);
+
     color: white;
     display: flex;
     align-items: center;
@@ -2622,6 +2604,7 @@ main.flex-grow {
         overflow-y: auto;
     }
 }
+
 /* Admin Panel Branding Section Styles */
 .admin-branding-grid {
     display: grid;
@@ -2788,18 +2771,22 @@ main.flex-grow {
 }
 
 .logo-source-btn:hover {
-    border-color: #93c5fd; /* blue-300 */
+    border-color: #93c5fd;
+    /* blue-300 */
 }
 
 .logo-source-btn.active {
     border-color: var(--primary-color);
-    background-color: rgba(37, 99, 235, 0.05); /* blue-50 approx */
+    background-color: rgba(37, 99, 235, 0.05);
+    /* blue-50 approx */
     color: var(--primary-color);
 }
 
 .dark .logo-source-btn.active {
-    background-color: rgba(30, 58, 138, 0.2); /* blue-900/20 */
-    color: #93c5fd; /* blue-300 */
+    background-color: rgba(30, 58, 138, 0.2);
+    /* blue-900/20 */
+    color: #93c5fd;
+    /* blue-300 */
 }
 
 .logo-source-btn span {
@@ -2825,8 +2812,15 @@ main.flex-grow {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-0.5rem); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-0.5rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .dropzone-label {
@@ -2919,6 +2913,652 @@ main.flex-grow {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
+
+/* Carousel Custom Styles */
+.carousel-mask {
+    overflow: hidden;
+    width: 100%;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1rem;
+}
+
+.carousel-card-wrapper {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    height: 100%;
+}
+
+/* Tablet */
+@media (min-width: 640px) {
+    .carousel-card-wrapper {
+        flex: 0 0 calc(50% - 0.5rem);
+    }
+}
+
+/* Desktop exactly 2 cards (User request override) */
+@media (min-width: 1024px) {
+    .carousel-card-wrapper {
+        flex: 0 0 calc(50% - 0.5rem);
+    }
+}
+
+.carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    transition: all 0.2s ease;
+}
+
+.carousel-nav:hover {
+    background: rgba(168, 85, 247, 0.8);
+}
+
+.carousel-nav.left {
+    left: -12px;
+}
+
+.carousel-nav.right {
+    right: -12px;
+}
+
+/* Hide arrows on mobile */
+@media (max-width: 768px) {
+    .carousel-nav {
+        display: none;
+    }
+}
+
+
+/* Carousel Layout Fixes */
+.carousel-track {
+    align-items: stretch;
+    /* Ensure all wrappers are same height */
+}
+
+.carousel-card-wrapper {
+    height: auto;
+    /* Let flexbox control height */
+    display: flex;
+    /* make wrapper a flex container */
+    flex-direction: column;
+}
+
+.carousel-card-wrapper>.offer-card {
+    flex: 1;
+    /* Make card take all available height */
+    height: 100%;
+}
+
+/* Admin Floating Save Bar */
+.admin-save-bar-container {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    width: 90%;
+    max-width: 800px;
+}
+
+.admin-save-bar {
+    background-color: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 1rem;
+    /* Reduced padding */
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: flex;
+    justify-content: center;
+    /* Ensure contents are centered if container is wide */
+}
+
+.admin-save-bar>div {
+    width: 100%;
+    max-width: 100%;
+}
+
+.dark .admin-save-bar {
+    background-color: var(--bg-card-secondary);
+    border-color: var(--border-color);
+}
+
+.admin-save-text h3 {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.admin-save-text p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.admin-save-btn {
+    background: linear-gradient(to right,
+            var(--primary-color),
+            #9333ea);
+    color: white;
+    font-weight: 700;
+    padding: 1rem 2rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s;
+}
+
+.admin-save-btn:hover:not(:disabled) {
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
+.admin-save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+}
+
+/* Profile Offer Filters */
+.profile-filter-container {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.profile-tabs-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.profile-filter-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Default State */
+.profile-filter-btn.default {
+    background-color: white;
+    color: #4b5563;
+    /* gray-600 */
+    border-color: #e5e7eb;
+    /* gray-200 */
+}
+
+.dark .profile-filter-btn.default {
+    background-color: #1f2937;
+    /* gray-800 */
+    color: #d1d5db;
+    /* gray-300 */
+    border-color: #374151;
+    /* gray-700 */
+}
+
+.profile-filter-btn.default:hover {
+    border-color: #d1d5db;
+    /* gray-300 */
+}
+
+/* Active: All */
+.profile-filter-btn.active-all {
+    background-color: black;
+    color: white;
+    border-color: black;
+}
+
+.dark .profile-filter-btn.active-all {
+    background-color: white;
+    color: #111827;
+    border-color: white;
+}
+
+/* Active: Codes - Blue */
+.profile-filter-btn.active-codes {
+    background-color: #dbeafe;
+    /* blue-100 */
+    color: #1d4ed8;
+    /* blue-700 */
+    border-color: #bfdbfe;
+    /* blue-200 */
+}
+
+.dark .profile-filter-btn.active-codes {
+    background-color: rgba(30, 58, 138, 0.4);
+    color: #93c5fd;
+    border-color: #1e40af;
+}
+
+/* Active: Deals - Amber */
+.profile-filter-btn.active-deals {
+    background-color: #fef3c7;
+    /* amber-100 */
+    color: #b45309;
+    /* amber-700 */
+    border-color: #fde68a;
+    /* amber-200 */
+}
+
+.dark .profile-filter-btn.active-deals {
+    background-color: rgba(120, 53, 15, 0.4);
+    color: #fcd34d;
+    border-color: #92400e;
+}
+
+/* Active: Favorites - Red */
+.profile-filter-btn.active-favorites {
+    background-color: #fef2f2;
+    /* red-50 */
+    color: #dc2626;
+    /* red-600 */
+    border-color: #fecaca;
+    /* red-200 */
+}
+
+.dark .profile-filter-btn.active-favorites {
+    background-color: rgba(127, 29, 29, 0.2);
+    color: #fca5a5;
+    border-color: #7f1d1d;
+}
+
+/* Tag Strip */
+.profile-tags-scroll {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+/* Hide scrollbar */
+.profile-tags-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.profile-tags-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.tags-label-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #9ca3af;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-right: 0.25rem;
+    background-color: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+}
+
+.dark .tags-label-badge {
+    background-color: #374151;
+    color: #9ca3af;
+}
+
+.tag-pill {
+    flex-shrink: 0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    /* rounded-md */
+    font-size: 0.75rem;
+    /* text-xs */
+    font-weight: 700;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.tag-pill.default {
+    background-color: white;
+    color: #4b5563;
+    /* gray-600 */
+    border-color: #e5e7eb;
+    /* gray-200 */
+}
+
+.tag-pill.default:hover {
+    border-color: #d1d5db;
+}
+
+.tag-pill.active {
+    background-color: #1f2937;
+    /* gray-800 */
+    color: white;
+    border-color: #1f2937;
+}
+
+.dark .tag-pill.active {
+    background-color: #f3f4f6;
+    color: #111827;
+    border-color: #f3f4f6;
+}
+
+
+/* Offer Modal - Make it Popup */
+.offer-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    padding: 1rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.offer-modal-content {
+    background-color: white;
+    width: 100%;
+    max-width: 42rem;
+    /* 2xl */
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    animation: zoomIn 0.2s ease-out;
+    border: 1px solid var(--border-color);
+}
+
+.dark .offer-modal-content {
+    background-color: #111827;
+    /* gray-900 */
+    border-color: #374151;
+    /* gray-700 */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+
+/* Image Upload Zone */
+.upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    transition: all 0.3s;
+    position: relative;
+    cursor: pointer;
+    background-color: var(--bg-card-secondary);
+}
+
+.dark .upload-zone {
+    background-color: rgba(31, 41, 55, 0.5);
+    /* gray-800/50 */
+}
+
+.upload-zone:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(59, 130, 246, 0.05);
+    /* blue-500/5 */
+}
+
+/* Spinner Animation */
+@keyframes spin-slow {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+}
+
+/* Upload Pulse */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+}
+
+.upload-pulse-ring {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    border: 2px solid var(--primary-color);
+    animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+
+/* Mobile Modal Overrides */
+@media (max-width: 640px) {
+    .offer-modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+        /* Sheet-like behavior on mobile */
+    }
+
+    .offer-modal-content {
+        max-height: 95vh;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        border-top-left-radius: 1.5rem;
+        border-top-right-radius: 1.5rem;
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+        }
+
+        to {
+            transform: translateY(0);
+        }
+    }
+}
+
+
+/* Hero Editor Card */
+.hero-editor-card {
+    position: relative;
+    padding: 2rem;
+    background-color: var(--bg-card);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.dark .hero-editor-card {
+    background-color: var(--bg-card);
+    /* Ensure consistency */
+    border-color: var(--border-color);
+}
+
+.hero-glow-bg {
+    position: absolute;
+    inset: -4px;
+    background: linear-gradient(to right, #fbbf24, #f97316, #ef4444);
+    /* amber-400 via orange-500 to red-500 */
+    border-radius: 1rem;
+    filter: blur(8px);
+    opacity: 0.25;
+    transition: opacity 1s;
+}
+
+.group:hover .hero-glow-bg {
+    opacity: 0.5;
+    transition-duration: 0.2s;
+}
+
+.hero-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .hero-header {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.hero-icon-box {
+    background: linear-gradient(to bottom right, #fbbf24, #ea580c);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    display: inline-flex;
+}
+
+.hero-toggle-label {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    background-color: var(--bg-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    border: 1px solid var(--border-color);
+    transition: border-color 0.2s;
+}
+
+.dark .hero-toggle-label {
+    background-color: rgba(55, 65, 81, 0.5);
+    /* gray-700/50 */
+}
+
+.hero-toggle-label:hover {
+    border-color: #60a5fa;
+    /* blue-400 */
+}
+
+
+/* Carousel Card Wrapper - Responsive Sizing */
+.carousel-card-wrapper {
+    flex: 0 0 auto;
+    width: 85vw;
+    /* Mobile: Show slightly less than full width to hint scroll */
+    max-width: 320px;
+    /* Cap width for larger mobile */
+    scroll-snap-align: center;
+}
+
+@media (min-width: 640px) {
+    .carousel-card-wrapper {
+        width: 300px;
+        /* Tablet */
+        scroll-snap-align: start;
+    }
+}
+
+@media (min-width: 768px) {
+    .carousel-card-wrapper {
+        width: 350px;
+        /* Desktop */
+    }
+}
+
+
+/* Drawer Logo Wrapper */
+.profile-drawer__logo-wrapper {
+    width: auto;
+    height: 2.5rem;
+    max-width: 140px;
+    margin-left: 0.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.profile-drawer__logo {
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+}
+
+
+/* Drawer Logo - Rectangular/Natural */
+.profile-drawer__logo-wrapper {
+    width: auto;
+    height: 32px;
+    /* Match icon size roughly or a bit bigger */
+    max-width: 120px;
+    margin-left: 0.75rem;
+    overflow: visible;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+}
+
+.profile-drawer__logo {
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+}

@@ -1,12 +1,28 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
 
-const ProfileDrawer = ({ isOpen, onClose, activeTab, setActiveTab, profile, updates, featureFlags = {} }) => {
+const ProfileDrawer = ({ isOpen, onClose, activeTab, setActiveTab, profile, updates, featureFlags = {}, branding }) => {
     // Get icon component by name
     const getIconComponent = (iconName) => {
         const Icon = LucideIcons[iconName];
         return Icon ? Icon : LucideIcons.Home;
     };
+
+    // Helper to determine logic source for logo
+    const getLogoSource = () => {
+        const source = branding?.publicProfileLogoSource || 'site_logo';
+        switch (source) {
+            case 'custom_logo':
+                return branding?.customPublicLogo || branding?.siteLogo;
+            case 'site_favicon':
+                return branding?.siteFavicon || branding?.siteLogo;
+            case 'site_logo':
+            default:
+                return branding?.siteLogo;
+        }
+    };
+
+    const logoSrc = getLogoSource() || '/witlogo.png';
 
     // Map tab names to feature flags
     const tabFeatureMap = {
@@ -117,7 +133,19 @@ const ProfileDrawer = ({ isOpen, onClose, activeTab, setActiveTab, profile, upda
             {/* Drawer */}
             <aside className={`profile-drawer ${isOpen ? 'open' : ''}`}>
                 <div className="profile-drawer__header">
-                    <h2 className="profile-drawer__title">Menu</h2>
+                    <div className="flex items-center">
+                        <h2 className="profile-drawer__title">Menu</h2>
+                        {logoSrc && featureFlags?.userPublicBranding !== false && (
+                            <div className="profile-drawer__logo-wrapper">
+                                <img
+                                    src={logoSrc}
+                                    alt="Brand Logo"
+                                    className="profile-drawer__logo"
+                                    onError={(e) => e.target.style.display = 'none'}
+                                />
+                            </div>
+                        )}
+                    </div>
                     <button className="profile-drawer__close" onClick={onClose}>
                         <LucideIcons.X size={24} />
                     </button>

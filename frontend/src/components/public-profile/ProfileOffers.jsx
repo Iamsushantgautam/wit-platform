@@ -120,30 +120,30 @@ const ProfileOffers = ({ profile }) => {
             )}
 
             {/* Filter Controls */}
-            <div className="mb-8 space-y-4">
+            <div className="profile-filter-container">
                 {/* Main Tabs */}
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="profile-tabs-wrapper">
                     <button
                         onClick={() => setFilterType('all')}
-                        className={`px-4 py-2 rounded-full text-sm font-bold border transition-all ${filterType === 'all' ? 'bg-black text-white border-black dark:bg-white dark:text-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'}`}
+                        className={`profile-filter-btn ${filterType === 'all' ? 'active-all' : 'default'}`}
                     >
                         All Offers
                     </button>
                     <button
                         onClick={() => setFilterType('codes')}
-                        className={`px-4 py-2 rounded-full text-sm font-bold border flex items-center gap-2 transition-all ${filterType === 'codes' ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800' : 'bg-white text-gray-600 border-gray-200 hover:border-blue-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'}`}
+                        className={`profile-filter-btn ${filterType === 'codes' ? 'active-codes' : 'default'}`}
                     >
                         <Ticket size={16} /> With Promo Code
                     </button>
                     <button
                         onClick={() => setFilterType('deals')}
-                        className={`px-4 py-2 rounded-full text-sm font-bold border flex items-center gap-2 transition-all ${filterType === 'deals' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800' : 'bg-white text-gray-600 border-gray-200 hover:border-amber-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'}`}
+                        className={`profile-filter-btn ${filterType === 'deals' ? 'active-deals' : 'default'}`}
                     >
                         <Megaphone size={16} /> Direct Deals
                     </button>
                     <button
                         onClick={() => setFilterType('favorites')}
-                        className={`px-4 py-2 rounded-full text-sm font-bold border flex items-center gap-2 transition-all ${filterType === 'favorites' ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-900' : 'bg-white text-gray-600 border-gray-200 hover:border-red-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700'}`}
+                        className={`profile-filter-btn ${filterType === 'favorites' ? 'active-favorites' : 'default'}`}
                     >
                         <Heart size={16} fill={filterType === 'favorites' ? "currentColor" : "none"} /> Favorites
                     </button>
@@ -151,14 +151,14 @@ const ProfileOffers = ({ profile }) => {
 
                 {/* Tag Filters */}
                 {allTags.length > 0 && (
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                        <div className="flex items-center gap-1 text-gray-400 text-sm font-medium mr-1 bg-gray-100 px-2 py-1 rounded-full   ">
-                            <h3 className="text-gray-600"><Filter size={16} /> Filters:</h3>
+                    <div className="profile-tags-scroll">
+                        <div className="tags-label-badge">
+                            <Filter size={16} /> <span>Filters:</span>
                         </div>
                         {selectedTag && (
                             <button
                                 onClick={() => setSelectedTag(null)}
-                                className="flex-shrink-0 px-3 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center gap-1"
+                                className="tag-pill bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center gap-1"
                             >
                                 <X size={12} /> Clear
                             </button>
@@ -167,12 +167,11 @@ const ProfileOffers = ({ profile }) => {
                             <button
                                 key={tag}
                                 onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                                className={`flex-shrink-0 px-3 py-1 rounded-md text-xs font-bold border transition-colors ${selectedTag === tag ? 'bg-gray-800 text-white border-gray-800' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
+                                className={`tag-pill ${selectedTag === tag ? 'active' : 'default'}`}
                             >
                                 {tag}
                             </button>
                         ))}
-                        <br />
                     </div>
                 )}
             </div>
@@ -199,31 +198,32 @@ const ProfileOffers = ({ profile }) => {
                     </>
                 )}
 
-                <div
-                    ref={scrollContainerRef}
-                    className="flex overflow-x-auto gap-6 pb-8 -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory scrollbar-hide scroll-smooth"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                    {filteredOffers.map((banner, idx) => (
-                        <div
-                            key={idx}
-                            className="min-w-[85vw] md:min-w-[320px] max-w-[320px] snap-center flex-shrink-0"
-                        >
-                            <OfferCard
-                                index={idx}
-                                offer={banner.isGlobal ? banner : {
-                                    title: banner.title,
-                                    image: banner.imageUrl,
-                                    link: banner.link,
-                                    code: banner.promoCode,
-                                    description: banner.caption,
-                                    discount: banner.tags && banner.tags.length > 0 ? banner.tags[0] : null
-                                }}
-                                isFavorite={filterType === 'favorites'}
-                                className="h-full shadow-sm hover:shadow-md transition-shadow border-gray-200 dark:border-gray-800"
-                            />
-                        </div>
-                    ))}
+                <div className="carousel-mask">
+                    <div
+                        ref={scrollContainerRef}
+                        className="carousel-track"
+                    >
+                        {filteredOffers.map((banner, idx) => (
+                            <div
+                                key={idx}
+                                className="carousel-card-wrapper"
+                            >
+                                <OfferCard
+                                    index={idx}
+                                    offer={banner.isGlobal ? banner : {
+                                        title: banner.title,
+                                        image: banner.imageUrl,
+                                        link: banner.link,
+                                        code: banner.promoCode,
+                                        description: banner.caption,
+                                        discount: banner.tags && banner.tags.length > 0 ? banner.tags[0] : null
+                                    }}
+                                    isFavorite={filterType === 'favorites'}
+                                    className="h-full shadow-sm hover:shadow-md transition-shadow border-gray-200 dark:border-gray-800"
+                                />
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 

@@ -158,6 +158,7 @@ const Profile = ({ usernameOverride }) => {
                 profile={profile}
                 updates={updates}
                 featureFlags={featureFlags}
+                branding={branding}
             />
 
             {/* Main Content */}

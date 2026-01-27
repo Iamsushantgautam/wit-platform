@@ -531,23 +531,20 @@ const AdminPanel = () => {
             </div>
 
             {/* Save Section */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border-2 border-slate-200 dark:border-slate-700 shadow-lg">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <SettingsIcon size={24} className="text-blue-600" />
-                        <div>
-                            <h3 className="font-bold text-gray-900 dark:text-white">Ready to apply changes?</h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">All changes will take effect immediately</p>
-                        </div>
+            {/* Sticky Save Bar */}
+            <div className="admin-save-bar-container">
+                <div className="admin-save-bar">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+
+                        <button
+                            onClick={saveSettings}
+                            disabled={saving}
+                            className="admin-save-btn"
+                        >
+                            <Save size={20} />
+                            {saving ? 'Saving Changes...' : 'Save All Changes'}
+                        </button>
                     </div>
-                    <button
-                        onClick={saveSettings}
-                        disabled={saving}
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 py-4 rounded-xl flex items-center gap-3 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Save size={20} />
-                        {saving ? 'Saving Changes...' : 'Save All Changes'}
-                    </button>
                 </div>
             </div>
 
