@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ArrowRight, Gift, Zap, ExternalLink, Edit, Trash2, Heart } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Gift, Zap, ExternalLink, Edit, Trash2, Heart, Lock } from 'lucide-react';
 import '../../styles/Offers.css';
 
-const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggleFavorite, isFavorite = false, showFullDetails = false }) => {
+const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggleFavorite, isFavorite = false, showFullDetails = false, onUnlock }) => {
     const [isRevealed, setIsRevealed] = useState(false);
 
     // Guard clause
     if (!offer) return null;
 
     const hasCode = offer.code && offer.code.trim() !== '';
+    const isLocked = offer.isLocked;
 
     const toggleReveal = () => setIsRevealed(!isRevealed);
     const animStyle = { animationDelay: `${(index % 8) * 100}ms` };
@@ -122,17 +123,37 @@ const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggl
                 <p className={`text-sm text-slate-500 mb-4 ${showFullDetails ? '' : 'line-clamp-2'}`}>{offer.description}</p>
 
                 {/* Promo Code Reveal */}
-                <div className="promo-reveal-container">
-                    <div className={`promo-code-display ${isRevealed ? 'animate-reveal text-slate-900 dark:text-white' : 'promo-blurred'}`}>
-                        {isRevealed ? offer.code : '••••••••'}
-                    </div>
-                    <button
-                        onClick={toggleReveal}
-                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 transition-colors"
-                        title={isRevealed ? "Hide Code" : "Reveal Code"}
-                    >
-                        {isRevealed ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
+                <div className={`promo-reveal-container ${isLocked ? 'border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-900/30' : ''}`}>
+                    {isLocked ? (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('Unlock clicked for:', offer);
+                                if (onUnlock) {
+                                    onUnlock(offer);
+                                } else {
+                                    console.error('onUnlock prop is missing');
+                                    alert('Unlock function not available');
+                                }
+                            }}
+                            className="w-full flex items-center justify-center gap-2 font-bold text-amber-600 dark:text-amber-500 py-1 hover:bg-amber-100/50 rounded transition-colors z-10 relative cursor-pointer"
+                        >
+                            <Lock size={16} /> Unlock Code ({offer.price ? `${offer.price} Coins` : 'Premium'})
+                        </button>
+                    ) : (
+                        <>
+                            <div className={`promo-code-display ${isRevealed ? 'animate-reveal text-slate-900 dark:text-white' : 'promo-blurred'}`}>
+                                {isRevealed ? offer.code : '••••••••'}
+                            </div>
+                            <button
+                                onClick={toggleReveal}
+                                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 transition-colors"
+                                title={isRevealed ? "Hide Code" : "Reveal Code"}
+                            >
+                                {isRevealed ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </>
+                    )}
                 </div>
 
                 <div className="mt-auto pt-4 border-t border-dashed border-slate-200 dark:border-slate-800 w-full flex justify-between items-center text-xs">

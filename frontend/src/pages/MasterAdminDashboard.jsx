@@ -50,7 +50,8 @@ const MasterAdminDashboard = () => {
         name: '', description: '', url: '', logo: '', icon: '', category: '',
         prompt: '', promptDescription: '', type: 'tool',
         platform: 'Generic', tags: [],
-        code: '', discount: '', expires: '', isActive: true
+        code: '', discount: '', expires: '', isActive: true,
+        isPaid: false, price: 0
     });
 
     useEffect(() => {
@@ -97,7 +98,9 @@ const MasterAdminDashboard = () => {
                 image: formData.logo,
                 tag: formData.category, // Use category field for tag
                 link: formData.url,
-                isActive: formData.isActive
+                isActive: formData.isActive,
+                isPaid: formData.isPaid,
+                price: Number(formData.price)
             };
 
             try {
@@ -130,7 +133,9 @@ const MasterAdminDashboard = () => {
                 image: formData.logo, // Map 'logo' state to 'image'
                 platform: formData.platform,
                 tags: formData.tags,
-                category: formData.category || 'AI Image'
+                category: formData.category || 'AI Image',
+                isPaid: formData.isPaid,
+                price: Number(formData.price)
             };
 
             try {
@@ -258,7 +263,8 @@ const MasterAdminDashboard = () => {
                     logo: item.image, category: item.tag || '',
                     code: item.code || '', discount: item.discount || '',
                     expires: item.expires || '', isActive: item.isActive,
-                    prompt: '', promptDescription: '', type: 'offer', platform: 'Generic', tags: []
+                    prompt: '', promptDescription: '', type: 'offer', platform: 'Generic', tags: [],
+                    isPaid: item.isPaid || false, price: item.price || 0
                 });
             } else {
                 setFormData({
@@ -266,7 +272,8 @@ const MasterAdminDashboard = () => {
                     logo: item.logo, icon: item.icon || '', category: item.category,
                     prompt: item.prompt || '', promptDescription: item.promptDescription || '',
                     type: item.type || 'tool', platform: item.platform || 'Generic', tags: item.tags || [],
-                    code: '', discount: '', expires: '', isActive: true
+                    code: '', discount: '', expires: '', isActive: true,
+                    isPaid: item.isPaid || false, price: item.price || 0
                 });
             }
         } else {
@@ -275,7 +282,8 @@ const MasterAdminDashboard = () => {
                 name: '', description: '', url: '', logo: '', icon: '', category: '',
                 prompt: '', promptDescription: '', type: type,
                 platform: 'Generic', tags: [],
-                code: '', discount: '', expires: '', isActive: true
+                code: '', discount: '', expires: '', isActive: true,
+                isPaid: false, price: 0
             });
         }
         setShowIconSelector(false);
@@ -864,6 +872,33 @@ const MasterAdminDashboard = () => {
                                             onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()) })}
                                         />
                                     </div>
+
+                                    <div className="form-grid">
+                                        <div>
+                                            <label className="label-premium flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.isPaid}
+                                                    onChange={(e) => setFormData({ ...formData, isPaid: e.target.checked })}
+                                                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                />
+                                                Premium / Paid Prompt
+                                            </label>
+                                            <p className="text-[10px] text-slate-400 mt-1">If checked, users must unlock using coins.</p>
+                                        </div>
+                                        {formData.isPaid && (
+                                            <div>
+                                                <label className="label-premium">Price (Coins)</label>
+                                                <input
+                                                    type="number"
+                                                    className="input-premium"
+                                                    placeholder="e.g. 50"
+                                                    value={formData.price}
+                                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             ) : formData.type === 'offer' ? (
                                 /* --- OFFER FORM --- */
@@ -928,6 +963,33 @@ const MasterAdminDashboard = () => {
                                                 <option value="false">Inactive</option>
                                             </select>
                                         </div>
+                                    </div>
+
+                                    <div className="form-grid">
+                                        <div>
+                                            <label className="label-premium flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.isPaid}
+                                                    onChange={(e) => setFormData({ ...formData, isPaid: e.target.checked })}
+                                                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                                />
+                                                Premium Offer (Paid)
+                                            </label>
+                                            <p className="text-[10px] text-slate-400 mt-1">Hide code until unlocked.</p>
+                                        </div>
+                                        {formData.isPaid && (
+                                            <div>
+                                                <label className="label-premium">Unlock Price (Coins)</label>
+                                                <input
+                                                    type="number"
+                                                    className="input-premium"
+                                                    placeholder="e.g. 20"
+                                                    value={formData.price}
+                                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ) : (

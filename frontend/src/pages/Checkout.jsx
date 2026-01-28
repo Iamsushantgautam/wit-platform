@@ -70,6 +70,8 @@ const Checkout = () => {
 
     const calculateSubtotal = () => {
         if (!item) return 0;
+        if (item.type === 'add_coins') return item.price.toFixed(2);
+
         if (appliedCoupon?.type === 'free_pro') {
             const months = appliedCoupon.planDurationUnit === 'year' ? appliedCoupon.planDurationValue * 12 : appliedCoupon.planDurationValue;
             return (item.monthlyRate * months).toFixed(2);
@@ -284,12 +286,18 @@ const Checkout = () => {
                                 <div className="summary-row">
                                     <span>Subtotal</span>
                                     <span className="summary-row-value flex items-center gap-2">
-                                        <span className="text-sm text-gray-400 font-bold">
-                                            {appliedCoupon?.type === 'free_pro'
-                                                ? (appliedCoupon.planDurationUnit === 'year' ? appliedCoupon.planDurationValue * 12 : appliedCoupon.planDurationValue)
-                                                : selectedMonths} X
-                                        </span>
-                                        <span>Rs.{item.monthlyRate.toFixed(2)}</span>
+                                        {item.type === 'plan_upgrade' ? (
+                                            <>
+                                                <span className="text-sm text-gray-400 font-bold">
+                                                    {appliedCoupon?.type === 'free_pro'
+                                                        ? (appliedCoupon.planDurationUnit === 'year' ? appliedCoupon.planDurationValue * 12 : appliedCoupon.planDurationValue)
+                                                        : selectedMonths} X
+                                                </span>
+                                                <span>Rs.{item.monthlyRate.toFixed(2)}</span>
+                                            </>
+                                        ) : (
+                                            <span>Rs.{item.price.toFixed(2)}</span>
+                                        )}
                                     </span>
                                 </div>
                                 {appliedCoupon && (

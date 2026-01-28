@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import axios from 'axios';
 import { Megaphone, Plus, Search, Save, Star, Globe, History, Layout, CheckCircle } from 'lucide-react';
 import PromptCard from '../blocks/PromptCard';
+import AuthContext from '../../context/AuthContext';
 import '../../styles/tab-switcher.css';
 
 const UserPrompts = ({
     profileData,
     availablePrompts = [],
+    setAvailablePrompts,
     featureFlags = {},
     openAddPromptModal,
     openEditPromptModal,
@@ -16,6 +19,7 @@ const UserPrompts = ({
     saveProfile,
     saving
 }) => {
+    const { user, API_URL } = useContext(AuthContext);
     const [toolSearch, setToolSearch] = useState('');
     const [copiedId, setCopiedId] = useState(null);
     const [activeSection, setActiveSection] = useState('collection'); // collection, library, settings
@@ -46,6 +50,28 @@ const UserPrompts = ({
 
     // Total Items: Custom + Favorites
     const totalPrompts = customPrompts.length + favoritePrompts.length;
+
+    const handleUnlock = async (prompt) => {
+        if (!user) return;
+        if (!window.confirm(`Unlock this prompt for ${prompt.price} coins?`)) return;
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+            const res = await axios.post(`${API_URL}/transactions/unlock`, {
+                itemId: prompt._id,
+                itemType: 'prompt'
+            }, config);
+
+            // Update available prompts state
+            if (setAvailablePrompts) {
+                setAvailablePrompts(prev => prev.map(p => p._id === prompt._id ? res.data.item : p));
+            }
+            alert('Prompt unlocked successfully!');
+        } catch (error) {
+            console.error('Unlock failed', error);
+            alert(error.response?.data?.message || 'Failed to unlock prompt');
+        }
+    };
 
     return (
         <div className="prompts-section animate-in fade-in duration-500">
@@ -237,6 +263,7 @@ const UserPrompts = ({
                                                         onFavorite={toggleFavorite}
                                                         onCopy={handleCopyPrompt}
                                                         copiedId={copiedId}
+                                                        onUnlock={handleUnlock}
                                                     />
                                                 </div>
                                             ))}
@@ -287,6 +314,7 @@ const UserPrompts = ({
                                                 onFavorite={toggleFavorite}
                                                 onCopy={handleCopyPrompt}
                                                 copiedId={copiedId}
+                                                onUnlock={handleUnlock}
                                             />
                                         </div>
                                     ))}
@@ -346,8 +374,8 @@ const UserPrompts = ({
                                     <label
                                         key={option.id}
                                         className={`userprompt-option ${profileData.publicPromptsDisplay === option.id
-                                                ? "userprompt-option-active"
-                                                : ""
+                                            ? "userprompt-option-active"
+                                            : ""
                                             }`}
                                     >
                                         <input

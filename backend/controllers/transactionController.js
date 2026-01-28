@@ -1,6 +1,8 @@
 const Transaction = require('../models/Transaction');
 const User = require('../models/User');
 const Coupon = require('../models/Coupon');
+const Offer = require('../models/Offer');
+const Prompt = require('../models/Prompt');
 const asyncHandler = require('express-async-handler');
 
 // @desc    Process a checkout (Plan upgrade or Coin purchase)
@@ -209,10 +211,98 @@ const deleteTransactionAdmin = asyncHandler(async (req, res) => {
     res.json({ message: 'Transaction deleted successfully' });
 });
 
+// @desc    Unlock a paid item (Offer/Prompt) using coins
+// @route   POST /api/transactions/unlock
+// @access  Private
+const unlockItem = asyncHandler(async (req, res) => {
+    const { itemId, itemType } = req.body; // itemType: 'offer' | 'prompt'
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    let item;
+    let price = 0;
+    let title = '';
+
+    if (itemType === 'offer') {
+        item = await Offer.findById(itemId);
+        if (!item) {
+            res.status(404);
+            throw new Error('Offer not found');
+        }
+        // Check if already unlocked
+        if (user.unlockedOffers.includes(itemId)) {
+            return res.status(200).json({ message: 'Offer already unlocked', item });
+        }
+        price = item.price;
+        title = item.title;
+
+    } else if (itemType === 'prompt') {
+        item = await Prompt.findById(itemId);
+        if (!item) {
+            res.status(404);
+            throw new Error('Prompt not found');
+        }
+        // Check if already unlocked
+        if (user.unlockedPrompts.includes(itemId)) {
+            return res.status(200).json({ message: 'Prompt already unlocked', item });
+        }
+        price = item.price;
+        title = item.title;
+    } else {
+        res.status(400);
+        throw new Error('Invalid item type');
+    }
+
+    // Check if free
+    if (!item.isPaid || price <= 0) {
+        return res.status(200).json({ message: 'Item is free', item });
+    }
+
+    // Check balance
+    if (user.coins < price) {
+        res.status(400);
+        throw new Error(`Insufficient coins. Need ${price} coins.`);
+    }
+
+    // Deduct coins
+    user.coins -= price;
+
+    // Add to unlocked list
+    if (itemType === 'offer') {
+        user.unlockedOffers.push(itemId);
+    } else {
+        user.unlockedPrompts.push(itemId);
+    }
+
+    await user.save();
+
+    // Create Transaction Record
+    await Transaction.create({
+        user: user._id,
+        type: 'purchase',
+        amount: 0,
+        coins: -price, // Negative to indicate spending
+        description: `Unlocked ${itemType}: ${title}`,
+        status: 'completed',
+        orderId: `UNLK-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`
+    });
+
+    res.status(200).json({
+        message: 'Item unlocked successfully',
+        remainingCoins: user.coins,
+        item
+    });
+});
+
 module.exports = {
     processCheckout,
     getMyTransactions,
     getAllTransactions,
     getUserTransactionsAdmin,
-    deleteTransactionAdmin
+    deleteTransactionAdmin,
+    unlockItem
 };

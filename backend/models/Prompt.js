@@ -33,6 +33,14 @@ const promptSchema = mongoose.Schema({
     isEnabled: {
         type: Boolean,
         default: true
+    },
+    isPaid: {
+        type: Boolean,
+        default: false
+    },
+    price: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Megaphone, Edit, Trash2, Check, Copy, CheckCircle, Heart, Share2, Bookmark, X } from 'lucide-react';
+import { Megaphone, Edit, Trash2, Check, Copy, CheckCircle, Heart, Share2, Bookmark, X, Lock } from 'lucide-react';
 import '../../styles/Prompts.css';
 
 const PromptCard = ({
@@ -14,11 +14,16 @@ const PromptCard = ({
     onCopy,
     copiedId,
     onClick,
-    onShare
+    onShare,
+    onUnlock
 }) => {
     const handleWrapperClick = (e) => {
         // If clicking on buttons or their children, don't toggle
         if (e.target.closest('button') || e.target.closest('a')) {
+            return;
+        }
+        if (onUnlock && prompt.isLocked) {
+            // Don't open if locked, maybe trigger unlock
             return;
         }
         if (onToggle) {
@@ -27,7 +32,7 @@ const PromptCard = ({
             onClick();
         } else {
             // Default behavior: Open full prompt modal
-            setShowFullPrompt(true);
+            if (!prompt.isLocked) setShowFullPrompt(true);
         }
     };
 
@@ -36,6 +41,8 @@ const PromptCard = ({
     const words = promptText.split(/\s+/);
     const isLong = words.length > 20;
     const shortText = isLong ? words.slice(0, 20).join(' ') + '...' : promptText;
+
+    const isLocked = prompt.isLocked;
 
     return (
         <article
@@ -48,7 +55,7 @@ const PromptCard = ({
                     <img
                         src={prompt.image || prompt.logo}
                         alt={prompt.title || prompt.name}
-                        className="prompt-image"
+                        className={`prompt-image ${isLocked ? 'grayscale blur-[2px]' : ''}`}
                     />
                 ) : (
                     <div className="prompt-image bg-slate-800 flex items-center justify-center">
@@ -56,6 +63,12 @@ const PromptCard = ({
                     </div>
                 )}
                 <div className="prompt-overlay" />
+
+                {isLocked && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1px]">
+                        <Lock size={32} className="text-amber-400 mb-2 drop-shadow-lg" />
+                    </div>
+                )}
 
                 <div className="prompt-top-row">
                     <span className="prompt-chip" title={prompt.title || prompt.name}>
@@ -66,8 +79,14 @@ const PromptCard = ({
                             {prompt.category || prompt.platform || 'AI'}
                         </span>
 
+                        {prompt.price > 0 && (
+                            <span className="prompt-chip font-bold flex items-center gap-1 bg-amber-500/20 text-amber-300 border border-amber-500/50">
+                                {prompt.price} <span className="text-[9px] uppercase">Coins</span>
+                            </span>
+                        )}
+
                         {/* Share Button */}
-                        {onShare && (
+                        {onShare && !isLocked && (
                             <button
                                 className="prompt-icon-btn hover:bg-white/20"
                                 onClick={(e) => {
@@ -127,7 +146,9 @@ const PromptCard = ({
                 <div className="prompt-body">
                     <p className="prompt-text">
                         <span className="font-bold text-slate-400 mr-2">Prompt:</span>
-                        {isLong ? (
+                        {isLocked ? (
+                            <span className="italic opacity-50">Premium Content Locked</span>
+                        ) : isLong ? (
                             <>
                                 {shortText}
                                 <button
@@ -145,7 +166,18 @@ const PromptCard = ({
                         )}
                     </p>
                     <div className="prompt-footer relative">
-                        {onCopy ? (
+                        {isLocked ? (
+                            <button
+                                type="button"
+                                className="w-full py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg font-bold text-xs flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-amber-500/30 transition-all uppercase tracking-wide"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onUnlock) onUnlock(prompt);
+                                }}
+                            >
+                                <Lock size={14} /> Unlock ({prompt.price})
+                            </button>
+                        ) : onCopy ? (
                             <button
                                 type="button"
                                 className={`prompt-copy-btn ${copiedId === prompt ? 'prompt-copy-btn--success' : ''}`}

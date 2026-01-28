@@ -13,7 +13,7 @@ const UserOffers = ({
     saveProfile,
     saving
 }) => {
-    const { API_URL } = useContext(AuthContext);
+    const { API_URL, user, setUser } = useContext(AuthContext);
 
     // Global Offers State
     const [globalOffers, setGlobalOffers] = useState([]);
@@ -39,7 +39,9 @@ const UserOffers = ({
     useEffect(() => {
         const fetchGlobalOffers = async () => {
             try {
-                const res = await axios.get(`${API_URL}/offers`);
+                const token = localStorage.getItem('token');
+                const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+                const res = await axios.get(`${API_URL}/offers`, config);
                 setGlobalOffers(res.data);
             } catch (error) {
                 console.error("Failed to fetch global offers", error);
@@ -48,7 +50,7 @@ const UserOffers = ({
             }
         };
         fetchGlobalOffers();
-    }, [API_URL]);
+    }, [API_URL, user]); // Added user to dependency to re-fetch on login
 
     // Categorize User Banners
     const promoBanners = (profileData.banners || []).filter(b => b.promoCode && b.promoCode.trim() !== '');
@@ -186,9 +188,40 @@ const UserOffers = ({
         </button>
     );
 
-    // Helpers to check if global offer is favorited
     const isGlobalFavorite = (offerId) => {
         return profileData.favoritesOffers?.some(fav => fav._id === offerId || fav === offerId);
+    };
+
+    const handleUnlock = async (offer) => {
+        if (!user) {
+            alert('Please login first');
+            return;
+        }
+
+        if (!window.confirm(`Unlock this offer for ${offer.price} coins?`)) return;
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token') || user.token}` } };
+            const res = await axios.post(`${API_URL}/transactions/unlock`, {
+                itemId: offer._id,
+                itemType: 'offer'
+            }, config);
+
+            // Update global offers state
+            setGlobalOffers(prev => prev.map(o => o._id === offer._id ? res.data.item : o));
+
+            // Update user balance in UI
+            if (res.data.remainingCoins !== undefined && setUser) {
+                const updatedUser = { ...user, coins: res.data.remainingCoins };
+                setUser(updatedUser);
+                // Also update local storage if necessary, though AuthContext usually handles it or hydrates from it. 
+                // We'll assume setUser updates the context state which drives the UI.
+            }
+            alert('Offer unlocked successfully!');
+        } catch (error) {
+            console.error('Unlock failed', error);
+            alert(error.response?.data?.message || 'Failed to unlock offer');
+        }
     };
 
     return (
@@ -443,6 +476,7 @@ const UserOffers = ({
                                                     isFavorite={isGlobalFavorite(offer._id)}
                                                     className="h-full"
                                                     showFullDetails={true}
+                                                    onUnlock={handleUnlock}
                                                 />
                                             </div>
                                         ))}

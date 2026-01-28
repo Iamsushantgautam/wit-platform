@@ -25,7 +25,9 @@ const PromptsLibrary = () => {
     useEffect(() => {
         const fetchPrompts = async () => {
             try {
-                const res = await axios.get(`${API_URL}/prompts`);
+                const token = localStorage.getItem('token');
+                const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+                const res = await axios.get(`${API_URL}/prompts`, config);
                 setPrompts(res.data);
             } catch (error) {
                 console.error("Error fetching prompts", error);
@@ -92,6 +94,35 @@ const PromptsLibrary = () => {
         } catch (err) {
             console.error('Error toggling favorite', err);
             alert('Could not save to favourites');
+        }
+    };
+
+    const handleUnlock = async (prompt) => {
+        if (!user) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!window.confirm(`Unlock this prompt for ${prompt.price} coins?`)) return;
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const res = await axios.post(`${API_URL}/transactions/unlock`, {
+                itemId: prompt._id,
+                itemType: 'prompt'
+            }, config);
+
+            // Update local state with unlocked prompt
+            setPrompts(prev => prev.map(p => p._id === prompt._id ? res.data.item : p));
+
+            if (res.data.remainingCoins !== undefined) {
+                window.location.reload();
+            } else {
+                alert('Prompt unlocked successfully!');
+            }
+        } catch (error) {
+            console.error('Unlock failed', error);
+            alert(error.response?.data?.message || 'Failed to unlock prompt');
         }
     };
 
@@ -182,6 +213,7 @@ const PromptsLibrary = () => {
                                         onShare={() => handleShare(prompt)}
                                         onCopy={() => handleCopy(prompt.prompt, prompt)}
                                         copiedId={copiedId}
+                                        onUnlock={handleUnlock}
                                     />
                                 );
                             })}

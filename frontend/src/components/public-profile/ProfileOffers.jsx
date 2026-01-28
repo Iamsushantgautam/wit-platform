@@ -1,8 +1,11 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useContext } from 'react';
+import axios from 'axios';
+import AuthContext from '../../context/AuthContext';
 import { ArrowRight, Ticket, Megaphone, Heart, Tag, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import OfferCard from '../blocks/OfferCard';
 
 const ProfileOffers = ({ profile }) => {
+    const { API_URL, user } = useContext(AuthContext);
     const [filterType, setFilterType] = useState('all'); // all, codes, deals, favorites
     const [selectedTag, setSelectedTag] = useState(null);
     const [favorites, setFavorites] = useState(new Set()); // Local favorites state for public viewer
@@ -88,9 +91,38 @@ const ProfileOffers = ({ profile }) => {
         }
     };
 
+    const handleUnlock = async (offer) => {
+        if (!user) {
+            alert('Please login first to unlock offers');
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!window.confirm(`Unlock this offer for ${offer.price} coins?`)) return;
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token || localStorage.getItem('token')}` } };
+            // Note: user object in ProfileOffers context likely has token.
+
+            const res = await axios.post(`${API_URL}/transactions/unlock`, {
+                itemId: offer._id,
+                itemType: 'offer'
+            }, config);
+
+            if (res.data.remainingCoins !== undefined) {
+                window.location.reload();
+            } else {
+                alert('Offer unlocked successfully!');
+            }
+        } catch (error) {
+            console.error('Unlock failed', error);
+            alert(error.response?.data?.message || 'Failed to unlock offer');
+        }
+    };
+
     return (
         <div className="w-full">
-            {/* Hero Banner */}
+            {/* Hero Banner ... */}
             {profile?.heroOffer?.isVisible !== false && (
                 <div
                     className="profile-hero-banner mb-10"
@@ -220,6 +252,7 @@ const ProfileOffers = ({ profile }) => {
                                     }}
                                     isFavorite={filterType === 'favorites'}
                                     className="h-full shadow-sm hover:shadow-md transition-shadow border-gray-200 dark:border-gray-800"
+                                    onUnlock={handleUnlock}
                                 />
                             </div>
                         ))}

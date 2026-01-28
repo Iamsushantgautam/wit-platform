@@ -42,7 +42,15 @@ const userSchema = mongoose.Schema({
     },
     planExpiryDate: {
         type: Date
-    }
+    },
+    unlockedOffers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Offer'
+    }],
+    unlockedPrompts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Prompt'
+    }]
 }, {
     timestamps: true
 });

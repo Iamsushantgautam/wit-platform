@@ -295,8 +295,19 @@ const UserWallet = () => {
                                     </td>
                                     <td>
                                         <div className="amount-group">
-                                            <span className="amount-main">Rs.{t.amount.toFixed(2)}</span>
-                                            {t.coins > 0 && <span className="amount-coins">+{t.coins} Coins</span>}
+                                            {/* Logic: If amount is > 0, show money. If amount is 0 and coins != 0, show coins. */}
+                                            {t.amount > 0 ? (
+                                                <>
+                                                    <span className="amount-main">Rs.{t.amount.toFixed(2)}</span>
+                                                    {t.coins > 0 && <span className="amount-coins">+{t.coins} Coins</span>}
+                                                </>
+                                            ) : (
+                                                t.coins !== 0 && (
+                                                    <span className={`amount-main ${t.coins < 0 ? 'text-red-500' : 'text-green-500'}`}>
+                                                        {t.coins > 0 ? '+' : ''}{t.coins} Coins
+                                                    </span>
+                                                )
+                                            )}
                                         </div>
                                     </td>
                                     <td style={{ textAlign: 'right' }}>

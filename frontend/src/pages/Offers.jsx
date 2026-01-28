@@ -6,7 +6,7 @@ import OfferCard from '../components/blocks/OfferCard';
 import '../styles/Offers.css';
 
 const Offers = () => {
-    const { API_URL } = useContext(AuthContext);
+    const { API_URL, user, setUser } = useContext(AuthContext);
     const [offers, setOffers] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -17,7 +17,9 @@ const Offers = () => {
     useEffect(() => {
         const fetchOffers = async () => {
             try {
-                const res = await axios.get(`${API_URL}/offers`);
+                const token = localStorage.getItem('token');
+                const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+                const res = await axios.get(`${API_URL}/offers`, config);
                 setOffers(res.data);
             } catch (error) {
                 console.error("Failed to fetch offers", error);
@@ -26,7 +28,39 @@ const Offers = () => {
             }
         };
         fetchOffers();
-    }, [API_URL]);
+    }, [API_URL, user]); // Refetch on user change (login/logout)
+
+    const handleUnlock = async (offer) => {
+        if (!user) {
+            alert('Please login first');
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!window.confirm(`Unlock this offer for ${offer.price} coins?`)) return;
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+            const res = await axios.post(`${API_URL}/transactions/unlock`, {
+                itemId: offer._id,
+                itemType: 'offer'
+            }, config);
+
+            // Update local state
+            setOffers(prev => prev.map(o => o._id === offer._id ? res.data.item : o));
+
+            // Update user balance in context
+            if (res.data.remainingCoins !== undefined && setUser) {
+                // We need to keep other user properties, so spread user
+                setUser(prev => ({ ...prev, coins: res.data.remainingCoins }));
+            }
+
+            alert('Offer unlocked successfully!');
+        } catch (error) {
+            console.error('Unlock failed', error);
+            alert(error.response?.data?.message || 'Failed to unlock offer');
+        }
+    };
 
     const promoOffers = offers.filter(o => o.code && o.code.trim() !== '');
     const dealOffers = offers.filter(o => !o.code || o.code.trim() === '');
@@ -81,7 +115,12 @@ const Offers = () => {
 
                                 <div className="offers-grid">
                                     {promoOffers.map((offer, idx) => (
-                                        <OfferCard key={offer._id} offer={offer} index={idx} />
+                                        <OfferCard
+                                            key={offer._id}
+                                            offer={offer}
+                                            index={idx}
+                                            onUnlock={handleUnlock}
+                                        />
                                     ))}
                                 </div>
                                 <br />
@@ -124,7 +163,12 @@ const Offers = () => {
 
                                 <div className="offers-grid">
                                     {currentDeals.map((offer, idx) => (
-                                        <OfferCard key={offer._id} offer={offer} index={idx} />
+                                        <OfferCard
+                                            key={offer._id}
+                                            offer={offer}
+                                            index={idx}
+                                            onUnlock={handleUnlock}
+                                        />
                                     ))}
                                 </div>
 

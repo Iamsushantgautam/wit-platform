@@ -8,7 +8,7 @@ import PromptCard from '../blocks/PromptCard';
 const PROMPTS_PER_PAGE = 9;
 
 const ProfilePrompts = ({ profile, featureFlags = {} }) => {
-    const { API_URL } = useContext(AuthContext);
+    const { API_URL, user } = useContext(AuthContext);
     const [copiedId, setCopiedId] = useState(null);
     const [globalPrompts, setGlobalPrompts] = useState([]);
     const [loadingGlobal, setLoadingGlobal] = useState(false);
@@ -36,7 +36,9 @@ const ProfilePrompts = ({ profile, featureFlags = {} }) => {
             if (showLibrary) {
                 setLoadingGlobal(true);
                 try {
-                    const res = await axios.get(`${API_URL}/prompts`);
+                    const token = localStorage.getItem('token');
+                    const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+                    const res = await axios.get(`${API_URL}/prompts`, config);
                     setGlobalPrompts(res.data);
                 } catch (error) {
                     console.error("Error fetching global prompts", error);
@@ -102,6 +104,30 @@ const ProfilePrompts = ({ profile, featureFlags = {} }) => {
             }
         } else {
             handleCopy(prompt.prompt || prompt.description, prompt);
+        }
+    };
+
+    const handleUnlock = async (prompt) => {
+        if (!user) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!window.confirm(`Unlock this prompt for ${prompt.price} coins?`)) return;
+
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const res = await axios.post(`${API_URL}/transactions/unlock`, {
+                itemId: prompt._id,
+                itemType: 'prompt'
+            }, config);
+
+            // Update local state
+            setGlobalPrompts(prev => prev.map(p => p._id === prompt._id ? res.data.item : p));
+            alert('Prompt unlocked successfully!');
+        } catch (error) {
+            console.error('Unlock failed', error);
+            alert(error.response?.data?.message || 'Failed to unlock prompt');
         }
     };
 
@@ -196,6 +222,7 @@ const ProfilePrompts = ({ profile, featureFlags = {} }) => {
                                             onCopy={handleCopy}
                                             onShare={handleShare}
                                             copiedId={copiedId}
+                                            onUnlock={handleUnlock}
                                         />
                                     </div>
                                 ))}

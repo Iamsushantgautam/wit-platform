@@ -1,12 +1,40 @@
 const Prompt = require('../models/Prompt');
 
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+
 // @desc    Get all prompts
 // @route   GET /api/prompts
 // @access  Public
 exports.getPrompts = async (req, res) => {
     try {
         const prompts = await Prompt.find().sort({ createdAt: -1 });
-        res.status(200).json(prompts);
+
+        // Check for user token manually to see if unlocked
+        let user = null;
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            try {
+                const token = req.headers.authorization.split(' ')[1];
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                user = await User.findById(decoded.id).select('unlockedPrompts');
+            } catch (error) {
+                // Invalid token, treat as guest
+            }
+        }
+
+        const processedPrompts = prompts.map(prompt => {
+            const promptObj = prompt.toObject();
+            if (prompt.isPaid) {
+                const isUnlocked = user && user.unlockedPrompts && user.unlockedPrompts.some(id => id.toString() === prompt._id.toString());
+                if (!isUnlocked) {
+                    promptObj.prompt = "This prompt is locked. Purchase to unlock."; // Simple masking
+                    promptObj.isLocked = true;
+                }
+            }
+            return promptObj;
+        });
+
+        res.status(200).json(processedPrompts);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

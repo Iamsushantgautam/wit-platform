@@ -461,15 +461,13 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+
                 const [profileRes, toolsRes, promptsRes, updatesRes, featuresRes] = await Promise.all([
-                    axios.get(`${API_URL}/profiles/me`, {
-                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                    }),
-                    axios.get(`${API_URL}/tools`),
-                    axios.get(`${API_URL}/prompts`),
-                    axios.get(`${API_URL}/profiles/updates`, {
-                        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-                    }),
+                    axios.get(`${API_URL}/profiles/me`, config),
+                    axios.get(`${API_URL}/tools`, config),
+                    axios.get(`${API_URL}/prompts`, config),
+                    axios.get(`${API_URL}/profiles/updates`, config),
                     axios.get(`${API_URL}/admin/features`)
                 ]);
                 setProfileData(profileRes.data);
@@ -792,6 +790,7 @@ const Dashboard = () => {
                                         profileData={profileData}
                                         availableTools={availableTools}
                                         availablePrompts={availablePrompts}
+                                        setAvailablePrompts={setAvailablePrompts}
                                         featureFlags={featureFlags}
                                         openAddPromptModal={openAddPromptModal}
                                         openEditPromptModal={openEditPromptModal}

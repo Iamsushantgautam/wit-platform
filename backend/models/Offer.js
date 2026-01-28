@@ -40,6 +40,14 @@ const offerSchema = mongoose.Schema({
     clicks: {
         type: Number,
         default: 0
+    },
+    isPaid: {
+        type: Boolean,
+        default: false
+    },
+    price: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true
