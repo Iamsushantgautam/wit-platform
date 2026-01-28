@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
     User, Link as LinkIcon, Megaphone, Layout, Bell,
     Palette, QrCode, ShieldAlert, ChevronRight, Settings, MousePointerClick, Navigation,
-    Grid, X
+    Grid, X, Lock, Coins
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -15,47 +15,87 @@ const DashboardSidebar = ({ activeTab, setActiveTab, user, featureFlags = {} }) 
         setMounted(true);
     }, []);
 
+    const isPremium = ['pro', 'premium'].includes(user.plan) || user.role === 'master_admin';
+
     // Define all tabs in an array for better management
     const allTabs = [
         { id: 'profile', label: 'Profile', icon: User },
 
-        { id: 'tools', label: 'Tools', icon: Layout, condition: featureFlags.userToolsEnabled },
+        { id: 'tools', label: 'Tools', icon: Layout, condition: featureFlags.userToolsEnabled, locked: !isPremium },
         { id: 'links', label: 'Links', icon: LinkIcon, condition: featureFlags.userLinksEnabled },
-        { id: 'offers', label: 'Offers', icon: Megaphone, condition: featureFlags.userOffersEnabled },
-        { id: 'prompts', label: 'Prompts', icon: Megaphone, condition: featureFlags.userPromptsEnabled },
+        { id: 'offers', label: 'Offers', icon: Megaphone, condition: featureFlags.userOffersEnabled, locked: !isPremium },
+        { id: 'prompts', label: 'Prompts', icon: Megaphone, condition: featureFlags.userPromptsEnabled, locked: !isPremium },
         { id: 'heroButtons', label: 'Buttons', icon: MousePointerClick, condition: featureFlags.userHeroButtonsEnabled },
-        { id: 'navigation', label: 'Nav', icon: Navigation, condition: featureFlags.userNavigationEnabled },
-        { id: 'updates', label: 'Updates', icon: Bell, condition: featureFlags.userUpdatesEnabled },
+        { id: 'navigation', label: 'Nav', icon: Navigation, condition: featureFlags.userNavigationEnabled, locked: !isPremium },
+        { id: 'updates', label: 'Updates', icon: Bell, condition: featureFlags.userUpdatesEnabled, locked: !isPremium },
         { id: 'customize', label: 'Customize', icon: Palette },
         { id: 'share', label: 'Share', icon: QrCode },
+        { id: 'wallet', label: 'Wallet', icon: Coins, path: '/wallet' },
         { id: 'account', label: 'Account', icon: Settings },
     ].filter(tab => tab.condition !== false); // Filter out disabled features
 
 
-    const TabButton = ({ id, label, icon: Icon, onClick, className }) => (
-        <button
-            onClick={onClick || (() => setActiveTab(id))}
-            className={`sidebar-tab ${activeTab === id ? 'active' : ''} ${className || ''}`}
-        >
-            <Icon size={24} className="mb-1" />
-            <span className="text-[8px] font-small">{label}</span>
-            {/* Show chevron only on desktop vertical layout if needed (CSS hides it on mobile) */}
-            <ChevronRight size={16} className="ml-auto hidden md:block" />
-        </button>
+    const TabButton = ({ id, label, icon: Icon, onClick, path, className }) => (
+        path ? (
+            <Link
+                to={path}
+                className={`sidebar-tab ${activeTab === id ? 'active' : ''} ${className || ''}`}
+                onClick={onClick}
+            >
+                <Icon size={24} className="mb-1" />
+                <span className="text-[8px] font-small">{label}</span>
+                <ChevronRight size={16} className="ml-auto hidden md:block" />
+            </Link>
+        ) : (
+            <button
+                onClick={onClick || (() => setActiveTab(id))}
+                className={`sidebar-tab ${activeTab === id ? 'active' : ''} ${className || ''}`}
+            >
+                <Icon size={24} className="mb-1" />
+                <span className="text-[8px] font-small">{label}</span>
+                {/* Show chevron only on desktop vertical layout if needed (CSS hides it on mobile) */}
+                <ChevronRight size={16} className="ml-auto hidden md:block" />
+            </button>
+        )
     );
 
     // Desktop View (Vertical Sidebar - Image Match via Custom CSS)
     const DesktopSidebar = () => (
         <div className="sidebar-menu-list desktop-only-menu">
             {allTabs.map(tab => (
-                <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`sidebar-menu-btn ${activeTab === tab.id ? 'active' : ''}`}
-                >
-                    <tab.icon size={24} />
-                    <span>{tab.label}</span>
-                </button>
+                tab.path ? (
+                    <Link
+                        key={tab.id}
+                        to={tab.path}
+                        className={`sidebar-menu-btn ${activeTab === tab.id ? 'active' : ''}`}
+                    >
+                        <div className="relative">
+                            <tab.icon size={24} />
+                            {tab.locked && (
+                                <div className="absolute -top-1 -right-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full p-0.5 border border-white dark:border-slate-800">
+                                    <Lock size={10} />
+                                </div>
+                            )}
+                        </div>
+                        <span>{tab.label}</span>
+                    </Link>
+                ) : (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`sidebar-menu-btn ${activeTab === tab.id ? 'active' : ''}`}
+                    >
+                        <div className="relative">
+                            <tab.icon size={24} />
+                            {tab.locked && (
+                                <div className="absolute -top-1 -right-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full p-0.5 border border-white dark:border-slate-800">
+                                    <Lock size={10} />
+                                </div>
+                            )}
+                        </div>
+                        <span>{tab.label}</span>
+                    </button>
+                )
             ))}
 
             {user.role === 'master_admin' && (
@@ -179,21 +219,47 @@ const DashboardSidebar = ({ activeTab, setActiveTab, user, featureFlags = {} }) 
                     {/* Scrollable Grid Area */}
                     <div className="mobile-menu-grid">
                         {allTabs.map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => {
-                                    setActiveTab(tab.id);
-                                    setIsMenuOpen(false);
-                                }}
-                                className={`menu-grid-item ${activeTab === tab.id ? 'active' : ''}`}
-                            >
-                                <div className="menu-grid-icon">
-                                    <tab.icon size={26} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
-                                </div>
-                                <span className="menu-grid-label">
-                                    {tab.label}
-                                </span>
-                            </button>
+                            tab.path ? (
+                                <Link
+                                    key={tab.id}
+                                    to={tab.path}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className={`menu-grid-item ${activeTab === tab.id ? 'active' : ''}`}
+                                >
+                                    <div className="menu-grid-icon relative">
+                                        <tab.icon size={26} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
+                                        {tab.locked && (
+                                            <div className="absolute -top-1 -right-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full p-0.5 border border-white dark:border-slate-800">
+                                                <Lock size={12} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="menu-grid-label">
+                                        {tab.label}
+                                    </span>
+                                </Link>
+                            ) : (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => {
+                                        setActiveTab(tab.id);
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className={`menu-grid-item ${activeTab === tab.id ? 'active' : ''}`}
+                                >
+                                    <div className="menu-grid-icon relative">
+                                        <tab.icon size={26} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
+                                        {tab.locked && (
+                                            <div className="absolute -top-1 -right-1 bg-slate-900 text-white dark:bg-white dark:text-slate-900 rounded-full p-0.5 border border-white dark:border-slate-800">
+                                                <Lock size={12} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="menu-grid-label">
+                                        {tab.label}
+                                    </span>
+                                </button>
+                            )
                         ))}
 
                         {user.role === 'master_admin' && (

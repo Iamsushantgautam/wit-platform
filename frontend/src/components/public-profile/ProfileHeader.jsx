@@ -25,10 +25,14 @@ const ProfileHeader = ({ activeTab, profile, username, onMenuToggle, branding })
                 <Menu size={24} />
             </button>
             <div className="profile-mobile-header__title flex items-center justify-center gap-2">
-                {branding?.siteLogo ? (
-                    <img src={branding.siteLogo} alt={branding.siteName} style={{ height: '24px', width: 'auto' }} />
+                {(!profile?.user?.plan || profile?.user?.plan === 'free') ? (
+                    branding?.siteLogo ? (
+                        <img src={branding.siteLogo} alt={branding.siteName} style={{ height: '24px', width: 'auto' }} />
+                    ) : (
+                        <span>{branding?.siteName || 'WitHub'}</span>
+                    )
                 ) : (
-                    <span>{branding?.siteName || 'WitHub'}</span>
+                    <span className="font-bold">{getTabTitle()}</span>
                 )}
             </div>
             <img

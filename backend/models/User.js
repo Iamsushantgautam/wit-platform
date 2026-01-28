@@ -27,9 +27,21 @@ const userSchema = mongoose.Schema({
         enum: ['user', 'master_admin'],
         default: 'user'
     },
+    plan: {
+        type: String,
+        enum: ['free', 'pro', 'premium'],
+        default: 'free'
+    },
     isBlocked: {
         type: Boolean,
         default: false
+    },
+    coins: {
+        type: Number,
+        default: 0
+    },
+    planExpiryDate: {
+        type: Date
     }
 }, {
     timestamps: true

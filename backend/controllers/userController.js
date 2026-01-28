@@ -76,6 +76,22 @@ const blockUser = asyncHandler(async (req, res) => {
     }
 });
 
+// @desc    Update user plan (Admin)
+// @route   PUT /api/user-manage/:id/plan
+// @access  Private/Admin
+const updateUserPlan = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id);
+
+    if (user) {
+        user.plan = req.body.plan;
+        const updatedUser = await user.save();
+        res.json(updatedUser);
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+});
+
 // @desc    Delete user account
 // @route   DELETE /api/user-manage/profile
 // @access  Private
@@ -100,5 +116,6 @@ module.exports = {
     updateUser,
     getUsers,
     blockUser,
-    deleteUser
+    deleteUser,
+    updateUserPlan
 };

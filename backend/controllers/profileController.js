@@ -79,7 +79,7 @@ const getProfileByUsername = asyncHandler(async (req, res) => {
     }
 
     const profile = await Profile.findOne({ user: user._id })
-        .populate('user', 'username email')
+        .populate('user', 'username email plan')
         .populate('activeTools')
         .populate('activePrompts')
         .populate('favoritesPrompts')

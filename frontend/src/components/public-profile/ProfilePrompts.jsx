@@ -172,30 +172,40 @@ const ProfilePrompts = ({ profile, featureFlags = {} }) => {
                 </div>
             )}
 
-            {/* Website Prompts (Global Library) - Carousel Layout */}
-            {filteredGlobalPrompts.length > 0 ? (
-                <div className="carousel-mask -mx-2 px-2">
-                    <div className="carousel-track">
-                        <h3 className="text-xl font-bold text-white px-1">Website Prompts</h3>
-                        {filteredGlobalPrompts.map((prompt, idx) => (
-                            <div
-                                key={`global-${prompt._id || idx}`}
-                                className="carousel-card-wrapper"
-                            >
-                                <PromptCard
-                                    prompt={prompt}
-                                    type="public"
-                                    onCopy={handleCopy}
-                                    onShare={handleShare}
-                                    copiedId={copiedId}
-                                />
+            {/* Website Prompts (Global Library) */}
+            {showLibrary && (
+                <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-white px-1">Website Prompts</h3>
+
+                    {loadingGlobal ? (
+                        <div className="py-12 flex flex-col items-center justify-center gap-4 bg-gray-900/30 rounded-2xl border-2 border-dashed border-gray-800">
+                            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Loading Website Library...</p>
+                        </div>
+                    ) : filteredGlobalPrompts.length > 0 ? (
+                        <div className="carousel-mask">
+                            <div className="carousel-track">
+                                {filteredGlobalPrompts.map((prompt, idx) => (
+                                    <div
+                                        key={`global-${prompt._id || idx}`}
+                                        className="carousel-card-wrapper"
+                                    >
+                                        <PromptCard
+                                            prompt={prompt}
+                                            type="public"
+                                            onCopy={handleCopy}
+                                            onShare={handleShare}
+                                            copiedId={copiedId}
+                                        />
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </div>
-            ) : (
-                <div className="py-12 text-center text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl bg-gray-900/30">
-                    <p>No website prompts found.</p>
+                        </div>
+                    ) : (
+                        <div className="py-12 text-center text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl bg-gray-900/30">
+                            <p>No website prompts found.</p>
+                        </div>
+                    )}
                 </div>
             )}
 

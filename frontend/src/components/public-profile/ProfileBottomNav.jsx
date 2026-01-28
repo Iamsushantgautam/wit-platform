@@ -61,8 +61,22 @@ const ProfileBottomNav = ({ profile, activeTab, setActiveTab, updates, featureFl
             .sort((a, b) => (a.order || 0) - (b.order || 0))
         : defaultNavItems;
 
-    // Apply feature flag filtering
-    navItems = filterByFeatureFlags(navItems);
+    // Combine feature flag and plan filtering
+    const proTabs = ['tools', 'prompts', 'offers', 'updates'];
+    const userPlan = profile?.user?.plan || 'free';
+
+    navItems = navItems.filter(item => {
+        // 1. Feature Flag filtering
+        const featureKey = tabFeatureMap[item.tab];
+        if (featureKey && featureFlags[featureKey] === false) return false;
+
+        // 2. Plan-based filtering (Hide locked features for free users)
+        if (proTabs.includes(item.tab) && userPlan === 'free') {
+            return false;
+        }
+
+        return true;
+    });
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);

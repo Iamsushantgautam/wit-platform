@@ -4,7 +4,7 @@ import AuthContext from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import {
     ExternalLink, CheckCircle, AlertCircle, Megaphone, Eye, X,
-    Smartphone, Tablet, Monitor, Home
+    Smartphone, Tablet, Monitor, Home, Crown, Coins
 } from 'lucide-react';
 import ProfileCustomizer from '../components/ProfileCustomizer';
 import UpdatesTab from '../components/UpdatesTab';
@@ -32,6 +32,24 @@ import CustomToolModal from '../components/user/CustomToolModal';
 import CustomPromptModal from '../components/user/CustomPromptModal';
 import DashboardProfilePreview from '../components/user/DashboardProfilePreview'; // Import Preview
 import '../styles/DashboardLayout.css'; // Import Helper CSS
+
+const UpgradeBanner = ({ title }) => (
+    <div className="flex flex-col items-center justify-center h-[50vh] text-center p-8 bg-slate-50 dark:bg-slate-900/50 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 mx-4 my-8 animate-fade-in-up">
+        <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 text-amber-600 dark:text-amber-500 rounded-full flex items-center justify-center mb-6 shadow-sm ring-4 ring-white dark:ring-slate-800">
+            <Crown size={40} fill="currentColor" className="opacity-80" />
+        </div>
+        <h2 className="text-3xl font-black mb-3 text-slate-900 dark:text-white tracking-tight">{title}</h2>
+        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md text-lg leading-relaxed">
+            This premium feature is locked. Upgrade your plan to unlock unlimited access to tools, prompts, and offers.
+        </p>
+        <Link to="/membership" className="group relative px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-2xl overflow-hidden transition-all hover:scale-105 hover:shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-10 transition-opacity" />
+            <span className="relative flex items-center gap-2">
+                Upgrade Now <Crown size={18} />
+            </span>
+        </Link>
+    </div>
+);
 
 const Dashboard = () => {
     const { user, logout, API_URL } = useContext(AuthContext);
@@ -646,8 +664,12 @@ const Dashboard = () => {
                     </button>
 
                     <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full border border-blue-100 dark:border-blue-900/30">
+                            <Coins size={16} />
+                            <span className="text-sm font-black">{user?.coins || 0}</span>
+                        </div>
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                            {user?.username}
+                            {user?.username?.[0]?.toUpperCase()}
                         </div>
                     </div>
                 </div>
@@ -707,12 +729,16 @@ const Dashboard = () => {
                             )}
 
                             {activeTab === 'navigation' && featureFlags.userNavigationEnabled && (
-                                <UserNavigation
-                                    profileData={profileData}
-                                    setProfileData={setProfileData}
-                                    saveProfile={saveProfile}
-                                    saving={saving}
-                                />
+                                (user.plan === 'pro' || user.plan === 'premium' || user.role === 'master_admin') ? (
+                                    <UserNavigation
+                                        profileData={profileData}
+                                        setProfileData={setProfileData}
+                                        saveProfile={saveProfile}
+                                        saving={saving}
+                                    />
+                                ) : (
+                                    <UpgradeBanner title="Custom Navigation" />
+                                )
                             )}
 
                             {activeTab === 'links' && featureFlags.userLinksEnabled && (
@@ -729,44 +755,56 @@ const Dashboard = () => {
                             )}
 
                             {activeTab === 'offers' && featureFlags.userOffersEnabled && (
-                                <UserOffers
-                                    profileData={profileData}
-                                    setProfileData={setProfileData}
-                                    openAddBannerModal={openAddBannerModal}
-                                    openEditBannerModal={openEditBannerModal}
-                                    removeBanner={removeBanner}
-                                    saveProfile={saveProfile}
-                                    saving={saving}
-                                />
+                                (user.plan === 'pro' || user.plan === 'premium' || user.role === 'master_admin') ? (
+                                    <UserOffers
+                                        profileData={profileData}
+                                        setProfileData={setProfileData}
+                                        openAddBannerModal={openAddBannerModal}
+                                        openEditBannerModal={openEditBannerModal}
+                                        removeBanner={removeBanner}
+                                        saveProfile={saveProfile}
+                                        saving={saving}
+                                    />
+                                ) : (
+                                    <UpgradeBanner title="Unlock Exclusive Offers" />
+                                )
                             )}
 
                             {activeTab === 'tools' && featureFlags.userToolsEnabled && (
-                                <UserTools
-                                    profileData={profileData}
-                                    availableTools={availableTools}
-                                    openAddToolModal={openAddToolModal}
-                                    removeCustomItem={removeCustomItem}
-                                    toggleTool={toggleTool}
-                                    saveProfile={saveProfile}
-                                    saving={saving}
-                                />
+                                (user.plan === 'pro' || user.plan === 'premium' || user.role === 'master_admin') ? (
+                                    <UserTools
+                                        profileData={profileData}
+                                        availableTools={availableTools}
+                                        openAddToolModal={openAddToolModal}
+                                        removeCustomItem={removeCustomItem}
+                                        toggleTool={toggleTool}
+                                        saveProfile={saveProfile}
+                                        saving={saving}
+                                    />
+                                ) : (
+                                    <UpgradeBanner title="Unlock AI Tools" />
+                                )
                             )}
 
                             {activeTab === 'prompts' && featureFlags.userPromptsEnabled && (
-                                <UserPrompts
-                                    profileData={profileData}
-                                    availableTools={availableTools}
-                                    availablePrompts={availablePrompts}
-                                    featureFlags={featureFlags}
-                                    openAddPromptModal={openAddPromptModal}
-                                    openEditPromptModal={openEditPromptModal}
-                                    removeCustomItem={removeCustomItem}
-                                    toggleTool={togglePrompt}
-                                    toggleFavorite={toggleFavorite}
-                                    handleProfileChange={handleProfileChange}
-                                    saveProfile={saveProfile}
-                                    saving={saving}
-                                />
+                                (user.plan === 'pro' || user.plan === 'premium' || user.role === 'master_admin') ? (
+                                    <UserPrompts
+                                        profileData={profileData}
+                                        availableTools={availableTools}
+                                        availablePrompts={availablePrompts}
+                                        featureFlags={featureFlags}
+                                        openAddPromptModal={openAddPromptModal}
+                                        openEditPromptModal={openEditPromptModal}
+                                        removeCustomItem={removeCustomItem}
+                                        toggleTool={togglePrompt}
+                                        toggleFavorite={toggleFavorite}
+                                        handleProfileChange={handleProfileChange}
+                                        saveProfile={saveProfile}
+                                        saving={saving}
+                                    />
+                                ) : (
+                                    <UpgradeBanner title="Unlock Premium Prompts" />
+                                )
                             )}
 
                             {activeTab === 'account' && (
@@ -782,22 +820,27 @@ const Dashboard = () => {
                                 />
                             )}
 
+
                             {activeTab === 'updates' && featureFlags.userUpdatesEnabled && (
-                                <UpdatesTab
-                                    updates={updates}
-                                    addOrUpdateUpdate={(e) => {
-                                        e.preventDefault();
-                                        addOrUpdateUpdate(API_URL, editingUpdate, updateForm, setUpdates, setMessage, setEditingUpdate, setUpdateForm, setSaving);
-                                    }}
-                                    deleteUpdate={(id) => deleteUpdate(API_URL, id, setUpdates, setMessage)}
-                                    startEditUpdate={(update) => startEditUpdate(update, setEditingUpdate, setUpdateForm)}
-                                    cancelEditUpdate={() => cancelEditUpdate(setEditingUpdate, setUpdateForm)}
-                                    editingUpdate={editingUpdate}
-                                    updateForm={updateForm}
-                                    setUpdateForm={setUpdateForm}
-                                    saving={saving}
-                                    API_URL={API_URL}
-                                />
+                                (user.plan === 'pro' || user.plan === 'premium' || user.role === 'master_admin') ? (
+                                    <UpdatesTab
+                                        updates={updates}
+                                        addOrUpdateUpdate={(e) => {
+                                            e.preventDefault();
+                                            addOrUpdateUpdate(API_URL, editingUpdate, updateForm, setUpdates, setMessage, setEditingUpdate, setUpdateForm, setSaving);
+                                        }}
+                                        deleteUpdate={(id) => deleteUpdate(API_URL, id, setUpdates, setMessage)}
+                                        startEditUpdate={(update) => startEditUpdate(update, setEditingUpdate, setUpdateForm)}
+                                        cancelEditUpdate={() => cancelEditUpdate(setEditingUpdate, setUpdateForm)}
+                                        editingUpdate={editingUpdate}
+                                        updateForm={updateForm}
+                                        setUpdateForm={setUpdateForm}
+                                        saving={saving}
+                                        API_URL={API_URL}
+                                    />
+                                ) : (
+                                    <UpgradeBanner title="Manage Updates" />
+                                )
                             )}
 
                             {activeTab === 'customize' && <ProfileCustomizer />}

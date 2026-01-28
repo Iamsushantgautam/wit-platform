@@ -174,7 +174,7 @@ const Profile = ({ usernameOverride }) => {
                 )}
 
                 {/* TOOLS TAB */}
-                {activeTab === 'tools' && featureFlags.userToolsEnabled && (
+                {activeTab === 'tools' && featureFlags.userToolsEnabled && profile?.user?.plan !== 'free' && (
                     <div className="profile-courses">
                         <h2 className="profile-section-title" style={{ paddingLeft: '4px' }}>My Tools</h2>
                         <ProfileTools profile={profile} />
@@ -182,7 +182,7 @@ const Profile = ({ usernameOverride }) => {
                 )}
 
                 {/* PROMPTS TAB */}
-                {activeTab === 'prompts' && featureFlags.userPromptsEnabled && (
+                {activeTab === 'prompts' && featureFlags.userPromptsEnabled && profile?.user?.plan !== 'free' && (
                     <div className="profile-courses">
                         <h2 className="profile-section-title" style={{ paddingLeft: '4px' }}>Favorite Prompts</h2>
                         <ProfilePrompts profile={profile} featureFlags={featureFlags} />
@@ -190,7 +190,7 @@ const Profile = ({ usernameOverride }) => {
                 )}
 
                 {/* OFFERS TAB */}
-                {activeTab === 'offers' && featureFlags.userOffersEnabled && (
+                {activeTab === 'offers' && featureFlags.userOffersEnabled && profile?.user?.plan !== 'free' && (
                     <div className="profile-courses">
                         <ProfileOffers profile={profile} />
                     </div>
@@ -247,7 +247,7 @@ const Profile = ({ usernameOverride }) => {
                 )}
 
                 {/* UPDATES TAB */}
-                {activeTab === 'updates' && featureFlags.userUpdatesEnabled && (
+                {activeTab === 'updates' && featureFlags.userUpdatesEnabled && profile?.user?.plan !== 'free' && (
                     <div className="profile-updates">
                         <h2 className="profile-section-title">Recent Updates</h2>
                         <ProfileUpdates updates={updates} formatDate={formatDate} />

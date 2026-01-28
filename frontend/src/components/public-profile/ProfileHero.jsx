@@ -56,8 +56,8 @@ const ProfileHero = ({ profile, username, featureFlags, branding }) => {
 
     return (
         <div className="profile-hero-card">
-            {/* Logo - Controlled by Admin 'userPublicBranding' flag */}
-            {(featureFlags?.userPublicBranding !== false) && (
+            {/* Logo - Controlled by Admin 'userPublicBranding' flag and User Plan (Hidden for Pro/Premium) */}
+            {(featureFlags?.userPublicBranding !== false) && (!profile?.user?.plan || profile?.user?.plan === 'free') && (
                 <div className="profile-hero-card__logo-wrapper">
                     <img
                         src={logoSrc}
@@ -73,9 +73,13 @@ const ProfileHero = ({ profile, username, featureFlags, branding }) => {
                     alt={profile.name}
                     className="profile-hero-card__avatar"
                 />
-                {/* <div className="profile-hero-card__badge">
-                    ai (add the blue trick icon)
-                </div> */}
+                {(profile?.user?.plan === 'pro' || profile?.user?.plan === 'premium') && (
+                    <div className="profile-hero-card__badge" title="Verified Creator">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="#3b82f6">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
+                    </div>
+                )}
             </div >
             <h1 className="profile-hero-card__name">{profile.name || username}</h1>
             <p className="profile-hero-card_bio profile-hero-card_username">

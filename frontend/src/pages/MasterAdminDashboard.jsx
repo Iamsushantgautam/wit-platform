@@ -2,7 +2,7 @@ import { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
-import { Users, Layout, Image, Plus, Search, Filter, Trash2, Edit2, CheckCircle, XCircle, MoreVertical, LogOut, Settings, Gift, ChevronDown, Zap, Activity, Box, Briefcase, Calendar, Camera, Clock, Code, Cpu, Database, File, Globe, Heart, Home, Layers, Link as LinkIcon, Lock, Mail, Map, MessageCircle, Music, PenTool, Shield, Smartphone, Star, Sun, Table, Terminal, Wrench as ToolIcon, Truck, Video, Wifi } from 'lucide-react';
+import { Users, Layout, Image, Plus, Search, Filter, Trash2, Edit2, CheckCircle, XCircle, MoreVertical, LogOut, Settings, Gift, ChevronDown, Zap, Activity, Box, Briefcase, Calendar, Camera, Clock, Code, Cpu, Database, File, Globe, Heart, Home, Layers, Link as LinkIcon, Lock, Mail, Map, MessageCircle, Music, PenTool, Shield, Smartphone, Star, Sun, Table, Terminal, Wrench as ToolIcon, Truck, Video, Wifi, History, ArrowLeft } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import '../styles/Admin.css';
 
@@ -13,6 +13,7 @@ const ICON_LIST = [
     'Star', 'Sun', 'Table', 'Terminal', 'Truck', 'User', 'Video', 'Wifi'
 ];
 import AdminPanel from '../components/user/AdminPanel';
+import AdminCoupons from '../components/admin/AdminCoupons';
 import ToolCard from '../components/blocks/ToolCard';
 import PromptCard from '../components/blocks/PromptCard';
 
@@ -40,6 +41,7 @@ const MasterAdminDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [stats, setStats] = useState({ totalUsers: 0, totalTools: 0, totalPrompts: 0 });
     const [showIconSelector, setShowIconSelector] = useState(false);
+    const [selectedUserForTransactions, setSelectedUserForTransactions] = useState(null);
 
     // Form State
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -236,6 +238,17 @@ const MasterAdminDashboard = () => {
         }
     };
 
+    const handleUpdatePlan = async (id, newPlan) => {
+        try {
+            const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+            await axios.put(`${API_URL}/user-manage/${id}/plan`, { plan: newPlan }, config);
+            setUsers(users.map(u => u._id === id ? { ...u, plan: newPlan } : u));
+        } catch (error) {
+            console.error("Error updating plan", error);
+            alert("Failed to update user plan");
+        }
+    };
+
     const openForm = (type = 'tool', item = null) => {
         if (item) {
             setEditingItem(item);
@@ -327,6 +340,158 @@ const MasterAdminDashboard = () => {
         </div>
     );
 
+    const TransactionsTab = ({ userId = null }) => {
+        const [transactions, setTransactions] = useState([]);
+        const [loading, setLoading] = useState(true);
+
+        const fetchTransactions = async () => {
+            setLoading(true);
+            try {
+                const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+                const url = userId
+                    ? `${API_URL}/transactions/admin/user/${userId}`
+                    : `${API_URL}/transactions/admin`;
+                const res = await axios.get(url, config);
+                setTransactions(res.data);
+            } catch (error) {
+                console.error("Error loading transactions", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        useEffect(() => {
+            fetchTransactions();
+        }, [userId]);
+
+        const handleDeleteTransaction = async (id, hasCoins) => {
+            const revert = hasCoins ? window.confirm("Do you want to REVERT the coins as well? (Minus from user balance)") : false;
+            if (!window.confirm("Are you sure you want to DELETE this transaction?")) return;
+
+            try {
+                const config = { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } };
+                await axios.delete(`${API_URL}/transactions/admin/${id}?revert=${revert}`, config);
+                fetchTransactions();
+            } catch (error) {
+                alert(error.response?.data?.message || "Error deleting transaction");
+            }
+        };
+
+        const filteredTransactions = transactions.filter(t =>
+            (t.user?.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (t.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (t.type || '').toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        return (
+            <div className="space-y-6 animate-fade-up">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        {userId && (
+                            <button
+                                onClick={() => setSelectedUserForTransactions(null)}
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500"
+                                title="Back to all users"
+                            >
+                                <ArrowLeft size={20} />
+                            </button>
+                        )}
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                            {userId ? `Transactions: ${transactions[0]?.user?.username || 'User'}` : 'Global Transaction History'}
+                        </h2>
+                    </div>
+                    <div className="search-wrapper-premium">
+                        <Search className="search-icon-premium" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search trans..."
+                            className="search-input-premium"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="admin-table-container">
+                    <div className="overflow-x-auto">
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    {!userId && <th>User</th>}
+                                    <th>Transaction Details</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th className="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loading ? (
+                                    <tr><td colSpan={userId ? "5" : "6"} className="text-center py-10 text-slate-500">Loading...</td></tr>
+                                ) : filteredTransactions.length === 0 ? (
+                                    <tr><td colSpan={userId ? "5" : "6"} className="text-center py-10 text-slate-500">No transactions found</td></tr>
+                                ) : filteredTransactions.map(t => (
+                                    <tr key={t._id}>
+                                        {!userId && (
+                                            <td>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center font-bold text-[10px] text-blue-600 border border-blue-100 dark:border-blue-800">
+                                                        {(t.user?.username || '?').substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <span className="font-bold text-xs text-slate-900 dark:text-white">{t.user?.username || 'Deleted User'}</span>
+                                                </div>
+                                            </td>
+                                        )}
+                                        <td>
+                                            <p className="font-bold text-sm text-slate-900 dark:text-white leading-tight">{t.description}</p>
+                                            <div className="flex gap-2 mt-1">
+                                                {t.orderId && <span className="text-[9px] font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded text-slate-500">ID: {t.orderId}</span>}
+                                                {t.couponUsed && <span className="text-[9px] text-green-500 font-bold bg-green-50 dark:bg-green-900/20 px-1 py-0.5 rounded">Coupon: {t.couponUsed.code}</span>}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className="text-[10px] uppercase font-black text-slate-400 tracking-tighter">{t.type.replace('_', ' ')}</span>
+                                        </td>
+                                        <td>
+                                            <div className="flex flex-col">
+                                                <span className="font-black text-slate-900 dark:text-white">Rs.{t.amount.toFixed(2)}</span>
+                                                {t.coins !== 0 && (
+                                                    <span className={`text-[10px] font-bold ${t.coins > 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                                                        {t.coins > 0 ? '+' : ''}{t.coins} Coins
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="text-[10px] text-slate-500 font-medium">
+                                                <p className="dark:text-slate-400">{new Date(t.createdAt).toLocaleDateString()}</p>
+                                                <p className="opacity-60">{new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className={`badge-pill ${t.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700'}`}>
+                                                {t.status}
+                                            </span>
+                                        </td>
+                                        <td className="text-right">
+                                            <button
+                                                onClick={() => handleDeleteTransaction(t._id, t.coins !== 0)}
+                                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const UsersTab = () => {
         const filteredUsers = users.filter(u =>
             u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -356,6 +521,7 @@ const MasterAdminDashboard = () => {
                                 <tr>
                                     <th>User</th>
                                     <th>Role</th>
+                                    <th>Plan</th>
                                     <th>Status</th>
                                     <th className="text-right">Actions</th>
                                 </tr>
@@ -380,16 +546,40 @@ const MasterAdminDashboard = () => {
                                             </span>
                                         </td>
                                         <td>
+                                            {u.role === 'master_admin' ? (
+                                                <span className="text-xs font-bold text-purple-500">Unlimited</span>
+                                            ) : (
+                                                <select
+                                                    value={u.plan || 'free'}
+                                                    onChange={(e) => handleUpdatePlan(u._id, e.target.value)}
+                                                    className="bg-slate-100 dark:bg-slate-700 border-none rounded-lg px-2 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                                                >
+                                                    <option value="free">Free</option>
+                                                    <option value="pro">Pro</option>
+                                                    <option value="premium">Premium</option>
+                                                </select>
+                                            )}
+                                        </td>
+                                        <td>
                                             <span className={`badge ${u.isBlocked ? 'blocked' : 'active'}`}>
                                                 {u.isBlocked ? 'Blocked' : 'Active'}
                                             </span>
                                         </td>
                                         <td className="text-right">
-                                            {u.role !== 'master_admin' && (
-                                                <button onClick={() => toggleBlockUser(u._id)} className={`p-2 rounded-xl transition-all ${u.isBlocked ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-red-600 bg-red-50 hover:bg-red-100'}`} title={u.isBlocked ? "Unblock" : "Block"}>
-                                                    {u.isBlocked ? <CheckCircle size={18} /> : <XCircle size={18} />}
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => setSelectedUserForTransactions(u._id)}
+                                                    className="p-2 rounded-xl text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all"
+                                                    title="View Transactions"
+                                                >
+                                                    <History size={18} />
                                                 </button>
-                                            )}
+                                                {u.role !== 'master_admin' && (
+                                                    <button onClick={() => toggleBlockUser(u._id)} className={`p-2 rounded-xl transition-all ${u.isBlocked ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-red-600 bg-red-50 hover:bg-red-100'}`} title={u.isBlocked ? "Unblock" : "Block"}>
+                                                        {u.isBlocked ? <CheckCircle size={18} /> : <XCircle size={18} />}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -547,10 +737,12 @@ const MasterAdminDashboard = () => {
 
                     <nav className="flex-1 space-y-1">
                         <SidebarItem id="overview" label="Overview" icon={Layout} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
-                        <SidebarItem id="users" label="User Management" icon={Users} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
+                        <SidebarItem id="users" label="User Management" icon={Users} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); setSelectedUserForTransactions(null); }} />
+                        <SidebarItem id="transactions" label="Transactions" icon={History} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                         <SidebarItem id="tools" label="AI Tools" icon={Filter} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                         <SidebarItem id="prompts" label="Prompt Library" icon={Image} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                         <SidebarItem id="offers" label="Manage Offers" icon={Gift} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
+                        <SidebarItem id="coupons" label="Manage Coupons" icon={Icons.Tag} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                         <SidebarItem id="settings" label="Feature Controls" icon={Settings} activeTab={activeTab} setActiveTab={(id) => { setActiveTab(id); setIsSidebarOpen(false); }} />
                     </nav>
 
@@ -565,10 +757,12 @@ const MasterAdminDashboard = () => {
                 {/* Main Content */}
                 <main className="min-w-0">
                     {activeTab === 'overview' && <OverviewTab />}
-                    {activeTab === 'users' && <UsersTab />}
+                    {activeTab === 'users' && (selectedUserForTransactions ? <TransactionsTab userId={selectedUserForTransactions} /> : <UsersTab />)}
+                    {activeTab === 'transactions' && <TransactionsTab />}
                     {activeTab === 'tools' && <ItemsTab type="tool" />}
                     {activeTab === 'prompts' && <ItemsTab type="prompt" />}
                     {activeTab === 'offers' && <OffersTab />}
+                    {activeTab === 'coupons' && <AdminCoupons />}
                     {activeTab === 'settings' && <AdminPanel />}
                 </main>
             </div>

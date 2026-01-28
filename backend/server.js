@@ -48,6 +48,8 @@ app.use('/api/prompts', require('./routes/promptRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/offers', require('./routes/offerRoutes'));
+app.use('/api/coupons', require('./routes/couponRoutes'));
+app.use('/api/transactions', require('./routes/transactionRoutes'));
 
 app.get('/', (req, res) => {
     res.send('API is running...');

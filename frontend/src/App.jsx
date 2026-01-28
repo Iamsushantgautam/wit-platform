@@ -15,6 +15,9 @@ import Profiles from './pages/Profiles';
 import Offers from './pages/Offers';
 import { ThemeProvider } from './context/ThemeContext';
 import Roadmap from './pages/Roadmap';
+import Membership from './pages/Membership';
+import Checkout from './pages/Checkout';
+import Wallet from './pages/Wallet';
 
 function App() {
   // Subdomain Routing Logic
@@ -69,6 +72,8 @@ function App() {
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/wallet" element={<Wallet />} />
               </Route>
 
               <Route element={<ProtectedRoute adminOnly={true} />}>
@@ -82,6 +87,7 @@ function App() {
               <Route path="/community" element={<Profiles />} />
               <Route path="/roadmap" element={<Roadmap />} />
               <Route path="/offers" element={<Offers />} />
+              <Route path="/membership" element={<Membership />} />
             </Route>
 
             {/* Profile Route - No Header/Layout */}

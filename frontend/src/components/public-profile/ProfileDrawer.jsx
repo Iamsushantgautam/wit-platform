@@ -114,8 +114,22 @@ const ProfileDrawer = ({ isOpen, onClose, activeTab, setActiveTab, profile, upda
             .sort((a, b) => (a.order || 0) - (b.order || 0))
         : getDefaultMenuItems();
 
-    // Apply feature flag filtering
-    menuItems = filterByFeatureFlags(menuItems);
+    // Combine feature flag and plan filtering
+    const proTabs = ['tools', 'prompts', 'offers', 'updates'];
+    const userPlan = profile?.user?.plan || 'free';
+
+    menuItems = menuItems.filter(item => {
+        // 1. Feature Flag filtering
+        const featureKey = tabFeatureMap[item.tab];
+        if (featureKey && featureFlags[featureKey] === false) return false;
+
+        // 2. Plan-based filtering (Hide locked features for free users)
+        if (proTabs.includes(item.tab) && userPlan === 'free') {
+            return false;
+        }
+
+        return true;
+    });
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -135,7 +149,7 @@ const ProfileDrawer = ({ isOpen, onClose, activeTab, setActiveTab, profile, upda
                 <div className="profile-drawer__header">
                     <div className="flex items-center">
                         <h2 className="profile-drawer__title">Menu</h2>
-                        {logoSrc && featureFlags?.userPublicBranding !== false && (
+                        {logoSrc && featureFlags?.userPublicBranding !== false && (!profile?.user?.plan || profile?.user?.plan === 'free') && (
                             <div className="profile-drawer__logo-wrapper">
                                 <img
                                     src={logoSrc}
