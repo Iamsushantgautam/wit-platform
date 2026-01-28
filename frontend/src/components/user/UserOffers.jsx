@@ -42,7 +42,16 @@ const UserOffers = ({
                 const token = localStorage.getItem('token');
                 const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
                 const res = await axios.get(`${API_URL}/offers`, config);
-                setGlobalOffers(res.data);
+
+                // Identify unlocked status correctly
+                const allOffers = res.data.map(offer => {
+                    const isUnlocked = user?.unlockedOffers?.some(u =>
+                        (typeof u === 'string' ? u === offer._id : u._id === offer._id)
+                    );
+                    return { ...offer, isLocked: !offer.isPaid ? false : !isUnlocked };
+                });
+
+                setGlobalOffers(allOffers);
             } catch (error) {
                 console.error("Failed to fetch global offers", error);
             } finally {
@@ -50,7 +59,7 @@ const UserOffers = ({
             }
         };
         fetchGlobalOffers();
-    }, [API_URL, user]); // Added user to dependency to re-fetch on login
+    }, [API_URL, user]); // Added user to dependency
 
     // Categorize User Banners
     const promoBanners = (profileData.banners || []).filter(b => b.promoCode && b.promoCode.trim() !== '');
@@ -208,14 +217,16 @@ const UserOffers = ({
             }, config);
 
             // Update global offers state
-            setGlobalOffers(prev => prev.map(o => o._id === offer._id ? res.data.item : o));
+            setGlobalOffers(prev => prev.map(o => o._id === offer._id ? { ...o, isLocked: false, ...res.data.item } : o));
 
             // Update user balance in UI
             if (res.data.remainingCoins !== undefined && setUser) {
-                const updatedUser = { ...user, coins: res.data.remainingCoins };
-                setUser(updatedUser);
-                // Also update local storage if necessary, though AuthContext usually handles it or hydrates from it. 
-                // We'll assume setUser updates the context state which drives the UI.
+                setUser(prev => ({
+                    ...prev,
+                    coins: res.data.remainingCoins,
+                    // Add the new unlocked item object to the list so checking logic works
+                    unlockedOffers: [...(prev.unlockedOffers || []), res.data.item]
+                }));
             }
             alert('Offer unlocked successfully!');
         } catch (error) {
@@ -461,14 +472,14 @@ const UserOffers = ({
                 ) : (
                     <div className="space-y-12">
                         {/* Global Promos Carousel */}
-                        {globalOffers.filter(o => o.code).length > 0 && (
+                        {globalOffers.filter(o => o.code && !o.isLocked).length > 0 && (
                             <section className="space-y-4">
                                 <h3 className="text-xl font-bold text-white px-1">
                                     Trending Promo Codes
                                 </h3>
                                 <div className="carousel-mask">
                                     <div className="carousel-track">
-                                        {globalOffers.filter(o => o.code).map((offer, idx) => (
+                                        {globalOffers.filter(o => o.code && !o.isLocked).map((offer, idx) => (
                                             <div key={`global-promo-${offer._id || idx}`} className="carousel-card-wrapper">
                                                 <OfferCard
                                                     offer={offer}
@@ -486,14 +497,14 @@ const UserOffers = ({
                         )}
 
                         {/* Global Deals Carousel */}
-                        {globalOffers.filter(o => !o.code).length > 0 && (
+                        {globalOffers.filter(o => !o.code && !o.isLocked).length > 0 && (
                             <section className="space-y-4">
                                 <h3 className="text-xl font-bold text-white px-1">
                                     Trending Deals
                                 </h3>
                                 <div className="carousel-mask">
                                     <div className="carousel-track">
-                                        {globalOffers.filter(o => !o.code).map((offer, idx) => (
+                                        {globalOffers.filter(o => !o.code && !o.isLocked).map((offer, idx) => (
                                             <div key={`global-deal-${offer._id || idx}`} className="carousel-card-wrapper">
                                                 <OfferCard
                                                     offer={offer}

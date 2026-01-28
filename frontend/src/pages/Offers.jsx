@@ -20,7 +20,21 @@ const Offers = () => {
                 const token = localStorage.getItem('token');
                 const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
                 const res = await axios.get(`${API_URL}/offers`, config);
-                setOffers(res.data);
+
+                // Identify locked status based on user purchases
+                const allOffers = res.data.map(offer => {
+                    if (!offer.isPaid) return { ...offer, isLocked: false };
+
+                    // Check if user has unlocked this
+                    // unlockedOffers is now an array of Objects, so we compare _id
+                    const isUnlocked = user?.unlockedOffers?.some(u =>
+                        (typeof u === 'string' ? u === offer._id : u._id === offer._id)
+                    );
+
+                    return { ...offer, isLocked: !isUnlocked };
+                });
+
+                setOffers(allOffers);
             } catch (error) {
                 console.error("Failed to fetch offers", error);
             } finally {
@@ -28,7 +42,7 @@ const Offers = () => {
             }
         };
         fetchOffers();
-    }, [API_URL, user]); // Refetch on user change (login/logout)
+    }, [API_URL, user]); // Refetch on user change (which updates unlockedOffers)
 
     const handleUnlock = async (offer) => {
         if (!user) {
@@ -46,13 +60,17 @@ const Offers = () => {
                 itemType: 'offer'
             }, config);
 
-            // Update local state
-            setOffers(prev => prev.map(o => o._id === offer._id ? res.data.item : o));
+            // Update local state - mark as unlocked immediately
+            setOffers(prev => prev.map(o => o._id === offer._id ? { ...o, isLocked: false, ...res.data.item } : o));
 
-            // Update user balance in context
-            if (res.data.remainingCoins !== undefined && setUser) {
-                // We need to keep other user properties, so spread user
-                setUser(prev => ({ ...prev, coins: res.data.remainingCoins }));
+            // Update user balance AND unlocked items in context
+            if (setUser && res.data.remainingCoins !== undefined) {
+                setUser(prev => ({
+                    ...prev,
+                    coins: res.data.remainingCoins,
+                    // Add the new unlocked item object to the list so checking logic works
+                    unlockedOffers: [...(prev.unlockedOffers || []), res.data.item]
+                }));
             }
 
             alert('Offer unlocked successfully!');

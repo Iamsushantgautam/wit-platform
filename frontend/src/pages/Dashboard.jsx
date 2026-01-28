@@ -25,6 +25,7 @@ import UserLinks from '../components/user/UserLinks';
 import UserOffers from '../components/user/UserOffers';
 import UserTools from '../components/user/UserTools';
 import UserPrompts from '../components/user/UserPrompts';
+import UserPurchases from '../components/user/UserPurchases';
 import UserAccount from '../components/user/UserAccount';
 import UserShare from '../components/user/UserShare';
 import BannerModal from '../components/user/BannerModal';
@@ -472,7 +473,18 @@ const Dashboard = () => {
                 ]);
                 setProfileData(profileRes.data);
                 setAvailableTools(toolsRes.data);
-                setAvailablePrompts(promptsRes.data);
+
+                // Process prompts with lock status
+                const promptsWithLockStatus = promptsRes.data.map(p => {
+                    if (!p.isPaid) return { ...p, isLocked: false };
+                    // user.unlockedPrompts is array of objects from AuthContext
+                    const isUnlocked = user?.unlockedPrompts?.some(u =>
+                        (typeof u === 'string' ? u === p._id : u._id === p._id)
+                    );
+                    return { ...p, isLocked: !isUnlocked };
+                });
+                setAvailablePrompts(promptsWithLockStatus);
+
                 setUpdates(updatesRes.data);
 
                 // Fix: Handle the new API response structure where features are nested
@@ -713,6 +725,10 @@ const Dashboard = () => {
                                     saveProfile={saveProfile}
                                     saving={saving}
                                 />
+                            )}
+
+                            {activeTab === 'purchases' && (
+                                <UserPurchases />
                             )}
 
 

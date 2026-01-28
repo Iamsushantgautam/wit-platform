@@ -5,10 +5,12 @@ const {
     getUsers,
     blockUser,
     deleteUser,
-    updateUserPlan
+    updateUserPlan,
+    getPurchases
 } = require('../controllers/userController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
+router.get('/purchases', protect, getPurchases);
 router.put('/profile', protect, updateUser);
 router.delete('/profile', protect, deleteUser);
 router.get('/', protect, admin, getUsers);

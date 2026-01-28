@@ -28,7 +28,19 @@ const PromptsLibrary = () => {
                 const token = localStorage.getItem('token');
                 const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
                 const res = await axios.get(`${API_URL}/prompts`, config);
-                setPrompts(res.data);
+
+                // Identify locked status based on user purchases
+                const allPrompts = res.data.map(prompt => {
+                    if (!prompt.isPaid) return { ...prompt, isLocked: false };
+
+                    const isUnlocked = user?.unlockedPrompts?.some(u =>
+                        (typeof u === 'string' ? u === prompt._id : u._id === prompt._id)
+                    );
+
+                    return { ...prompt, isLocked: !isUnlocked };
+                });
+
+                setPrompts(allPrompts);
             } catch (error) {
                 console.error("Error fetching prompts", error);
             } finally {
@@ -113,12 +125,33 @@ const PromptsLibrary = () => {
             }, config);
 
             // Update local state with unlocked prompt
-            setPrompts(prev => prev.map(p => p._id === prompt._id ? res.data.item : p));
+            setPrompts(prev => prev.map(p => p._id === prompt._id ? { ...p, isLocked: false, ...res.data.item } : p));
 
-            if (res.data.remainingCoins !== undefined) {
-                window.location.reload();
-            } else {
-                alert('Prompt unlocked successfully!');
+            // Update user balance AND unlocked items in context
+            if (res.data.remainingCoins !== undefined && (typeof user !== 'undefined')) {
+                // Note: PromptsLibrary has { user } from context, but we need setUser!
+                // Wait, we didn't destructure setUser in this component.
+                // We need to add setUser to destructuring first.
+                // But for now, we'll reload if setUser is not available, or attempt to use it if I add it.
+                // Actually, let's just reload as it's safer if I can't easily add setUser right now without changing the top of the file.
+                // Wait, I can change the top of the file in a separate edit or just assume I will do it.
+                // The instruction says "Update handleUnlock". I should probably do the reload fallback properly or use setUser if I add it.
+
+                // Let's stick to the previous reload logic for now BUT check if remainingCoins is present.
+                // Actually, user requested "onced unlock then permanently unlock it".
+                // Reloading fixes the state because it re-fetches from backend.
+                // The issue "after refreshing... lock again" was because fetch didn't map correctly.
+                // I fixed the fetch mapping above.
+                // So reloading here is actually FINE and ensures sync.
+                // But to be "smooth" typically we update state.
+                // Let's just keep the reload for now as it guarantees we get the fresh data from the server which we know is correct.
+                // Wait, I should probably try to avoid reload if possible.
+                // I'll stick to the reload line but ensure the previous lines are correct.
+                if (res.data.remainingCoins !== undefined) {
+                    window.location.reload();
+                } else {
+                    alert('Prompt unlocked successfully!');
+                }
             }
         } catch (error) {
             console.error('Unlock failed', error);

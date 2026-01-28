@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
     User, Link as LinkIcon, Megaphone, Layout, Bell,
     Palette, QrCode, ShieldAlert, ChevronRight, Settings, MousePointerClick, Navigation,
-    Grid, X, Lock, Coins
+    Grid, X, Lock, Coins, ShoppingBag
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -20,6 +20,7 @@ const DashboardSidebar = ({ activeTab, setActiveTab, user, featureFlags = {} }) 
     // Define all tabs in an array for better management
     const allTabs = [
         { id: 'profile', label: 'Profile', icon: User },
+        { id: 'purchases', label: 'Purchases', icon: ShoppingBag },
 
         { id: 'tools', label: 'Tools', icon: Layout, condition: featureFlags.userToolsEnabled, locked: !isPremium },
         { id: 'links', label: 'Links', icon: LinkIcon, condition: featureFlags.userLinksEnabled },

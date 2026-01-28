@@ -233,8 +233,8 @@ const unlockItem = asyncHandler(async (req, res) => {
             res.status(404);
             throw new Error('Offer not found');
         }
-        // Check if already unlocked
-        if (user.unlockedOffers.includes(itemId)) {
+        // Check if already unlocked (check by _id in the array of objects)
+        if (user.unlockedOffers.some(o => o._id.toString() === itemId)) {
             return res.status(200).json({ message: 'Offer already unlocked', item });
         }
         price = item.price;
@@ -247,7 +247,7 @@ const unlockItem = asyncHandler(async (req, res) => {
             throw new Error('Prompt not found');
         }
         // Check if already unlocked
-        if (user.unlockedPrompts.includes(itemId)) {
+        if (user.unlockedPrompts.some(p => p._id.toString() === itemId)) {
             return res.status(200).json({ message: 'Prompt already unlocked', item });
         }
         price = item.price;
@@ -271,12 +271,20 @@ const unlockItem = asyncHandler(async (req, res) => {
     // Deduct coins
     user.coins -= price;
 
-    // Add to unlocked list
+    // Add to unlocked list (Full Object + purchased flag)
+    const itemData = item.toObject();
+    itemData.purchased = true;
+    itemData.unlockedAt = new Date();
+
     if (itemType === 'offer') {
-        user.unlockedOffers.push(itemId);
+        user.unlockedOffers.push(itemData);
     } else {
-        user.unlockedPrompts.push(itemId);
+        user.unlockedPrompts.push(itemData);
     }
+
+    // specific hack: Mongoose might not detect changes in Mixed/Object arrays easily
+    user.markModified('unlockedOffers');
+    user.markModified('unlockedPrompts');
 
     await user.save();
 

@@ -8,7 +8,7 @@ import PromptCard from '../blocks/PromptCard';
 const PROMPTS_PER_PAGE = 9;
 
 const ProfilePrompts = ({ profile, featureFlags = {} }) => {
-    const { API_URL, user } = useContext(AuthContext);
+    const { API_URL, user, setUser } = useContext(AuthContext);
     const [copiedId, setCopiedId] = useState(null);
     const [globalPrompts, setGlobalPrompts] = useState([]);
     const [loadingGlobal, setLoadingGlobal] = useState(false);
@@ -22,14 +22,24 @@ const ProfilePrompts = ({ profile, featureFlags = {} }) => {
 
     // 2. Favorites
     const showGlobalPublic = featureFlags.globalLibraryPublicEnabled !== false;
+    // Filter favorites to exclude locked paid items (User Request)
     const favoritePrompts = showGlobalPublic
-        ? (profile?.favoritesPrompts || []).filter(p => p)
+        ? (profile?.favoritesPrompts || []).filter(p => {
+            if (!p) return false;
+            // Check locked
+            if (!p.isPaid) return true;
+            const isUnlocked = user?.unlockedPrompts?.some(u =>
+                (typeof u === 'string' ? u === p._id : u._id === p._id)
+            );
+            return isUnlocked;
+        })
         : [];
 
     // 3. Website Prompts (Global Library) - Replaces "Selected" prompts
     // Fetch if logic permits
     // Logic: If 'all' or 'custom_library' is selected AND global library is public enabled.
-    const showLibrary = showGlobalPublic && ['all', 'custom_library'].includes(mode);
+    // User Update: "in public profile ... remove the website prompt" -> Force Hide
+    const showLibrary = false;
 
     useEffect(() => {
         const fetchGlobalPrompts = async () => {
@@ -58,6 +68,14 @@ const ProfilePrompts = ({ profile, featureFlags = {} }) => {
     const showCustom = ['all', 'custom', 'custom_favorites', 'custom_library'].includes(mode) && customPrompts.length > 0;
 
     const filteredGlobalPrompts = globalPrompts.filter(gp => {
+        // Exclude locked items (User Request)
+        if (gp.isPaid) {
+            const isUnlocked = user?.unlockedPrompts?.some(u =>
+                (typeof u === 'string' ? u === gp._id : u._id === gp._id)
+            );
+            if (!isUnlocked) return false;
+        }
+
         // Search filter
         const lowerSearch = searchTerm.toLowerCase();
         const matchesSearch = (gp.name || gp.title || '').toLowerCase().includes(lowerSearch) ||
@@ -124,6 +142,15 @@ const ProfilePrompts = ({ profile, featureFlags = {} }) => {
 
             // Update local state
             setGlobalPrompts(prev => prev.map(p => p._id === prompt._id ? res.data.item : p));
+
+            // Update user balance AND unlocked items in context
+            if (setUser && res.data.remainingCoins !== undefined) {
+                setUser(prev => ({
+                    ...prev,
+                    coins: res.data.remainingCoins,
+                    unlockedPrompts: [...(prev.unlockedPrompts || []), res.data.item]
+                }));
+            }
             alert('Prompt unlocked successfully!');
         } catch (error) {
             console.error('Unlock failed', error);

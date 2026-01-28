@@ -44,12 +44,10 @@ const userSchema = mongoose.Schema({
         type: Date
     },
     unlockedOffers: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Offer'
+        type: Object
     }],
     unlockedPrompts: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Prompt'
+        type: Object
     }]
 }, {
     timestamps: true

@@ -50,6 +50,21 @@ const ProfileOffers = ({ profile }) => {
             items = (profile?.banners || []).filter(banner => banner.isVisible !== false);
         }
 
+        // Filter out locked items (User Request: "lock offers ... will not show")
+        // We need to check if it's paid and not unlocked by the *viewer* (user)
+        items = items.filter(offer => {
+            if (!offer.isGlobal) return true; // Custom banners are never locked
+
+            // Check if locked
+            if (!offer.isPaid) return true; // Free items are visible
+
+            const isUnlocked = user?.unlockedOffers?.some(u =>
+                (typeof u === 'string' ? u === offer._id : u._id === offer._id)
+            );
+
+            return isUnlocked; // Only show if unlocked
+        });
+
         return items.filter(banner => {
             // 2. Tag Filter
             if (selectedTag) {

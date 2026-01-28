@@ -1,6 +1,8 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/User');
 const UsernameHistory = require('../models/UsernameHistory');
+const Offer = require('../models/Offer');
+const Prompt = require('../models/Prompt');
 
 // @desc    Update user (Username change)
 // @route   PUT /api/users/profile
@@ -112,10 +114,40 @@ const deleteUser = asyncHandler(async (req, res) => {
 });
 
 
+// @desc    Get user purchased/unlocked items
+// @route   GET /api/users/purchases
+// @access  Private
+const getPurchases = asyncHandler(async (req, res) => {
+    // console.log(`Fetching purchases for user: ${req.user._id}`);
+    const user = await User.findById(req.user._id); // No populate needed
+
+    if (user) {
+        // Filter only those with purchased: true, though logically all in this list should be.
+        // But user asked to "show ... which purchases field it true"
+
+        // Since we pushed objects, they might be Mongoose Subdocuments or plain objects depending on schema.
+        // We defined them as Object type, so likely plain objects.
+
+        const offers = (user.unlockedOffers || []).filter(o => o.purchased === true);
+        const prompts = (user.unlockedPrompts || []).filter(p => p.purchased === true);
+
+        // console.log(`Found purchases - Offers: ${offers.length}, Prompts: ${prompts.length}`);
+
+        res.json({
+            offers,
+            prompts
+        });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+});
+
 module.exports = {
     updateUser,
     getUsers,
     blockUser,
     deleteUser,
-    updateUserPlan
+    updateUserPlan,
+    getPurchases
 };

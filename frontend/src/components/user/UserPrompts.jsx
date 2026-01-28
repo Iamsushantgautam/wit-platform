@@ -19,7 +19,7 @@ const UserPrompts = ({
     saveProfile,
     saving
 }) => {
-    const { user, API_URL } = useContext(AuthContext);
+    const { user, setUser, API_URL } = useContext(AuthContext); // Added setUser
     const [toolSearch, setToolSearch] = useState('');
     const [copiedId, setCopiedId] = useState(null);
     const [activeSection, setActiveSection] = useState('collection'); // collection, library, settings
@@ -30,9 +30,17 @@ const UserPrompts = ({
     if (currentSection !== activeSection) setActiveSection(currentSection);
 
     const filteredAvailablePrompts = isLibraryEnabled
-        ? availablePrompts.filter(t =>
-            (t.title || t.name || '').toLowerCase().includes(toolSearch.toLowerCase()) ||
-            (t.category || '').toLowerCase().includes(toolSearch.toLowerCase()))
+        ? availablePrompts.filter(t => {
+            // Filter out locked items
+            if (t.isPaid) {
+                const isUnlocked = user?.unlockedPrompts?.some(u =>
+                    (typeof u === 'string' ? u === t._id : u._id === t._id)
+                );
+                if (!isUnlocked) return false;
+            }
+            return (t.title || t.name || '').toLowerCase().includes(toolSearch.toLowerCase()) ||
+                (t.category || '').toLowerCase().includes(toolSearch.toLowerCase());
+        })
         : [];
 
     const handleCopyPrompt = (text, id) => {
@@ -41,10 +49,10 @@ const UserPrompts = ({
         setTimeout(() => setCopiedId(null), 2000);
     };
 
-    // Favorites logic
-    const favoritePrompts = isLibraryEnabled
-        ? availablePrompts.filter(t => profileData.favoritesPrompts?.some(f => (f._id || f) === t._id))
-        : [];
+    // Favorites logic - Show ALL favorites (locked or unlocked)
+    const favoritePrompts = availablePrompts.filter(t =>
+        profileData.favoritesPrompts?.some(f => (f._id || f) === t._id)
+    );
 
     const customPrompts = profileData.customItems?.filter(i => i.type === 'prompt') || [];
 
@@ -64,8 +72,21 @@ const UserPrompts = ({
 
             // Update available prompts state
             if (setAvailablePrompts) {
+                // Ensure the item object has isLocked: false explicitly if needed, but the object from DB usually doesn't have isLocked property. 
+                // However, we just need it to match the ID in user.unlockedPrompts.
                 setAvailablePrompts(prev => prev.map(p => p._id === prompt._id ? res.data.item : p));
             }
+
+            // Update user balance AND unlocked items in context
+            if (setUser && res.data.remainingCoins !== undefined) {
+                setUser(prev => ({
+                    ...prev,
+                    coins: res.data.remainingCoins,
+                    // Add the new unlocked item object to the list so checking logic works
+                    unlockedPrompts: [...(prev.unlockedPrompts || []), res.data.item]
+                }));
+            }
+
             alert('Prompt unlocked successfully!');
         } catch (error) {
             console.error('Unlock failed', error);
@@ -139,6 +160,8 @@ const UserPrompts = ({
                         </span>
                     </button>
 
+                    {/* Admin Store Tab Removed per User Request */}
+                    {/* 
                     {isLibraryEnabled && (
                         <button
                             onClick={() => setActiveSection("library")}
@@ -150,7 +173,8 @@ const UserPrompts = ({
                                 <span className="tab-count">({filteredAvailablePrompts.length})</span>
                             </span>
                         </button>
-                    )}
+                    )} 
+                    */}
 
                     <button
                         onClick={() => setActiveSection("settings")}
