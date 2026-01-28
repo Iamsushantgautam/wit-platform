@@ -134,8 +134,8 @@ footer,
 .layout-content {
     margin-left: var(--sidebar-width);
     margin-top: 0;
-    margin-right: 400px;
-    /* Space for Preview */
+    margin-right: 0;
+    /* Space for Preview removed */
     flex-grow: 1;
     height: calc(100vh - var(--header-height));
     overflow-y: auto;
@@ -146,7 +146,8 @@ footer,
 }
 
 .content-card {
-    max-width: 900px;
+    max-width: 1200px;
+    /* Increased max-width since we have more space */
     margin: 0 auto;
     background: white !important;
     border-radius: 1rem !important;
@@ -156,21 +157,9 @@ footer,
     min-height: min-content;
 }
 
-/* 4. Live Preview Column (Desktop) */
+/* 4. Live Preview Column (Desktop) - REMOVED */
 .layout-preview {
-    width: 400px;
-    height: calc(100vh - var(--header-height));
-    position: fixed;
-    top: var(--header-height);
-    right: 0;
-    background: #f9fafb;
-    border-left: 1px solid #e5e7eb;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 30;
-    padding: 2rem 0;
+    display: none !important;
 }
 
 .layout-preview .phone-mockup {

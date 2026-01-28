@@ -31,7 +31,6 @@ import UserShare from '../components/user/UserShare';
 import BannerModal from '../components/user/BannerModal';
 import CustomToolModal from '../components/user/CustomToolModal';
 import CustomPromptModal from '../components/user/CustomPromptModal';
-import DashboardProfilePreview from '../components/user/DashboardProfilePreview'; // Import Preview
 import '../styles/DashboardLayout.css'; // Import Helper CSS
 
 const UpgradeBanner = ({ title }) => (
@@ -55,8 +54,6 @@ const UpgradeBanner = ({ title }) => (
 const Dashboard = () => {
     const { user, logout, API_URL } = useContext(AuthContext);
     const [activeTab, setActiveTab] = useState('profile');
-    const [isPreviewOpen, setIsPreviewOpen] = useState(false); // Tablet Preview Toggle
-    const [previewMode, setPreviewMode] = useState('mobile'); // mobile, tablet, desktop
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState(null);
@@ -665,13 +662,14 @@ const Dashboard = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setIsPreviewOpen(true)}
-                        className="tablet-preview-btn"
+                    <a
+                        href={publicProfileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm font-semibold transition-colors"
                     >
-                        <Eye size={18} />
-                        <span>Preview</span>
-                    </button>
+                        <ExternalLink size={16} /> Live Site
+                    </a>
 
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full border border-blue-100 dark:border-blue-900/30">
@@ -703,7 +701,7 @@ const Dashboard = () => {
 
                 {/* 2. MAIN CONTENT COLUMN */}
                 {(activeTab || window.innerWidth > 768) && (
-                    <main className="layout-content custom-scrollbar">
+                    <main className="layout-content ">
                         {/* Mobile Close Button to return to Preview (md:hidden) */}
                         {activeTab && (
                             <button
@@ -865,59 +863,6 @@ const Dashboard = () => {
                     </main>
                 )}
 
-                {/* 3. LIVE PREVIEW COLUMN */}
-                <div className={`layout-preview ${isPreviewOpen ? 'visible' : ''}`}>
-
-                    {/* Close Button for Tablet Overlay Mode (769-1240px) */}
-                    <button
-                        onClick={() => setIsPreviewOpen(false)}
-                        className="absolute top-6 right-6 p-2 bg-white rounded-full shadow-lg text-gray-700 hover:bg-gray-100 z-50 md:flex xl:hidden hidden"
-                    >
-                        <X size={24} />
-                    </button>
-
-
-
-
-                    <div
-                        className="flex items-start justify-center overflow-hidden"
-                        style={{ height: 'calc(100% - 60px)', width: '100%' }}
-                    >
-                        <div
-                            className={`transition-all duration-300 ease-in-out bg-white relative shadow-xl ${previewMode === 'mobile' ? 'phone-mockup-override' : ''}`}
-                            style={{
-                                width: previewMode === 'mobile' ? '320px' : '1280px',
-                                height: '100%',
-                                maxHeight: previewMode === 'mobile' ? '700px' : '100%',
-                                transform: previewMode === 'mobile' ? 'scale(1)' : 'scale(0.28)',
-                                transformOrigin: 'top center',
-                                border: previewMode === 'mobile' ? '12px solid #1f2937' : '1px solid #e5e7eb',
-                                borderRadius: previewMode === 'mobile' ? '30px' : '8px',
-                            }}
-                        >
-                            {previewMode === 'mobile' && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-900 rounded-b-2xl z-20"></div>}
-                            <iframe
-                                height="100%"
-                                width="100%"
-                                key={previewKey}
-                                src={publicProfileUrl}
-                                className="w-full h-full bg-white border-none"
-                                title="Live Preview"
-                                style={{
-                                    borderRadius: previewMode === 'mobile' ? '18px' : '8px'
-                                }}
-                            />
-                        </div>
-                    </div>
-                    <a
-                        href={publicProfileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-6 flex items-center gap-2 text-sm text-blue-600 hover:underline xl:flex hidden"
-                    >
-                        <ExternalLink size={14} /> View Live Site
-                    </a>
-                </div>
             </div>
 
             {/* MODALS */}

@@ -1,4 +1,4 @@
-:root {
+﻿:root {
     /* Light Theme Variables */
     --bg-primary: #ffffff;
     --bg-secondary: #f9fafb;
@@ -66,6 +66,13 @@
 
 *::-webkit-scrollbar {
     display: none;
+}
+
+html, body {
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -2420,6 +2427,13 @@ main.flex-grow {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 1rem;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.carousel-track::-webkit-scrollbar {
+    display: none;
+    /* Chrome Safari smooth hide */
 }
 
 
@@ -3561,4 +3575,45 @@ main.flex-grow {
     width: auto;
     height: 100%;
     object-fit: contain;
+}. o f f e r - c a r o u s e l - s e c t i o n  
+   m a r g i n - b o t t o m :   3 r e m ;    
+ a n i m a t i o n :   f a d e I n   0 . 5 s    
+ e a s e - o u t ;    
+ 
+/* ========================================
+   MOBILE FLAT CONTENT FIX
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Flat Layout for Main Content */
+    .layout-content {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        background-color: var(--bg-primary); /* Flat background */
+        padding: 0 !important; /* Remove generic padding */
+        overflow-y: auto;
+    }
+
+    /* Remove Card Styling */
+    .layout-content .content-card {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 1rem !important; /* Add internal padding */
+    }
+
+    /* Adjust Mobile Close Button Position/Style if needed */
+    .content-close-mobile-btn {
+        top: 1rem;
+        right: 1rem;
+        background-color: var(--bg-card-secondary);
+        /* Ensure it's visible on flat bg */
+    }
 }
+
+

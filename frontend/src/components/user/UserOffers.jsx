@@ -18,6 +18,7 @@ const UserOffers = ({
     // Global Offers State
     const [globalOffers, setGlobalOffers] = useState([]);
     const [loadingGlobal, setLoadingGlobal] = useState(true);
+    const [activeTab, setActiveTab] = useState('all');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,6 +63,7 @@ const UserOffers = ({
     }, [API_URL, user]); // Added user to dependency
 
     // Categorize User Banners
+    // Keeping these for legacy reference but we will map them dynamically now
     const promoBanners = (profileData.banners || []).filter(b => b.promoCode && b.promoCode.trim() !== '');
     const dealBanners = (profileData.banners || []).filter(b => !b.promoCode || b.promoCode.trim() === '');
 
@@ -243,7 +245,6 @@ const UserOffers = ({
             </h2>
 
             {/* Hero Offer Editor - Encapsulated in its own block logic */}
-            {/* Hero Offer Editor - Encapsulated in its own block logic */}
             <div className="mb-12 relative group">
                 <div className="hero-glow-bg"></div>
                 <div className="hero-editor-card">
@@ -373,360 +374,408 @@ const UserOffers = ({
                 </div>
             </div>
 
-            {/* My Promo Codes Section */}
-            <div className="flex items-center gap-3 mb-6 mt-12">
-                <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-lg">
-                    <Ticket size={24} className="text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">My Promo Codes</h3>
-                    <p className="text-sm text-gray-500">Manage your discount coupons</p>
-                    {renderAddButton()}
-                </div>
-            </div>
-
-            <div>
-                <div className="carousel-mask">
-                    <div className="carousel-track">
-                        <div className="carousel-card-wrapper">
-
-                        </div>
-                        {promoBanners.map((banner, index) => {
-                            const realIndex = getRealIndex(banner);
-                            return (
-                                <div key={`promo-${index}`} className="carousel-card-wrapper">
-                                    <OfferCard
-                                        offer={{
-                                            title: banner.title,
-                                            image: banner.imageUrl,
-                                            link: banner.link,
-                                            code: banner.promoCode,
-                                            description: banner.caption,
-                                            discount: banner.tags && banner.tags.length > 0 ? banner.tags[0] : null
-                                        }}
-                                        onEdit={() => handleOpenEdit(realIndex)}
-                                        onDelete={() => removeBanner(realIndex)}
-                                        onToggleFavorite={() => toggleFavorite(banner)}
-                                        className="h-full"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* My Deal Offers Section */}
-                <div className="flex items-center gap-3 mb-6 mt-16">
-                    <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-lg">
-                        <Megaphone size={24} className="text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">My Direct Deals</h3>
-                        <p className="text-sm text-gray-500">Manage your promotional banners (No Code)</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8 mb-16">
-                    {/* Only show add button if no promos, or just rely on the top one. Let's add it here too for convenience if deal section is empty */}
-                    {dealBanners.length === 0 && promoBanners.length > 0 && renderAddButton()}
-
-                    {dealBanners.map((banner, index) => {
-                        const realIndex = getRealIndex(banner);
-                        return (
-                            <OfferCard
-                                key={`deal-${index}`}
-                                offer={{
-                                    title: banner.title,
-                                    image: banner.imageUrl,
-                                    link: banner.link,
-                                    code: banner.promoCode,
-                                    description: banner.caption,
-                                    discount: banner.tags && banner.tags.length > 0 ? banner.tags[0] : null
-                                }}
-                                onEdit={() => handleOpenEdit(realIndex)}
-                                onDelete={() => removeBanner(realIndex)}
-                                onToggleFavorite={() => toggleFavorite(banner)}
-                                className="h-full w-full"
-                            />
-                        );
-                    })}
-                    {dealBanners.length === 0 && promoBanners.length === 0 && <p className="text-gray-400 italic">No direct deals added yet.</p>}
-                </div>
-
-
-                {/* Website All Offers Section - Carousel Style */}
-                <div className="flex items-center gap-3 mb-6 mt-16 pt-8 border-t border-gray-100 dark:border-gray-800">
-                    <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-lg">
-                        <Globe size={24} className="text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Explore All Offers</h3>
-                        <p className="text-sm text-gray-500">Discover trending offers from the platform</p>
-                    </div>
-                </div>
-
-                {loadingGlobal ? (
-                    <div className="py-10 flex justify-center">
-                        <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-                    </div>
-                ) : (
-                    <div className="space-y-12">
-                        {/* Global Promos Carousel */}
-                        {globalOffers.filter(o => o.code && !o.isLocked).length > 0 && (
-                            <section className="space-y-4">
-                                <h3 className="text-xl font-bold text-white px-1">
-                                    Trending Promo Codes
-                                </h3>
-                                <div className="carousel-mask">
-                                    <div className="carousel-track">
-                                        {globalOffers.filter(o => o.code && !o.isLocked).map((offer, idx) => (
-                                            <div key={`global-promo-${offer._id || idx}`} className="carousel-card-wrapper">
-                                                <OfferCard
-                                                    offer={offer}
-                                                    onToggleFavorite={() => toggleFavorite(offer)}
-                                                    isFavorite={isGlobalFavorite(offer._id)}
-                                                    className="h-full"
-                                                    showFullDetails={true}
-                                                    onUnlock={handleUnlock}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </section>
-                        )}
-
-                        {/* Global Deals Carousel */}
-                        {globalOffers.filter(o => !o.code && !o.isLocked).length > 0 && (
-                            <section className="space-y-4">
-                                <h3 className="text-xl font-bold text-white px-1">
-                                    Trending Deals
-                                </h3>
-                                <div className="carousel-mask">
-                                    <div className="carousel-track">
-                                        {globalOffers.filter(o => !o.code && !o.isLocked).map((offer, idx) => (
-                                            <div key={`global-deal-${offer._id || idx}`} className="carousel-card-wrapper">
-                                                <OfferCard
-                                                    offer={offer}
-                                                    onToggleFavorite={() => toggleFavorite(offer)}
-                                                    isFavorite={isGlobalFavorite(offer._id)}
-                                                    className="h-full"
-                                                    showFullDetails={true}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </section>
-                        )}
-
-                        {globalOffers.length === 0 && (
-                            <div className="w-full shrink-0 text-center text-gray-400 italic py-10 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                                No active global offers found.
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                <div className="sticky bottom-4 z-20 mt-8 flex justify-end">
+            {/* --- OFFERS TABS & CONTENT --- */}
+            <div className="offers-tabs-container">
+                <div className="offers-tabs-wrapper">
                     <button
-                        onClick={saveProfile}
-                        disabled={saving}
-                        className="btn btn-primary px-8 py-3 rounded-2xl shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 font-bold text-lg bg-gradient-to-r from-blue-600 to-indigo-600 border-none"
+                        onClick={() => setActiveTab('all')}
+                        className={`offer-tab-btn ${activeTab === 'all'
+                            ? 'active'
+                            : ''
+                            }`}
                     >
-                        <Save size={20} />
-                        {saving ? 'Saving...' : 'Save All Changes'}
+                        All Offers
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('codes')}
+                        className={`offer-tab-btn ${activeTab === 'codes'
+                            ? 'active'
+                            : ''
+                            }`}
+                    >
+                        <Ticket size={16} /> With Promo Code
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('deals')}
+                        className={`offer-tab-btn ${activeTab === 'deals'
+                            ? 'active'
+                            : ''
+                            }`}
+                    >
+                        <Megaphone size={16} /> Direct Deals
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('favorites')}
+                        className={`offer-tab-btn ${activeTab === 'favorites'
+                            ? 'active'
+                            : ''
+                            }`}
+                    >
+                        <Heart size={16} className={activeTab === 'favorites' ? "fill-current" : ""} /> Favorites
+                    </button>
+
+                    {/* Add Button - Always visible regardless of tab to encourage creation */}
+                    <button
+                        onClick={handleOpenAdd}
+                        className="add-custom-offer-btn"
+                    >
+                        <Plus size={18} /> Add Custom
                     </button>
                 </div>
 
-                {/* INTERNAL MODAL */}
-                {isModalOpen && (
-                    <div className="offer-modal-overlay">
-                        <div className="offer-modal-content">
-                            <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 sticky top-0 z-10">
-                                <div>
-                                    <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                                        {editingIndex !== null ? <Edit size={24} className="text-blue-500" /> : <Plus size={24} className="text-green-500" />}
-                                        {editingIndex !== null ? 'Edit Banner' : 'Create New Banner'}
-                                    </h3>
-                                    <p className="text-sm text-gray-500 mt-1">Add details for your promotional banner</p>
+                {/* Offer Content Area - Sections Layout */}
+                <div className="offers-content-stack">
+                    {/* Logic to prepare data */}
+                    {(() => {
+                        const canViewGlobal = user?.plan === 'premium' || user?.role === 'master_admin';
+
+                        // Helper to Normalize Custom Offers
+                        const normalizeCustom = (b, idx) => ({
+                            ...b,
+                            currentRealIndex: idx,
+                            _source: 'custom',
+                            _id: `custom-${idx}`,
+                            title: b.title,
+                            image: b.imageUrl,
+                            link: b.link,
+                            code: b.promoCode,
+                            description: b.caption,
+                            discount: b.tags && b.tags.length > 0 ? b.tags[0] : null
+                        });
+
+                        // 1. Promo Codes (Custom)
+                        const customCodes = (profileData.banners || [])
+                            .map((b, i) => ({ banner: b, idx: i }))
+                            .filter(({ banner }) => banner.promoCode && banner.promoCode.trim().length > 0)
+                            .map(({ banner, idx }) => normalizeCustom(banner, idx));
+
+                        // 2. Direct Deals (Custom)
+                        const customDeals = (profileData.banners || [])
+                            .map((b, i) => ({ banner: b, idx: i }))
+                            .filter(({ banner }) => !banner.promoCode || banner.promoCode.trim().length === 0)
+                            .map(({ banner, idx }) => normalizeCustom(banner, idx));
+
+                        // 3. Favorites (Global)
+                        const filteredFavorites = globalOffers
+                            .filter(g => isGlobalFavorite(g._id))
+                            .map(g => ({
+                                ...g,
+                                _source: 'global',
+                                code: g.code,
+                                promoCode: g.code,
+                                description: g.description,
+                                imageUrl: g.image,
+                                discount: g.discount
+                            }));
+
+                        // 4. Global Offers (Available to Premium)
+                        const allGlobal = canViewGlobal ? globalOffers.map(g => ({
+                            ...g,
+                            _source: 'global',
+                            code: g.code,
+                            promoCode: g.code,
+                            description: g.description,
+                            imageUrl: g.image,
+                            discount: g.discount
+                        })) : [];
+
+
+                        // Section Renderer
+                        const renderSection = (title, items, icon, showAdd = false) => {
+                            if (items.length === 0 && !showAdd) return null;
+
+                            return (
+                                <div className="offer-carousel-section">
+                                    <div className="offer-section-header">
+                                        <div className="offer-section-icon">
+                                            {icon}
+                                        </div>
+                                        <h3 className="offer-section-title">{title}</h3>
+                                        <span className="offer-section-count">{items.length} {items.length === 1 ? 'Item' : 'Items'}</span>
+                                    </div>
+
+                                    {/* Carousel Container */}
+                                    <div className="relative group/carousel">
+                                        <div className="offers-carousel-wrapper">
+                                            {/* Add Button Check */}
+
+                                            {items.map((item, idx) => (
+                                                <div key={`${item._source}-${idx}`} className="offer-slide">
+                                                    <OfferCard
+                                                        offer={{
+                                                            title: item.title,
+                                                            image: item.imageUrl || item.image,
+                                                            link: item.link,
+                                                            code: item.code || item.promoCode,
+                                                            description: item.description || item.caption,
+                                                            discount: item.discount,
+                                                            isLocked: item.isLocked,
+                                                            price: item.price
+                                                        }}
+                                                        className="h-full w-full"
+                                                        showFullDetails={item._source === 'global' || true}
+                                                        onEdit={item._source === 'custom' ? () => handleOpenEdit(item.currentRealIndex) : undefined}
+                                                        onDelete={item._source === 'custom' ? () => removeBanner(item.currentRealIndex) : undefined}
+                                                        onToggleFavorite={() => toggleFavorite(item)}
+                                                        isFavorite={isGlobalFavorite(item._id)}
+                                                        onUnlock={item._source === 'global' ? handleUnlock : undefined}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
-                                <button onClick={handleCloseModal} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition text-gray-500">
-                                    <X size={24} />
-                                </button>
+                            );
+                        };
+
+                        // Logic to Display Sections based on Tab
+                        return (
+                            <>
+                                {/* Tab: All or Codes -> Show Codes Section */}
+                                {(activeTab === 'all' || activeTab === 'codes') &&
+                                    renderSection("My Promo Codes", customCodes, <Ticket size={24} />, true)
+                                }
+
+                                {/* Tab: All or Deals -> Show Deals Section */}
+                                {(activeTab === 'all' || activeTab === 'deals') &&
+                                    renderSection("My Direct Deals", customDeals, <Megaphone size={24} />, activeTab === 'deals') // Show add button in deals tab too if empty? Or just rely on Codes section having it in All view. Let's show it in Deals tab if active.
+                                }
+
+                                {/* Tab: Favorites -> Show Favorites Section */}
+                                {activeTab === 'favorites' &&
+                                    renderSection("My Favorites", filteredFavorites, <Heart size={24} />)
+                                }
+
+                                {/* Tab: All -> Show Global Offers (if Premium) */}
+                                {(activeTab === 'all') && canViewGlobal &&
+                                    renderSection("Explore Global Offers", allGlobal.filter(g => !g.isLocked), <Globe size={24} />)
+                                }
+
+                                {/* Empty State Fallback for Tabs */}
+                                {((activeTab === 'codes' && customCodes.length === 0) ||
+                                    (activeTab === 'deals' && customDeals.length === 0) ||
+                                    (activeTab === 'favorites' && filteredFavorites.length === 0)) && (
+                                        <div className="offers-empty-state">
+                                            <div className="offers-empty-icon">
+                                                <Globe size={24} />
+                                            </div>
+                                            <h3 className="offers-empty-title">No offers found</h3>
+                                            <p className="offers-empty-text">Try adding a new offer to this section.</p>
+                                        </div>
+                                    )}
+                            </>
+                        );
+                    })()}
+                </div>
+
+                {/* Premium Banner for restricted users in Filtered Tabs? */}
+                {user?.plan !== 'premium' && user?.role !== 'master_admin' && (activeTab === 'favorites' || activeTab === 'all') && (
+                    <div className="premium-upgrade-banner">
+                        <p className="premium-banner-text-sm">Want access to our Global Offers Library?</p>
+                        <p className="premium-banner-title">Upgrade to Premium to unlock hundreds of ready-to-use offers</p>
+                        <a href="/membership" className="premium-upgrade-btn">View Plans</a>
+                    </div>
+                )}
+            </div>
+
+            <div className="sticky bottom-4 z-20 mt-8 flex justify-end">
+                <button
+                    onClick={saveProfile}
+                    disabled={saving}
+                    className="btn btn-primary px-8 py-3 rounded-2xl shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 font-bold text-lg bg-gradient-to-r from-blue-600 to-indigo-600 border-none"
+                >
+                    <Save size={20} />
+                    {saving ? 'Saving...' : 'Save All Changes'}
+                </button>
+            </div>
+
+            {/* INTERNAL MODAL */}
+            {isModalOpen && (
+                <div className="offer-modal-overlay">
+                    <div className="offer-modal-content">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 sticky top-0 z-10">
+                            <div>
+                                <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                                    {editingIndex !== null ? <Edit size={24} className="text-blue-500" /> : <Plus size={24} className="text-green-500" />}
+                                    {editingIndex !== null ? 'Edit Banner' : 'Create New Banner'}
+                                </h3>
+                                <p className="text-sm text-gray-500 mt-1">Add details for your promotional banner</p>
+                            </div>
+                            <button onClick={handleCloseModal} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition text-gray-500">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                            {/* Visibility Toggle */}
+                            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
+                                <span className="font-medium text-gray-900 dark:text-white">Banner Visibility</span>
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="toggle-checkbox"
+                                        checked={tempBanner.isVisible}
+                                        onChange={(e) => setTempBanner({ ...tempBanner, isVisible: e.target.checked })}
+                                    />
+                                    <div className="toggle-slider"></div>
+                                </label>
                             </div>
 
-                            <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-                                {/* Visibility Toggle */}
-                                <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
-                                    <span className="font-medium text-gray-900 dark:text-white">Banner Visibility</span>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            className="toggle-checkbox"
-                                            checked={tempBanner.isVisible}
-                                            onChange={(e) => setTempBanner({ ...tempBanner, isVisible: e.target.checked })}
-                                        />
-                                        <div className="toggle-slider"></div>
-                                    </label>
-                                </div>
+                            {/* Title */}
+                            <div className="form-group">
+                                <label className="label-premium">Banner Title <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    className="input-premium"
+                                    value={tempBanner.title}
+                                    onChange={(e) => setTempBanner({ ...tempBanner, title: e.target.value })}
+                                    placeholder="e.g. Summer Sale 2024"
+                                />
+                            </div>
 
-                                {/* Title */}
-                                <div className="form-group">
-                                    <label className="label-premium">Banner Title <span className="text-red-500">*</span></label>
+                            {/* Banner Image Selection */}
+                            <div className="form-group">
+                                <label className="label-premium mb-3 block">Banner Image</label>
+                                <div className="upload-zone group">
                                     <input
-                                        type="text"
-                                        className="input-premium"
-                                        value={tempBanner.title}
-                                        onChange={(e) => setTempBanner({ ...tempBanner, title: e.target.value })}
-                                        placeholder="e.g. Summer Sale 2024"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="absolute inset-0 w-full h-full cursor-pointer z-20 opacity-0"
+                                        disabled={uploading}
                                     />
-                                </div>
 
-                                {/* Banner Image Selection */}
-                                <div className="form-group">
-                                    <label className="label-premium mb-3 block">Banner Image</label>
-                                    <div className="upload-zone group">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleImageUpload}
-                                            className="absolute inset-0 w-full h-full cursor-pointer z-20 opacity-0"
-                                            disabled={uploading}
-                                        />
-
-                                        {tempBanner.imageUrl ? (
-                                            <div className="relative h-48 w-full rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-inner">
-                                                <img src={tempBanner.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                                    <div className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full font-medium flex items-center gap-2">
-                                                        <Image size={18} /> Change Image
-                                                    </div>
+                                    {tempBanner.imageUrl ? (
+                                        <div className="relative h-48 w-full rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-inner">
+                                            <img src={tempBanner.imageUrl} alt="Banner Preview" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                <div className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full font-medium flex items-center gap-2">
+                                                    <Image size={18} /> Change Image
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <div className="h-40 flex flex-col items-center justify-center text-gray-400 relative">
-                                                {uploading ? (
-                                                    <div className="flex flex-col items-center">
-                                                        <div className="relative w-16 h-16 mb-3">
-                                                            <div className="upload-pulse-ring"></div>
-                                                            <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
-                                                            <Image size={24} className="absolute inset-0 m-auto text-blue-500" />
-                                                        </div>
-                                                        <p className="text-sm font-bold text-blue-500 animate-pulse">Uploading Image...</p>
+                                        </div>
+                                    ) : (
+                                        <div className="h-40 flex flex-col items-center justify-center text-gray-400 relative">
+                                            {uploading ? (
+                                                <div className="flex flex-col items-center">
+                                                    <div className="relative w-16 h-16 mb-3">
+                                                        <div className="upload-pulse-ring"></div>
+                                                        <div className="absolute inset-0 border-4 border-blue-500 rounded-full border-t-transparent animate-spin"></div>
+                                                        <Image size={24} className="absolute inset-0 m-auto text-blue-500" />
                                                     </div>
-                                                ) : (
-                                                    <>
-                                                        <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-xl flex items-center justify-center mb-3 transform group-hover:scale-110 transition-transform">
-                                                            <Image size={28} />
-                                                        </div>
-                                                        <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                                                            Click to upload banner image
-                                                        </p>
-                                                        <p className="text-xs text-gray-400 mt-1">Supports JPG, PNG (Max 2MB)</p>
-                                                    </>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
+                                                    <p className="text-sm font-bold text-blue-500 animate-pulse">Uploading Image...</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/20 text-blue-500 rounded-xl flex items-center justify-center mb-3 transform group-hover:scale-110 transition-transform">
+                                                        <Image size={28} />
+                                                    </div>
+                                                    <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                                                        Click to upload banner image
+                                                    </p>
+                                                    <p className="text-xs text-gray-400 mt-1">Supports JPG, PNG (Max 2MB)</p>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
 
-                                    <div className="mt-3">
-                                        <details className="text-xs">
-                                            <summary className="cursor-pointer text-gray-500 hover:text-blue-600 font-medium list-none flex items-center gap-1 w-max">
-                                                <LinkIcon size={12} /> Or paste direct image URL
-                                            </summary>
-                                            <div className="mt-2 animate-in slide-in-from-top-1">
-                                                <input
-                                                    type="text"
-                                                    className="input-premium pl-3 text-xs py-2 h-9"
-                                                    value={tempBanner.imageUrl}
-                                                    onChange={(e) => setTempBanner({ ...tempBanner, imageUrl: e.target.value })}
-                                                    placeholder="https://example.com/image.jpg"
-                                                />
-                                            </div>
-                                        </details>
+                                <div className="mt-3">
+                                    <details className="text-xs">
+                                        <summary className="cursor-pointer text-gray-500 hover:text-blue-600 font-medium list-none flex items-center gap-1 w-max">
+                                            <LinkIcon size={12} /> Or paste direct image URL
+                                        </summary>
+                                        <div className="mt-2 animate-in slide-in-from-top-1">
+                                            <input
+                                                type="text"
+                                                className="input-premium pl-3 text-xs py-2 h-9"
+                                                value={tempBanner.imageUrl}
+                                                onChange={(e) => setTempBanner({ ...tempBanner, imageUrl: e.target.value })}
+                                                placeholder="https://example.com/image.jpg"
+                                            />
+                                        </div>
+                                    </details>
+                                </div>
+                            </div>
+
+                            {/* Link */}
+                            <div className="form-group">
+                                <label className="label-premium">Destination Link</label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className="input-premium pl-10"
+                                        value={tempBanner.link}
+                                        onChange={(e) => setTempBanner({ ...tempBanner, link: e.target.value })}
+                                        placeholder="https://yourstore.com/offer"
+                                    />
+                                    <LinkIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Promo Code */}
+                                <div className="form-group">
+                                    <label className="label-premium">Promo Code</label>
+                                    <div className="relative group">
+                                        <input
+                                            type={showPromo ? "text" : "password"}
+                                            className="input-premium pl-10 pr-10 font-mono tracking-wider transition-all duration-300 ease-in-out"
+                                            value={tempBanner.promoCode}
+                                            onChange={(e) => setTempBanner({ ...tempBanner, promoCode: e.target.value })}
+                                            placeholder="SAVE20"
+                                        />
+                                        <div style={{ position: 'absolute', top: '50%', left: '0.75rem', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9ca3af' }}>
+                                            <Ticket size={18} />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPromo(!showPromo)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none"
+                                        >
+                                            {showPromo ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
                                     </div>
                                 </div>
 
-                                {/* Link */}
+                                {/* Tags */}
                                 <div className="form-group">
-                                    <label className="label-premium">Destination Link</label>
+                                    <label className="label-premium">Tags (comma separated)</label>
                                     <div className="relative">
                                         <input
                                             type="text"
                                             className="input-premium pl-10"
-                                            value={tempBanner.link}
-                                            onChange={(e) => setTempBanner({ ...tempBanner, link: e.target.value })}
-                                            placeholder="https://yourstore.com/offer"
+                                            value={Array.isArray(tempBanner.tags) ? tempBanner.tags.join(', ') : tempBanner.tags}
+                                            onChange={(e) => setTempBanner({ ...tempBanner, tags: e.target.value.split(',').map(tag => tag.trim()) })}
+                                            placeholder="sale, limited, new"
                                         />
-                                        <LinkIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <Tag size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                     </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Promo Code */}
-                                    <div className="form-group">
-                                        <label className="label-premium">Promo Code</label>
-                                        <div className="relative group">
-                                            <input
-                                                type={showPromo ? "text" : "password"}
-                                                className="input-premium pl-10 pr-10 font-mono tracking-wider transition-all duration-300 ease-in-out"
-                                                value={tempBanner.promoCode}
-                                                onChange={(e) => setTempBanner({ ...tempBanner, promoCode: e.target.value })}
-                                                placeholder="SAVE20"
-                                            />
-                                            <div style={{ position: 'absolute', top: '50%', left: '0.75rem', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9ca3af' }}>
-                                                <Ticket size={18} />
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPromo(!showPromo)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors focus:outline-none"
-                                            >
-                                                {showPromo ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Tags */}
-                                    <div className="form-group">
-                                        <label className="label-premium">Tags (comma separated)</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                className="input-premium pl-10"
-                                                value={Array.isArray(tempBanner.tags) ? tempBanner.tags.join(', ') : tempBanner.tags}
-                                                onChange={(e) => setTempBanner({ ...tempBanner, tags: e.target.value.split(',').map(tag => tag.trim()) })}
-                                                placeholder="sale, limited, new"
-                                            />
-                                            <Tag size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Caption */}
-                                <div className="form-group">
-                                    <label className="label-premium">Caption / Description</label>
-                                    <textarea
-                                        rows="3"
-                                        className="input-premium min-h-[80px]"
-                                        value={tempBanner.caption}
-                                        onChange={(e) => setTempBanner({ ...tempBanner, caption: e.target.value })}
-                                        placeholder="Add a short description or terms for this offer..."
-                                    />
                                 </div>
                             </div>
 
-                            <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-white dark:bg-gray-900 sticky bottom-0 z-10">
-                                <button onClick={handleCloseModal} className="btn btn-ghost px-6 bg-gray-100/50 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg font-medium">Cancel</button>
-                                <button onClick={handleSaveBanner} className="btn btn-primary px-8 shadow-lg shadow-blue-500/20">
-                                    {editingIndex !== null ? 'Save Changes' : 'Create Banner'}
-                                </button>
+                            {/* Caption */}
+                            <div className="form-group">
+                                <label className="label-premium">Caption / Description</label>
+                                <textarea
+                                    rows="3"
+                                    className="input-premium min-h-[80px]"
+                                    value={tempBanner.caption}
+                                    onChange={(e) => setTempBanner({ ...tempBanner, caption: e.target.value })}
+                                    placeholder="Add a short description or terms for this offer..."
+                                />
                             </div>
                         </div>
+
+                        <div className="p-6 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3 bg-white dark:bg-gray-900 sticky bottom-0 z-10">
+                            <button onClick={handleCloseModal} className="btn btn-ghost px-6 bg-gray-100/50 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg font-medium">Cancel</button>
+                            <button onClick={handleSaveBanner} className="btn btn-primary px-8 shadow-lg shadow-blue-500/20">
+                                {editingIndex !== null ? 'Save Changes' : 'Create Banner'}
+                            </button>
+                        </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

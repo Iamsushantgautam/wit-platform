@@ -24,9 +24,11 @@ const UserPrompts = ({
     const [copiedId, setCopiedId] = useState(null);
     const [activeSection, setActiveSection] = useState('collection'); // collection, library, settings
 
-    // Redirect if library is disabled
+    // Redirect if library is disabled or user not premium
     const isLibraryEnabled = featureFlags.globalLibraryEnabled !== false;
-    const currentSection = (!isLibraryEnabled && activeSection === 'library') ? 'collection' : activeSection;
+    const hasLibraryAccess = isLibraryEnabled && (user?.plan === 'premium' || user?.role === 'master_admin');
+
+    const currentSection = (!hasLibraryAccess && activeSection === 'library') ? 'collection' : activeSection;
     if (currentSection !== activeSection) setActiveSection(currentSection);
 
     const filteredAvailablePrompts = isLibraryEnabled
@@ -160,9 +162,7 @@ const UserPrompts = ({
                         </span>
                     </button>
 
-                    {/* Admin Store Tab Removed per User Request */}
-                    {/* 
-                    {isLibraryEnabled && (
+                    {hasLibraryAccess && (
                         <button
                             onClick={() => setActiveSection("library")}
                             className={`tab-btn ${activeSection === "library" ? "tab-active" : ""}`}
@@ -173,8 +173,7 @@ const UserPrompts = ({
                                 <span className="tab-count">({filteredAvailablePrompts.length})</span>
                             </span>
                         </button>
-                    )} 
-                    */}
+                    )}
 
                     <button
                         onClick={() => setActiveSection("settings")}
@@ -368,59 +367,76 @@ const UserPrompts = ({
                             </label>
 
                             <div className="userprompt-settings-options">
-                                {[
-                                    {
-                                        id: "all",
-                                        label: "All Collection",
-                                        desc: "Full registry of all your prompts"
-                                    },
-                                    {
-                                        id: "custom",
-                                        label: "Only Custom Prompts",
-                                        desc: "Show only what you created"
-                                    },
-                                    {
-                                        id: "favorites",
-                                        label: "Only Favorites",
-                                        desc: "Curated list of items you favorited"
-                                    },
-                                    {
-                                        id: "custom_favorites",
-                                        label: "Custom and Favorites",
-                                        desc: "Your creations plus favorites"
-                                    },
-                                    {
-                                        id: "custom_library",
-                                        label: "Custom and Website Prompts",
-                                        desc: "Your creations plus full global library"
-                                    }
-                                ].map(option => (
-                                    <label
-                                        key={option.id}
-                                        className={`userprompt-option ${profileData.publicPromptsDisplay === option.id
-                                            ? "userprompt-option-active"
-                                            : ""
-                                            }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="publicPromptsDisplay"
-                                            value={option.id}
-                                            checked={profileData.publicPromptsDisplay === option.id}
-                                            onChange={handleProfileChange}
-                                            className="userprompt-option-radio"
-                                        />
+                                {(() => {
+                                    const baseOptions = [
+                                        {
+                                            id: "custom",
+                                            label: "Only Custom Prompts",
+                                            desc: "Show only what you created"
+                                        },
+                                        {
+                                            id: "favorites",
+                                            label: "Only Favorites",
+                                            desc: "Curated list of items you favorited"
+                                        },
+                                        {
+                                            id: "custom_favorites",
+                                            label: "Custom and Favorites",
+                                            desc: "Your creations plus favorites"
+                                        }
+                                    ];
 
-                                        <div className="userprompt-option-content">
-                                            <p className="userprompt-option-title">
-                                                {option.label}
-                                            </p>
-                                            <p className="userprompt-option-desc">
-                                                {option.desc}
-                                            </p>
-                                        </div>
-                                    </label>
-                                ))}
+                                    const premiumOptions = [
+                                        {
+                                            id: "all",
+                                            label: "All Collection",
+                                            desc: "Full registry of all your prompts"
+                                        },
+                                        {
+                                            id: "custom_library",
+                                            label: "Custom and Website Prompts",
+                                            desc: "Your creations plus full global library"
+                                        },
+                                        {
+                                            id: "library_only",
+                                            label: "Only Website Prompts",
+                                            desc: "Show only the global library"
+                                        }
+                                    ];
+
+                                    // Merge if premium
+                                    const finalOptions = hasLibraryAccess
+                                        ? [...premiumOptions.slice(0, 1), ...baseOptions, ...premiumOptions.slice(1)]
+                                        : baseOptions;
+
+                                    return finalOptions.map(option => (
+                                        <label
+                                            key={option.id}
+                                            className={`userprompt-option ${profileData.publicPromptsDisplay === option.id
+                                                ? "userprompt-option-active"
+                                                : ""
+                                                }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="publicPromptsDisplay"
+                                                value={option.id}
+                                                checked={profileData.publicPromptsDisplay === option.id}
+                                                onChange={handleProfileChange}
+                                                className="userprompt-option-radio"
+                                            />
+
+                                            <div className="userprompt-option-content">
+                                                <p className="userprompt-option-title">
+                                                    {option.label}
+                                                </p>
+                                                <p className="userprompt-option-desc">
+                                                    {option.desc}
+                                                </p>
+                                            </div>
+                                        </label>
+                                    ));
+                                })()}
                             </div>
                         </div>
                     </div>

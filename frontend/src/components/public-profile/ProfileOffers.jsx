@@ -5,10 +5,12 @@ import { ArrowRight, Ticket, Megaphone, Heart, Tag, Filter, X, ChevronLeft, Chev
 import OfferCard from '../blocks/OfferCard';
 
 const ProfileOffers = ({ profile }) => {
-    const { API_URL, user } = useContext(AuthContext);
+    const { API_URL, user, setUser } = useContext(AuthContext);
     const [filterType, setFilterType] = useState('all'); // all, codes, deals, favorites
     const [selectedTag, setSelectedTag] = useState(null);
     const [favorites, setFavorites] = useState(new Set()); // Local favorites state for public viewer
+
+    const showGlobalOffers = profile?.plan === 'premium' || profile?.role === 'master_admin';
 
     // Extract all unique tags
     const allTags = useMemo(() => {
@@ -117,17 +119,21 @@ const ProfileOffers = ({ profile }) => {
 
         try {
             const config = { headers: { Authorization: `Bearer ${user.token || localStorage.getItem('token')}` } };
-            // Note: user object in ProfileOffers context likely has token.
 
             const res = await axios.post(`${API_URL}/transactions/unlock`, {
                 itemId: offer._id,
                 itemType: 'offer'
             }, config);
 
-            if (res.data.remainingCoins !== undefined) {
-                window.location.reload();
-            } else {
+            if (res.data.remainingCoins !== undefined && setUser) {
+                setUser(prev => ({
+                    ...prev,
+                    coins: res.data.remainingCoins,
+                    unlockedOffers: [...(prev.unlockedOffers || []), res.data.item]
+                }));
                 alert('Offer unlocked successfully!');
+            } else {
+                window.location.reload();
             }
         } catch (error) {
             console.error('Unlock failed', error);
@@ -188,12 +194,14 @@ const ProfileOffers = ({ profile }) => {
                     >
                         <Megaphone size={16} /> Direct Deals
                     </button>
-                    <button
-                        onClick={() => setFilterType('favorites')}
-                        className={`profile-filter-btn ${filterType === 'favorites' ? 'active-favorites' : 'default'}`}
-                    >
-                        <Heart size={16} fill={filterType === 'favorites' ? "currentColor" : "none"} /> Favorites
-                    </button>
+                    {showGlobalOffers && (
+                        <button
+                            onClick={() => setFilterType('favorites')}
+                            className={`profile-filter-btn ${filterType === 'favorites' ? 'active-favorites' : 'default'}`}
+                        >
+                            <Heart size={16} fill={filterType === 'favorites' ? "currentColor" : "none"} /> Favorites
+                        </button>
+                    )}
                 </div>
 
                 {/* Tag Filters */}

@@ -38,8 +38,8 @@ const ProfilePrompts = ({ profile, featureFlags = {} }) => {
     // 3. Website Prompts (Global Library) - Replaces "Selected" prompts
     // Fetch if logic permits
     // Logic: If 'all' or 'custom_library' is selected AND global library is public enabled.
-    // User Update: "in public profile ... remove the website prompt" -> Force Hide
-    const showLibrary = false;
+    // User Update: Premium users can enable "only website prompts". So we restore logic but dependent on 'mode'.
+    const showLibrary = showGlobalPublic && ['all', 'custom_library', 'library_only'].includes(mode);
 
     useEffect(() => {
         const fetchGlobalPrompts = async () => {

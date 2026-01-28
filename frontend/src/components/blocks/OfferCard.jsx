@@ -16,11 +16,11 @@ const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggl
 
     const renderControls = () => {
         return (
-            <div className="absolute top-2 right-2 flex gap-2 z-20">
+            <div className="offer-card-controls">
                 {onToggleFavorite && (
                     <button
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(); }}
-                        className={`p-2 rounded-full shadow-md transition-all duration-200 ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-white/90 text-slate-400 hover:text-red-500'}`}
+                        className={`offer-control-btn favorite ${isFavorite ? 'active' : ''}`}
                         title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
                     >
                         <Heart size={16} fill={isFavorite ? "currentColor" : "none"} />
@@ -29,7 +29,7 @@ const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggl
                 {onEdit && (
                     <button
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(); }}
-                        className="p-2 bg-white/90 text-blue-600 rounded-full shadow-md hover:bg-blue-50 transition-colors opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 duration-200"
+                        className="offer-control-btn edit"
                         title="Edit Offer"
                     >
                         <Edit size={16} />
@@ -38,7 +38,7 @@ const OfferCard = ({ offer, index = 0, className = '', onEdit, onDelete, onToggl
                 {onDelete && (
                     <button
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
-                        className="p-2 bg-white/90 text-red-600 rounded-full shadow-md hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 duration-200"
+                        className="offer-control-btn delete"
                         title="Delete Offer"
                     >
                         <Trash2 size={16} />
